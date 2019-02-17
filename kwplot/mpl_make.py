@@ -20,24 +20,24 @@ def make_heatmask(probs, cmap='plasma', with_alpha=1.0, space='rgb',
         dsize (tuple): if not None, then output is resized to W,H=dsize
 
     SeeAlso:
-        kwil.overlay_alpha_images
+        kwimage.overlay_alpha_images
 
     Example:
         >>> probs = np.tile(np.linspace(0, 1, 10), (10, 1))
         >>> heatmask = make_heatmask(probs, with_alpha=0.8, dsize=(100, 100))
         >>> # xdoc: +REQUIRES(--show)
-        >>> import kwil
-        >>> kwil.imshow(heatmask, fnum=1, doclf=True, colorspace='rgb')
-        >>> kwil.show_if_requested()
+        >>> import kwplot
+        >>> kwplot.imshow(heatmask, fnum=1, doclf=True, colorspace='rgb')
+        >>> kwplot.show_if_requested()
     """
     import matplotlib as mpl
-    import kwil
+    import kwimage
     import matplotlib.cm  # NOQA
     assert len(probs.shape) == 2
     cmap_ = mpl.cm.get_cmap(cmap)
-    probs = kwil.ensure_float01(probs)
+    probs = kwimage.ensure_float01(probs)
     heatmask = cmap_(probs).astype(np.float32)
-    heatmask = kwil.convert_colorspace(heatmask, 'rgba', space, implicit=True)
+    heatmask = kwimage.convert_colorspace(heatmask, 'rgba', space, implicit=True)
     if with_alpha is not False and with_alpha is not None:
         heatmask[:, :, 3] = (probs * with_alpha)  # assign probs to alpha channel
     if dsize is not None:
@@ -63,19 +63,18 @@ def make_orimask(radians, mag=None, alpha=1.0):
         ndarray[float32]: an rgb / rgba image in 01 space
 
     SeeAlso:
-        kwil.overlay_alpha_images
+        kwimage.overlay_alpha_images
 
     Example:
-        >>> from kwil.mplutil.mpl_make import *
         >>> x, y = np.meshgrid(np.arange(64), np.arange(64))
         >>> dx, dy = x - 32, y - 32
         >>> radians = np.arctan2(dx, dy)
         >>> mag = np.sqrt(dx ** 2 + dy ** 2)
         >>> orimask = make_orimask(radians, mag)
         >>> # xdoc: +REQUIRES(--show)
-        >>> import kwil
-        >>> kwil.imshow(orimask, fnum=1, doclf=True, colorspace='rgb')
-        >>> kwil.show_if_requested()
+        >>> import kwplot
+        >>> kwplot.imshow(orimask, fnum=1, doclf=True, colorspace='rgb')
+        >>> kwplot.show_if_requested()
     """
     import matplotlib as mpl
     import matplotlib.cm  # NOQA
@@ -85,22 +84,22 @@ def make_orimask(radians, mag=None, alpha=1.0):
     cmap_ = mpl.cm.get_cmap('hsv')
     color_rgb = cmap_(ori01)[..., 0:3].astype(np.float32)
     if mag is not None:
-        import kwil
+        import kwimage
         if mag.max() > 1:
             mag = mag / mag.max()
-        color_hsv = kwil.convert_colorspace(color_rgb, 'rgb', 'hsv')
+        color_hsv = kwimage.convert_colorspace(color_rgb, 'rgb', 'hsv')
         color_hsv[..., 1:3] = mag[..., None]
-        color_rgb = kwil.convert_colorspace(color_hsv, 'hsv', 'rgb')
+        color_rgb = kwimage.convert_colorspace(color_hsv, 'hsv', 'rgb')
     else:
         mag = 1
     orimask = np.array(color_rgb, dtype=np.float32)
 
     if isinstance(alpha, np.ndarray):
         # Alpha specified as explicit numpy array
-        orimask = kwil.ensure_alpha_channel(orimask)
+        orimask = kwimage.ensure_alpha_channel(orimask)
         orimask[:, :, 3] = alpha
     elif alpha is not False and alpha is not None:
-        orimask = kwil.ensure_alpha_channel(orimask)
+        orimask = kwimage.ensure_alpha_channel(orimask)
         orimask[:, :, 3] = mag * alpha
     return orimask
 
@@ -127,10 +126,9 @@ def make_vector_field(dx, dy, stride=1, thresh=0.0, scale=1.0, alpha=1.0,
         ndarray[float32]: vec_img: an rgb/rgba image in 0-1 space
 
     SeeAlso:
-        kwil.overlay_alpha_images
+        kwimage.overlay_alpha_images
 
     Example:
-        >>> from kwil.mplutil.mpl_make import *
         >>> x, y = np.meshgrid(np.arange(512), np.arange(512))
         >>> dx, dy = x - 256.01, y - 256.01
         >>> radians = np.arctan2(dx, dy)
@@ -138,13 +136,15 @@ def make_vector_field(dx, dy, stride=1, thresh=0.0, scale=1.0, alpha=1.0,
         >>> dx, dy = dx / mag, dy / mag
         >>> img = make_vector_field(dx, dy, stride=10, scale=10, alpha=False)
         >>> # xdoctest: +REQUIRES(--show)
-        >>> kwil.autompl()
-        >>> kwil.imshow(img)
-        >>> kwil.show_if_requested()
+        >>> import kwplot
+        >>> kwplot.autompl()
+        >>> kwplot.imshow(img)
+        >>> kwplot.show_if_requested()
     """
     import cv2
-    import kwil
-    color = kwil.Color(color).as255('rgb')
+    import kwplot
+    import kwimage
+    color = kwplot.Color(color).as255('rgb')
     vecmask = np.zeros(dx.shape + (3,), dtype=np.uint8)
 
     line_type_lookup = {'aa': cv2.LINE_AA}
@@ -184,14 +184,14 @@ def make_vector_field(dx, dy, stride=1, thresh=0.0, scale=1.0, alpha=1.0,
                         tipLength=tipLength,
                         line_type=line_type)
 
-    vecmask = kwil.ensure_float01(vecmask)
+    vecmask = kwimage.ensure_float01(vecmask)
     if isinstance(alpha, np.ndarray):
         # Alpha specified as explicit numpy array
-        vecmask = kwil.ensure_alpha_channel(vecmask)
+        vecmask = kwimage.ensure_alpha_channel(vecmask)
         vecmask[:, :, 3] = alpha
     elif alpha is not False and alpha is not None:
         # Alpha specified as a scale factor
-        vecmask = kwil.ensure_alpha_channel(vecmask)
+        vecmask = kwimage.ensure_alpha_channel(vecmask)
         # vecmask[:, :, 3] = (vecmask[:, :, 0:3].sum(axis=2) > 0) * alpha
         vecmask[:, :, 3] = vecmask[:, :, 0:3].sum(axis=2) * alpha
     return vecmask

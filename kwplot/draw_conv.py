@@ -22,10 +22,11 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         >>> weights_tohack = conv.weight[0:7].data.numpy()
         >>> weights_flat = make_conv_images(conv, norm_per_feat=False)
         >>> # xdoctest: +REQUIRES(--show)
-        >>> import kwil
-        >>> stacked = kwil.stack_images_grid(weights_flat, chunksize=5, overlap=-1)
-        >>> kwil.imshow(stacked)
-        >>> kwil.show_if_requested()
+        >>> import kwimage
+        >>> import kwplot
+        >>> stacked = kwimage.stack_images_grid(weights_flat, chunksize=5, overlap=-1)
+        >>> kwplot.imshow(stacked)
+        >>> kwplot.show_if_requested()
 
     Ignore:
         >>> import torchvision
@@ -33,11 +34,12 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         >>> #conv = torchvision.models.vgg11(pretrained=True).features[0]
         >>> weights_flat = make_conv_images(conv, norm_per_feat=False)
         >>> # xdoctest: +REQUIRES(--show)
-        >>> import kwil
-        >>> stacked = kwil.stack_images_grid(weights_flat, chunksize=8, overlap=-1)
-        >>> kwil.autompl()
-        >>> kwil.imshow(stacked)
-        >>> kwil.show_if_requested()
+        >>> import kwplot
+        >>> import kwimage
+        >>> stacked = kwplot.stack_images_grid(weights_flat, chunksize=8, overlap=-1)
+        >>> kwplot.autompl()
+        >>> kwplot.imshow(stacked)
+        >>> kwplotwil.show_if_requested()
     """
     # get relavent data out of pytorch module
     weights = conv.weight.data.cpu().numpy()
@@ -115,9 +117,6 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
     References:
         https://matplotlib.org/devdocs/gallery/mplot3d/voxels.html
 
-    CommandLine:
-        xdoctest -m ~/code/kwil/kwil/mplutil/draw_conv.py plot_convolutional_features
-
     Example:
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
         >>> plot_convolutional_features(conv, colorspace=None, fnum=None, limit=2)
@@ -171,8 +170,8 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         >>> plot_convolutional_features(conv, colorspace='rgb', fnum=None)
 
     """
-    from kwil import mplutil
-    mplutil.autompl()
+    import kwplot
+    kwplot.autompl()
     import matplotlib.pyplot as plt
 
     # get relavent data out of pytorch module
@@ -232,17 +231,17 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         # np.ones(spatial_axes)
         # d, h, w = np.indices(spatial_axes)
 
-    fnum = mplutil.ensure_fnum(fnum)
-    fig = mplutil.figure(fnum=fnum)
+    fnum = kwplot.ensure_fnum(fnum)
+    fig = kwplot.figure(fnum=fnum)
     fig.clf()
     if nCols is None:
         nCols = dim
-    pnum_ = mplutil.PlotNums(nCols=nCols, nSubplots=num_plots)
+    pnum_ = kwplot.PlotNums(nCols=nCols, nSubplots=num_plots)
 
     def plot_kernel3d(i):
         img = weights_flat[i]
 
-        # fig = mplutil.figure(fnum=fnum, pnum=pnum_[i])
+        # fig = kwplot.figure(fnum=fnum, pnum=pnum_[i])
         ax = fig.add_subplot(*pnum_[i], projection='3d')
         # ax = fig.gca(projection='3d')
 
@@ -319,8 +318,8 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
             plot_kernel3d(i)
         else:
             img = weights_flat[i]
-            mplutil.imshow(img, fnum=fnum, pnum=pnum_[i],
-                           interpolation='nearest', colorspace=colorspace)
+            kwplot.imshow(img, fnum=fnum, pnum=pnum_[i],
+                          interpolation='nearest', colorspace=colorspace)
     return fig
 
 

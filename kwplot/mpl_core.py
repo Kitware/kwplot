@@ -39,8 +39,8 @@ def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
         mpl.Figure: fig
 
     Example:
-        >>> from kwil import mplutil
-        >>> mplutil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> import matplotlib.pyplot as plt
         >>> fnum = 1
         >>> fig = figure(fnum, (2, 2, 1))
@@ -50,8 +50,8 @@ def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
         >>> show_if_requested()
 
     Example:
-        >>> from kwil import mplutil
-        >>> mplutil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> import matplotlib.pyplot as plt
         >>> fnum = 1
         >>> fig = figure(fnum, (2, 2, 1))
@@ -270,13 +270,14 @@ def imshow(img,
         tuple: (fig, ax)
 
     Ignore:
-        >>> import kwil
-        >>> kwil.autompl()
-        >>> img = kwil.grab_test_image('carl')
+        >>> import kwplot
+        >>> import kwimage
+        >>> kwplot.autompl()
+        >>> img = kwimage.grab_test_image('carl')
         >>> (fig, ax) = imshow(img)
         >>> result = ('(fig, ax) = %s' % (str((fig, ax)),))
         >>> print(result)
-        >>> kwil.show_if_requested()
+        >>> kwplot.show_if_requested()
     """
     import matplotlib as mpl
     import matplotlib.pyplot as plt
@@ -634,7 +635,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         HSV_tuples = [(hue, sat, val) for hue in hue_list]
         RGB_tuples = [colorsys.hsv_to_rgb(*x) for x in HSV_tuples]
     if randomize:
-        from kwil.util import ensure_rng
-        rng = ensure_rng(rng=0)
+        import kwarray
+        rng = kwarray.ensure_rng(rng=0)
         rng.shuffle(RGB_tuples)
     return RGB_tuples

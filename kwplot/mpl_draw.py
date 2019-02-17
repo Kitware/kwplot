@@ -21,7 +21,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
         >>> draw_boxes(bboxes)
         >>> #kwil.autompl()
     """
-    from kwil import mplutil
+    import kwplot
     import matplotlib as mpl
     from matplotlib import pyplot as plt
     if ax is None:
@@ -29,7 +29,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
     xywh = boxes.to_xywh().data
 
-    transparent = mplutil.Color((0, 0, 0, 0)).as01('rgba')
+    transparent = kwplot.Color((0, 0, 0, 0)).as01('rgba')
 
     # More grouped patches == more efficient runtime
     if alpha is None:
@@ -37,7 +37,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
     elif not ub.iterable(alpha):
         alpha = [alpha] * len(xywh)
 
-    edgecolors = [mplutil.Color(color, alpha=a).as01('rgba')
+    edgecolors = [kwplot.Color(color, alpha=a).as01('rgba')
                   for a in alpha]
     color_groups = ub.group_items(range(len(edgecolors)), edgecolors)
     for edgecolor, idxs in color_groups.items():
@@ -97,17 +97,17 @@ def draw_line_segments(pts1, pts2, ax=None, **kwargs):
 
     Example:
         >>> import numpy as np
-        >>> import kwil
+        >>> import kwplot
         >>> pts1 = np.array([(.1, .8), (.6, .8)])
         >>> pts2 = np.array([(.6, .7), (.4, .1)])
-        >>> kwil.figure(fnum=None)
+        >>> kwplot.figure(fnum=None)
         >>> draw_line_segments(pts1, pts2)
         >>> # xdoc: +REQUIRES(--show)
         >>> import matplotlib.pyplot as plt
         >>> ax = plt.gca()
         >>> ax.set_xlim(0, 1)
         >>> ax.set_ylim(0, 1)
-        >>> kwil.show_if_requested()
+        >>> kwplot.show_if_requested()
     """
     import matplotlib.pyplot as plt
     import matplotlib as mpl
@@ -139,7 +139,6 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         - [ ] Finish args docs
 
     Example:
-        >>> from kwil.mplutil.mpl_draw import *
         >>> classes = ['cls1', 'cls2', 'cls3']
         >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
         >>> matrix = pd.DataFrame(matrix, index=classes, columns=classes)
