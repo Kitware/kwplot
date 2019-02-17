@@ -2,3 +2,9 @@ pytest >= 3.3.1
 coverage >= 4.3.4
 xdoctest >= 0.3.0
 pytest-cov
+
+
+six >= 1.11.0
+xdoctest >= 0.6.2  # Yes, this is actually required due to use of its utils
+ubelt >= 0.5.0
+matplotlib >= 2.2.2
