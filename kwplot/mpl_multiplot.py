@@ -96,8 +96,8 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         matplotlib.org/examples/api/barchart_demo.html
 
     Example:
-        >>> import kwil
-        >>> kwil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> # The new way to use multi_plot is to pass ydata as a dict of lists
         >>> ydata = {
         >>>     'spamΣ': [1, 1, 2, 3, 5, 8, 13],
@@ -105,44 +105,44 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         >>>     'jamµ': [5, 3, np.nan, 1, 2, np.nan, np.nan],
         >>>     'pram': [4, 2, np.nan, 0, 0, np.nan, 1],
         >>> }
-        >>> ax = kwil.multi_plot(ydata=ydata, title='ΣΣΣµµµ',
+        >>> ax = kwplot.multi_plot(ydata=ydata, title='ΣΣΣµµµ',
         >>>                      xlabel='\nfdsΣΣΣµµµ', linestyle='--')
-        >>> kwil.show_if_requested()
+        >>> kwplot.show_if_requested()
 
     Example:
         >>> # Old way to use multi_plot is a list of lists
-        >>> import kwil
-        >>> kwil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> xdata = [1, 2, 3, 4, 5]
         >>> ydata_list = [[1, 2, 3, 4, 5], [3, 3, 3, 3, 3], [5, 4, np.nan, 2, 1], [4, 3, np.nan, 1, 0]]
         >>> kwargs = {'label': ['spamΣ', 'eggs', 'jamµ', 'pram'],  'linestyle': '-'}
         >>> #ax = multi_plot(xdata, ydata_list, title='$\phi_1(\\vec{x})$', xlabel='\nfds', **kwargs)
         >>> ax = multi_plot(xdata, ydata_list, title='ΣΣΣµµµ', xlabel='\nfdsΣΣΣµµµ', **kwargs)
-        >>> kwil.show_if_requested()
+        >>> kwplot.show_if_requested()
 
     Example:
         >>> # Simple way to use multi_plot is to pass xdata and ydata exactly
         >>> # like you would use plt.plot
-        >>> import kwil
-        >>> kwil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> ax = multi_plot([1, 2, 3], [4, 5, 6], fnum=4, label='foo')
-        >>> kwil.show_if_requested()
+        >>> kwplot.show_if_requested()
 
     Example:
-        >>> import kwil
-        >>> kwil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> xydata = {'a': ([0, 1, 2], [0, 1, 2]), 'b': ([0, 2, 4], [2, 1, 0])}
-        >>> ax = kwil.multi_plot(xydata=xydata, fnum=4)
-        >>> kwil.show_if_requested()
+        >>> ax = kwplot.multi_plot(xydata=xydata, fnum=4)
+        >>> kwplot.show_if_requested()
 
     Ignore:
-        >>> import kwil
-        >>> kwil.autompl()
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> ydata = {
         >>>     str(i): np.random.rand(100) + i for i in range(30)
         >>> }
-        >>> ax = kwil.multi_plot(ydata=ydata, fnum=1, doclf=True)
-        >>> kwil.show_if_requested()
+        >>> ax = kwplot.multi_plot(ydata=ydata, fnum=1, doclf=True)
+        >>> kwplot.show_if_requested()
     """
     import matplotlib as mpl
     from matplotlib import pyplot as plt

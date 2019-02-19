@@ -249,18 +249,18 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         colors = img
 
         if not color_axes:
-            from kwil import imutil
+            import kwimage
             # transform grays into colors
-            grays = imutil.atleast_nd(img, 4)
+            grays = kwimage.atleast_nd(img, 4)
             colors = np.concatenate([grays, grays, grays], axis=3)
 
         if colorspace and color_axes:
-            from kwil import imutil
+            import kwimage
             # convert into RGB
             for d in range(len(colors)):
-                colors[d] = imutil.convert_colorspace(colors[d],
-                                                      src_space=colorspace,
-                                                      dst_space='rgb')
+                colors[d] = kwimage.convert_colorspace(colors[d],
+                                                       src_space=colorspace,
+                                                       dst_space='rgb')
         facecolors = np.concatenate([colors, alpha_], axis=3)
 
         # shuffle dims so height is upwards and depth move away from us.
@@ -321,12 +321,3 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
             kwplot.imshow(img, fnum=fnum, pnum=pnum_[i],
                           interpolation='nearest', colorspace=colorspace)
     return fig
-
-
-if __name__ == '__main__':
-    """
-    CommandLine:
-        python ~/code/kwil/kwil/nnet/draw_conv.py
-    """
-    import xdoctest
-    xdoctest.doctest_module(__file__)

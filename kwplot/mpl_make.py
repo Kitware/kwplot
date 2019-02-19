@@ -117,7 +117,7 @@ def make_vector_field(dx, dy, stride=1, thresh=0.0, scale=1.0, alpha=1.0,
         scale (float): multiply magnitude for easier visualization
         alpha (float): alpha value for vectors. Non-vector regions receive 0
             alpha (if False, no alpha channel is used)
-        color (str | tuple | kwil.Color): RGB color of the vectors
+        color (str | tuple | kwplot.Color): RGB color of the vectors
         thickness (int, default=1): thickness of arrows
         tipLength (float, default=0.1): fraction of line length
         line_type (int): either cv2.LINE_4, cv2.LINE_8, or cv2.LINE_AA

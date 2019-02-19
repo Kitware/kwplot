@@ -271,8 +271,8 @@ def imshow(img,
 
     Ignore:
         >>> import kwplot
-        >>> import kwimage
         >>> kwplot.autompl()
+        >>> import kwimage
         >>> img = kwimage.grab_test_image('carl')
         >>> (fig, ax) = imshow(img)
         >>> result = ('(fig, ax) = %s' % (str((fig, ax)),))
@@ -281,7 +281,6 @@ def imshow(img,
     """
     import matplotlib as mpl
     import matplotlib.pyplot as plt
-    import kwimage
 
     if ax is not None:
         fig = ax.figure
@@ -294,6 +293,7 @@ def imshow(img,
     if isinstance(img, six.string_types):
         # Allow for path to image to be specified
         img_fpath = img
+        import kwimage
         img = kwimage.imread(img_fpath)
 
     valid_interpolation_choices = ['nearest', 'bicubic', 'bilinear']
@@ -349,6 +349,7 @@ def imshow(img,
         if len(img.shape) == 3 and (img.shape[2] == 3 or img.shape[2] == 4):
             # img is in a color format
             dst_space = 'rgb'
+            import kwimage
             imgRGB = kwimage.convert_colorspace(img, src_space=colorspace,
                                                 dst_space=dst_space,
                                                 implicit=True)

@@ -16,10 +16,10 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
         lw (float): linewidth
 
     Example:
-        >>> import kwil
-        >>> bboxes = kwil.Boxes([[.1, .1, .6, .3], [.3, .5, .5, .6]], 'xywh')
+        >>> import kwimage
+        >>> bboxes = kwimage.Boxes([[.1, .1, .6, .3], [.3, .5, .5, .6]], 'xywh')
         >>> draw_boxes(bboxes)
-        >>> #kwil.autompl()
+        >>> #kwplot.autompl()
     """
     import kwplot
     import matplotlib as mpl
