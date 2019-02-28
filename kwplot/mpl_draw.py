@@ -253,3 +253,88 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     if ylabel is not None:
         ax.set_ylabel(ylabel)
     return ax
+
+
+def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
+    """
+    Draws classification label on an image
+
+    Args:
+        im (ndarray): the image
+        classes (Sequence): list of class names
+        tcx (int): true class index
+        probs (int): predicted class probs
+        pcx (int): predicted class index. (if none finds argmax of probs)
+
+    Example:
+        >>> import torch
+        >>> import kwarray
+        >>> import kwplot
+        >>> rng = kwarray.ensure_rng(0)
+        >>> im = (rng.rand(300, 300) * 255).astype(np.uint8)
+        >>> classes = ['cls_a', 'cls_b', 'cls_c']
+        >>> tcx = 1
+        >>> probs = rng.rand(len(classes))
+        >>> probs[tcx] = 0
+        >>> probs = torch.FloatTensor(probs).softmax(dim=0).numpy()
+        >>> im1_ = kwplot.draw_clf_on_image(im, classes, tcx, probs)
+        >>> probs[tcx] = .9
+        >>> probs = torch.FloatTensor(probs).softmax(dim=0).numpy()
+        >>> im2_ = kwplot.draw_clf_on_image(im, classes, tcx, probs)
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> kwplot.autompl()
+        >>> kwplot.imshow(im1_, colorspace='rgb', pnum=(1, 2, 1), fnum=1, doclf=True)
+        >>> kwplot.imshow(im2_, colorspace='rgb', pnum=(1, 2, 2), fnum=1)
+        >>> kwplot.show_if_requested()
+    """
+    import netharn as nh
+    im_ = nh.util.atleast_3channels(im)
+    h, w = im.shape[0:2][::-1]
+
+    if pcx is None and probs is not None:
+        pcx = probs.argmax()
+    else:
+        pcx = None
+
+    if probs is not None:
+        pred_score = probs[pcx]
+        true_score = probs[tcx]
+
+    org1 = np.array((2, h - 5))
+    org2 = np.array((2, 5))
+
+    true_name = classes[tcx]
+    if pcx == tcx:
+        true_label = 't:{tcx}:{true_name}'.format(**locals())
+    elif probs is None:
+        true_label = 't:{tcx}:\n{true_name}'.format(**locals())
+    else:
+        true_label = 't:{tcx}@{true_score:.2f}:\n{true_name}'.format(**locals())
+
+    pred_label = None
+    if pcx is not None:
+        pred_name = classes[pcx]
+        if probs is None:
+            pred_label = 'p:{pcx}:\n{pred_name}'.format(**locals())
+        else:
+            pred_label = 'p:{pcx}@{pred_score:.2f}:\n{pred_name}'.format(**locals())
+
+    fontkw = {
+        'fontScale': 1.0,
+        'thickness': 2
+    }
+    color = 'dodgerblue' if pcx == tcx else 'orangered'
+
+    # im_ = nh.util.draw_text_on_image(im_, pred_label, org=org1 - 2,
+    #                                  color='white', valign='bottom', **fontkw)
+    # im_ = nh.util.draw_text_on_image(im_, true_label, org=org2 - 2,
+    #                                  color='white', valign='top', **fontkw)
+
+    if pred_label is not None:
+        im_ = nh.util.draw_text_on_image(im_, pred_label, org=org1,
+                                         color=color, border=border,
+                                         valign='bottom', **fontkw)
+    im_ = nh.util.draw_text_on_image(im_, true_label, org=org2,
+                                     color='lawngreen', valign='top',
+                                     border=border, **fontkw)
+    return im_
