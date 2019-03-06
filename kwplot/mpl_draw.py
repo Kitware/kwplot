@@ -137,6 +137,7 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
 
     TODO:
         - [ ] Finish args docs
+        - [ ] Replace internals with seaborn
 
     Example:
         >>> classes = ['cls1', 'cls2', 'cls3']
@@ -287,8 +288,8 @@ def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
         >>> kwplot.imshow(im2_, colorspace='rgb', pnum=(1, 2, 2), fnum=1)
         >>> kwplot.show_if_requested()
     """
-    import netharn as nh
-    im_ = nh.util.atleast_3channels(im)
+    import kwimage
+    im_ = kwimage.atleast_3channels(im)
     h, w = im.shape[0:2][::-1]
 
     if pcx is None and probs is not None:
@@ -325,16 +326,15 @@ def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
     }
     color = 'dodgerblue' if pcx == tcx else 'orangered'
 
-    # im_ = nh.util.draw_text_on_image(im_, pred_label, org=org1 - 2,
+    from kwimage import draw_text_on_image
+    # im_ = draw_text_on_image(im_, pred_label, org=org1 - 2,
     #                                  color='white', valign='bottom', **fontkw)
-    # im_ = nh.util.draw_text_on_image(im_, true_label, org=org2 - 2,
+    # im_ = draw_text_on_image(im_, true_label, org=org2 - 2,
     #                                  color='white', valign='top', **fontkw)
 
     if pred_label is not None:
-        im_ = nh.util.draw_text_on_image(im_, pred_label, org=org1,
-                                         color=color, border=border,
-                                         valign='bottom', **fontkw)
-    im_ = nh.util.draw_text_on_image(im_, true_label, org=org2,
-                                     color='lawngreen', valign='top',
-                                     border=border, **fontkw)
+        im_ = draw_text_on_image(im_, pred_label, org=org1, color=color,
+                                 border=border, valign='bottom', **fontkw)
+    im_ = draw_text_on_image(im_, true_label, org=org2, color='lawngreen',
+                             valign='top', border=border, **fontkw)
     return im_
