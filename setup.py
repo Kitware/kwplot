@@ -186,9 +186,9 @@ if __name__ == '__main__':
         author='Jon Crall',
         description='A "utility belt" of commonly needed utility and helper functions',
         long_description=parse_description(),
-        install_requires=parse_requirements('requirements.txt'),
+        install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
-            'all': parse_requirements('optional-requirements.txt')
+            'all': parse_requirements('requirements.txt')
         },
         author_email='erotemic@gmail.com',
         url='https://github.com/Erotemic/kwplot',
