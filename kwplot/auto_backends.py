@@ -88,53 +88,69 @@ def set_mpl_backend(backend, verbose=None):
         print('* new_backend = {!r}'.format(mpl.get_backend()))
 
 
-def autompl(verbose=0):
+_AUTOMPL_WAS_RUN = False
+
+
+# import xdev  # NOQA
+# @xdev.profile  # NOQA
+def autompl(verbose=0, recheck=False):
     """
     Uses platform heuristics to automatically set the mpl backend.
     If no display is available it will be set to agg, otherwise we will try to
     use the cross-platform Qt5Agg backend.
 
+    Args:
+        verbose (int, default=0): verbosity level
+        recheck (bool, default=False): if False, this function will not run if
+            it has already been called (this can save a significant amount of
+            time).
+
     References:
         https://stackoverflow.com/questions/637005/how-to-check-if-x-server-is-running
     """
-    if verbose:
-        print('AUTOMPL')
-    if sys.platform.startswith('win32'):
-        # TODO: something reasonable
-        pass
-    else:
-        DISPLAY = os.environ.get('DISPLAY', '')
-        if DISPLAY:
-            # Check if we can actually connect to X
-            info = ub.cmd('xdpyinfo', shell=True)
-            if verbose:
-                print('xdpyinfo-info = {}'.format(ub.repr2(info)))
-            if info['ret'] != 0:
-                DISPLAY = None
-
+    global _AUTOMPL_WAS_RUN
+    if recheck or not _AUTOMPL_WAS_RUN:
         if verbose:
-            print(' * DISPLAY = {!r}'.format(DISPLAY))
-
-        if not DISPLAY:
-            backend = 'agg'
+            print('AUTOMPL')
+        if sys.platform.startswith('win32'):
+            # TODO: something reasonable
+            pass
         else:
-            if ub.modname_to_modpath('PyQt5'):
-                try:
-                    import PyQt5  # NOQA
-                    from PyQt5 import QtCore  # NOQA
-                except ImportError:
-                    backend = 'agg'
-                else:
-                    backend = 'Qt5Agg'
-            elif ub.modname_to_modpath('PyQt4'):
-                try:
-                    import Qt4Agg  # NOQA
-                    from PyQt4 import QtCore  # NOQA
-                except ImportError:
-                    backend = 'agg'
-                else:
-                    backend = 'Qt4Agg'
-            else:
-                backend = 'agg'
+            DISPLAY = os.environ.get('DISPLAY', '')
+            if DISPLAY:
+                # Check if we can actually connect to X
+                # NOTE: this call takes a significant amount of time
+                info = ub.cmd('xdpyinfo', shell=True)
+                if verbose:
+                    print('xdpyinfo-info = {}'.format(ub.repr2(info)))
+                if info['ret'] != 0:
+                    DISPLAY = None
 
-        set_mpl_backend(backend, verbose=verbose)
+            if verbose:
+                print(' * DISPLAY = {!r}'.format(DISPLAY))
+
+            if not DISPLAY:
+                backend = 'agg'
+            else:
+                if ub.modname_to_modpath('PyQt5'):
+                    try:
+                        import PyQt5  # NOQA
+                        from PyQt5 import QtCore  # NOQA
+                    except ImportError:
+                        backend = 'agg'
+                    else:
+                        backend = 'Qt5Agg'
+                elif ub.modname_to_modpath('PyQt4'):
+                    try:
+                        import Qt4Agg  # NOQA
+                        from PyQt4 import QtCore  # NOQA
+                    except ImportError:
+                        backend = 'agg'
+                    else:
+                        backend = 'Qt4Agg'
+                else:
+                    backend = 'agg'
+
+            set_mpl_backend(backend, verbose=verbose)
+
+        _AUTOMPL_WAS_RUN = True

@@ -11,6 +11,8 @@ from . import mpl_core
 __all__ = ['multi_plot']
 
 
+# import xdev  # NOQA
+# @xdev.profile  # NOQA
 def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     r"""
     plots multiple lines, bars, etc...
@@ -336,6 +338,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     # Get passed in axes or setup a new figure
     ax = kwargs.get('ax', None)
     if ax is None:
+        # NOTE: This is slow, can we speed it up?
         doclf = kwargs.get('doclf', False)
         fig = mpl_core.figure(fnum=fnum, pnum=pnum, docla=False, doclf=doclf)
         ax = fig.gca()
@@ -482,6 +485,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
                                                     weight=weight)
 
     if tick_fontprop is not None:
+        # NOTE: This is slow, can we speed it up?
         for ticklabel in ax.get_xticklabels():
             ticklabel.set_fontproperties(tick_fontprop)
         for ticklabel in ax.get_yticklabels():
