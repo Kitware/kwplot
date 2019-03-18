@@ -91,13 +91,11 @@ def set_mpl_backend(backend, verbose=None):
 _AUTOMPL_WAS_RUN = False
 
 
-# import xdev  # NOQA
-# @xdev.profile  # NOQA
 def autompl(verbose=0, recheck=False):
     """
-    Uses platform heuristics to automatically set the mpl backend.
-    If no display is available it will be set to agg, otherwise we will try to
-    use the cross-platform Qt5Agg backend.
+    Uses platform heuristics to automatically set the matplotlib backend.
+    If no display is available it will be set to `agg`, otherwise we will try
+    to use the cross-platform `Qt5Agg` backend.
 
     Args:
         verbose (int, default=0): verbosity level
@@ -106,7 +104,7 @@ def autompl(verbose=0, recheck=False):
             time).
 
     References:
-        https://stackoverflow.com/questions/637005/how-to-check-if-x-server-is-running
+        https://stackoverflow.com/questions/637005/check-if-x-server-is-running
     """
     global _AUTOMPL_WAS_RUN
     if recheck or not _AUTOMPL_WAS_RUN:
@@ -154,3 +152,13 @@ def autompl(verbose=0, recheck=False):
             set_mpl_backend(backend, verbose=verbose)
 
         _AUTOMPL_WAS_RUN = True
+
+
+def autoplt(verbose=0, recheck=False):
+    """
+    Like autompl, but also returns the `matplotlib.pyplot` module for
+    convenience.
+    """
+    autompl(verbose=verbose, recheck=recheck)
+    from matplotlib import pyplot as plt
+    return plt
