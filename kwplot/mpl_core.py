@@ -22,6 +22,8 @@ def ensure_fnum(fnum):
     return fnum
 
 
+# import xdev  # NOQA
+# @xdev.profile  # NOQA
 def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
            docla=False, projection=None, **kwargs):
     """
