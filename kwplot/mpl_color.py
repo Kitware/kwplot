@@ -146,8 +146,11 @@ class Color(ub.NiceRepr):
         """
         mplutil.Color._string_to_01('green')
         mplutil.Color._string_to_01('red')
-
         """
+        if color == 'random':
+            import random
+            color = random.choice(Color.named_colors())
+
         from matplotlib import colors as mcolors
         if color in mcolors.BASE_COLORS:
             color01 = mcolors.BASE_COLORS[color]
@@ -188,3 +191,7 @@ class Color(ub.NiceRepr):
             return distinct_colors
         else:
             return [Color(c, space='rgb').as01(space=space) for c in distinct_colors]
+
+    @classmethod
+    def random(Color, pool='named'):
+        return Color('random')
