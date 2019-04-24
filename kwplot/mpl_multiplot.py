@@ -75,6 +75,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             Ticks:
                 num_xticks, num_yticks, tickwidth, ticklength, ticksize
                 xticklabels, yticklabels, <-overwrites previous
+                xtick_rotation, ytick_rotation,
             Data:
                 xmin, xmax, ymin, ymax, spread_list
                 # can append _list to any of these
