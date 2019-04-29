@@ -11,8 +11,8 @@ steps:
     image: python:3.6
     commands:
       - pip install pip -U
-      - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray
-      - pip install -v git+ssh://git@gitlab.kitware.com/vigilant/kwimage.git@dev/0.4.0#egg=kwimage
+      - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray 
+      - pip install -v git+ssh://git@gitlab.kitware.com/vigilant/kwimage.git@dev/0.4.0#egg=kwimage --no-use-pep517
       - pip install -r requirements.txt -U
       - pip install .
       - ./run_tests.py
