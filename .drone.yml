@@ -14,8 +14,53 @@ steps:
       - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray 
       - pip install -v git+ssh://git@gitlab.kitware.com/vigilant/kwimage.git@dev/0.4.0#egg=kwimage --no-use-pep517
       - pip install -r requirements.txt -U
-      - pip install .
-      - ./run_tests.py
+
+      # - ./run_developer_setup.sh
+      # - ./run_tests.py
+      
+      # using pyargs tests the installed package instead of the source one
+      - pip install -v --no-use-pep517 .
+      - pytest ./tests/ --pyargs kwplot
+
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+trigger:
+  event:
+    - pull_request
+    - push
+    - tag
+
+volumes:
+  - name: ssh
+    host:
+      path: /home/vigilant-robot/.ssh
+
+
+---
+kind: pipeline
+name: "Test in 2.7"
+
+platform:
+  os: linux
+  arch: amd64
+  
+steps:
+  - name: "Test python 2.x"
+    image: python:2.7 
+    commands:
+      - pip install pip -U
+      - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray 
+      - pip install -v git+ssh://git@gitlab.kitware.com/vigilant/kwimage.git@dev/0.4.0#egg=kwimage --no-use-pep517
+      - pip install -r requirements.txt -U
+
+      # - ./run_developer_setup.sh
+      # - ./run_tests.py
+      
+      # using pyargs tests the installed package instead of the source one
+      - pip install -v --no-use-pep517 .
+      - pytest ./tests/ --pyargs kwplot
 
     volumes:
       - name: ssh
