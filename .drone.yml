@@ -24,6 +24,7 @@ steps:
 trigger:
   event:
     - pull_request
+    - push
     - tag
 
 volumes:
