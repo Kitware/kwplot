@@ -20,7 +20,7 @@ steps:
       
       # using pyargs tests the installed package instead of the source one
       - pip install -v --no-use-pep517 .
-      - pytest ./tests/ --pyargs kwplot
+      - pytest --pyargs kwplot
 
     volumes:
       - name: ssh
@@ -60,7 +60,7 @@ steps:
       
       # using pyargs tests the installed package instead of the source one
       - pip install -v --no-use-pep517 .
-      - pytest ./tests/ --pyargs kwplot
+      - pytest --pyargs kwplot
 
     volumes:
       - name: ssh
