@@ -298,8 +298,6 @@ def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
 
     if pcx is None and probs is not None:
         pcx = probs.argmax()
-    else:
-        pcx = None
 
     if probs is not None:
         pred_score = probs[pcx]
