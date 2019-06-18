@@ -266,10 +266,10 @@ def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
 
     Args:
         im (ndarray): the image
-        classes (Sequence): list of class names
+        classes (Sequence | CategoryTree): list of class names
         tcx (int): true class index
-        probs (int): predicted class probs
-        pcx (int): predicted class index. (if none finds argmax of probs)
+        probs (ndarray): predicted class probs for each class
+        pcx (int): predicted class index. (if none uses argmax of probs)
 
     Example:
         >>> import torch
