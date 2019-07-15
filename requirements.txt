@@ -1,9 +1,3 @@
-pytest >= 3.3.1
-coverage >= 4.3.4
-xdoctest >= 0.3.0
-pytest-cov
-
-six >= 1.11.0
-ubelt >= 0.6.0
-matplotlib >= 2.2.2
-opencv-python >= 3.4.1.15
+-r requirements/runtime.txt
+-r requirements/tests.txt
+-r requirements/build.txt
