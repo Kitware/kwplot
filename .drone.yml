@@ -8,8 +8,11 @@ platform:
 
 steps:
   - name: "Test python 3.6"
-    image: python:3.6
+    #image: python:3.6
+    image: erotemic/research:PY_VER_3.6
     commands:
+      - . $HOME/.local/conda/etc/profile.d/conda.sh
+      - conda activate py3.6
       - pip install pip -U
       - pip install -r requirements.txt 
       - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray 
@@ -48,8 +51,11 @@ platform:
   
 steps:
   - name: "Test python 2.x"
-    image: python:2.7 
+    #image: python:2.7 
+    image: erotemic/research:PY_VER_2.7
     commands:
+      - . $HOME/.local/conda/etc/profile.d/conda.sh
+      - conda activate py2.7
       - pip install pip -U
       - pip install git+ssh://git@gitlab.kitware.com/vigilant/kwarray.git@dev/0.4.0#egg=kwarray 
       - pip install -v git+ssh://git@gitlab.kitware.com/vigilant/kwimage.git@dev/0.4.0#egg=kwimage --no-use-pep517
