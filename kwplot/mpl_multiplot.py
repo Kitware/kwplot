@@ -42,18 +42,19 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             pnum (Tuple[int, int, int]):
                 plot number to draw on within the figure: e.g. (1, 1, 1)
 
-            label (List[str]): if you specified ydata as a List[ndarray]
+            label (List|Dict): if you specified ydata as a List[ndarray]
                 this is the label for each line in that list. Note this is
                 unnecessary if you specify input as a dictionary mapping labels
                 to lines.
 
-            label_list : same as `label`
+            color (str|List|Dict): either a special color code, a single color,
+                or a color for each item in ydata. In the later case, this
+                should be specified as either a list or a dict depending on how
+                ydata was specified.
 
             marker (str|List|Dict): type of matplotlib marker to use at every
                 data point. Can be specified for all lines jointly or for each
                 line independently.
-
-            marker_list : same as `marker`
 
             transpose (bool, default=False): swaps x and y data.
 
@@ -66,31 +67,61 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
                         stacked, width
 
             Misc:
-                use_legend, legend_loc
-            Labels:
-                xlabel, ylabel, title, figtitle
-                ticksize, titlesize, legendsize, labelsize
+                use_legend (bool): ...
+                legend_loc (str): ...
+
+            Layout:
+                xlabel (str): label for x-axis
+                ylabel (str): label for y-axis
+                title (str): title for the axes
+                figtitle (str): title for the figure
+
+                xscale (str): can be one of [linear, log, logit, symlog]
+                yscale (str): can be one of [linear, log, logit, symlog]
+
+                xlim (Tuple[float, float]): low and high x-limit of axes
+                ylim (Tuple[float, float]): low and high y-limit of axes
+                xmin (float): low x-limit of axes, mutex with xlim
+                xmax (float): high x-limit of axes, mutex with xlim
+                ymin (float): low y-limit of axes, mutex with ylim
+                ymax (float): high y-limit of axes, mutex with ylim
+
+                titlesize (float): ...
+                legendsize (float): ...
+                labelsize (float): ...
+
             Grid:
-                gridlinewidth, gridlinestyle
+                gridlinewidth (float): ...
+                gridlinestyle (str): ...
             Ticks:
-                num_xticks, num_yticks, tickwidth, ticklength, ticksize
-                xticklabels, yticklabels, <-overwrites previous
-                xtick_rotation, ytick_rotation,
+                num_xticks (int): number of x ticks
+                num_yticks (int): number of y ticks
+                tickwidth (float): ...
+                ticklength (float): ...
+                ticksize (float): ...
+                xticklabels (list): list of x-tick labels, overrides num_xticks
+                yticklabels (list): list of y-tick labels, overrides num_yticks
+                xtick_rotation (float): xtick rotation in degrees
+                ytick_rotation (float): ytick rotation in degrees
             Data:
-                xmin, xmax, ymin, ymax, spread_list
-                # can append _list to any of these
-                # these can be dictionaries if ydata was also a dict
+                spread (List | Dict): Plots a spread around plot lines usually
+                    indicating standard deviation
 
-                xscale in [linear, log, logit, symlog]
-                yscale in [linear, log, logit, symlog]
+                markersize (float|List|Dict): marker size for all or each plot
 
-                plot_kw_keys = ['label', 'color', 'marker', 'markersize',
-                    'markeredgewidth', 'linewidth', 'linestyle']
-                any plot_kw key can be a scalar (corresponding to all ydatas),
-                a list if ydata was specified as a list, or a dict if ydata was
-                specified as a dict.
+                markeredgewidth (float|List|Dict): marker edge width for all or each plot
 
-                kind = ['bar', 'plot', ...]
+                linewidth (float|List|Dict): line width for all or each plot
+
+                linestyle (str|List|Dict): line style for all or each plot
+
+    Notes:
+        any plot_kw key can be a scalar (corresponding to all ydatas),
+        a list if ydata was specified as a list, or a dict if ydata was
+        specified as a dict.
+
+        plot_kw_keys = ['label', 'color', 'marker', 'markersize',
+            'markeredgewidth', 'linewidth', 'linestyle']
 
     Returns:
         matplotlib.axes.Axes: ax : the axes that was drawn on
@@ -136,6 +167,19 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         >>> kwplot.autompl()
         >>> xydata = {'a': ([0, 1, 2], [0, 1, 2]), 'b': ([0, 2, 4], [2, 1, 0])}
         >>> ax = kwplot.multi_plot(xydata=xydata, fnum=4)
+        >>> kwplot.show_if_requested()
+
+    Example:
+        >>> import kwplot
+        >>> kwplot.autompl()
+        >>> ydata = {'a': [0, 1, 2], 'b': [1, 2, 1], 'c': [4, 4, 4, 3, 2]}
+        >>> kwargs = {
+        >>>     'spread': {'a': [.2, .3, .1], 'b': .2},
+        >>>     'xlim': (-1, 5),
+        >>>     'xticklabels': ['foo', 'bar'],
+        >>>     'xtick_rotation': 90,
+        >>> }
+        >>> ax = kwplot.multi_plot(ydata=ydata, fnum=4, **kwargs)
         >>> kwplot.show_if_requested()
 
     Ignore:
@@ -202,7 +246,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         ydata_list = [np.array(ydata_list)]
 
     if xdata is None:
-        xdata = list(range(len(ydata_list[0])))
+        xdata = list(range(max(map(len, ydata_list))))
 
     num_lines = len(ydata_list)
 
@@ -219,8 +263,15 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     kind = kwargs.get('kind', 'plot')
     transpose = kwargs.get('transpose', False)
 
-    def parsekw_list(key, kwargs, num_lines=num_lines, ykeys=ykeys):
-        """ copies relevant plot commands into plot_list_kw """
+    def parsekw_list(key, kwargs, num_lines=num_lines, ykeys=ykeys,
+                     default=ub.NoParam):
+        """
+        Return properties that corresponds with ydata_list.
+
+        Searches kwargs for several keys based on the base key and finds either
+        a scalar, list, or dict and coerces this into a list of properties that
+        corresonds with the ydata_list.
+        """
         if key in kwargs:
             val_list = kwargs[key]
         elif key + '_list' in kwargs:
@@ -235,13 +286,18 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
         if val_list is not None:
             if isinstance(val_list, dict):
+                # Extract propertly ordered dictionary values
                 if ykeys is None:
                     raise ValueError(
                         'Kwarg {!r} was a dict, but ydata was not'.format(key))
                 else:
-                    val_list = [val_list[key] for key in ykeys]
+                    if default is ub.NoParam:
+                        val_list = [val_list[key] for key in ykeys]
+                    else:
+                        val_list = [val_list.get(key, default) for key in ykeys]
 
             if not isinstance(val_list, list):
+                # Coerce a scalar value into a list
                 val_list = [val_list] * num_lines
 
         return val_list
@@ -290,7 +346,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     # Parse out arguments to ax.plot
     plot_kw_keys = ['label', 'color', 'marker', 'markersize',
                     'markeredgewidth', 'linewidth', 'linestyle', 'alpha']
-    # hackish / extra args that dont go to plot, but help
+    # hackish / extra args that dont directly get passed to plt.plot
     extra_plot_kw_keys = ['spread_alpha', 'autolabel', 'edgecolor', 'fill']
     plot_kw_keys += extra_plot_kw_keys
     plot_ks_vals = [parsekw_list(key, kwargs) for key in plot_kw_keys]
@@ -323,9 +379,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             #plot_list_kw['orientation'] = ['horizontal'] * num_lines
             plot_list_kw[width_key] = [width] * num_lines
 
-    spread_list = kwargs.get('spread_list', None)
-    if spread_list is None:
-        pass
+    spread_list = parsekw_list('spread', kwargs, default=None)
 
     # nest into a list of dicts for each line in the multiplot
     valid_keys = list(set(plot_list_kw.keys()) - set(extra_plot_kw_keys))
@@ -349,7 +403,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     # +---------------
     # Draw plot lines
-    ydata_list = np.array(ydata_list)
+    ydata_list = [np.array(ydata) for ydata in ydata_list]
 
     if transpose:
         if kind == 'bar':
@@ -364,6 +418,8 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         # raise ValueError('no ydata')
         _iter = enumerate(zip_longest(xdata_list, ydata_list, plot_kw_list, extra_kw_list))
         for count, (_xdata, _ydata, plot_kw, extra_kw) in _iter:
+            _ydata = _ydata[0:len(_xdata)]
+            _xdata = _xdata[0:len(_ydata)]
             ymask = np.isfinite(_ydata)
             ydata_ = _ydata.compress(ymask)
             xdata_ = _xdata.compress(ymask)
@@ -412,15 +468,18 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
                 # Plots a spread around plot lines usually indicating standard
                 # deviation
                 _xdata = np.array(_xdata)
-                spread = spread_list[count]
-                ydata_ave = np.array(ydata_)
-                y_data_dev = np.array(spread)
-                y_data_max = ydata_ave + y_data_dev
-                y_data_min = ydata_ave - y_data_dev
-                ax = plt.gca()
-                spread_alpha = extra_kw['spread_alpha']
-                ax.fill_between(_xdata, y_data_min, y_data_max, alpha=spread_alpha,
-                                color=plot_kw.get('color', None))  # , zorder=0)
+                _spread = spread_list[count]
+                if _spread is not None:
+                    if not ub.iterable(_spread):
+                        _spread = [_spread] * len(ydata_)
+                    ydata_ave = np.array(ydata_)
+                    y_data_dev = np.array(_spread)
+                    y_data_max = ydata_ave + y_data_dev
+                    y_data_min = ydata_ave - y_data_dev
+                    ax = plt.gca()
+                    spread_alpha = extra_kw['spread_alpha']
+                    ax.fill_between(_xdata, y_data_min, y_data_max, alpha=spread_alpha,
+                                    color=plot_kw.get('color', None))  # , zorder=0)
         ydata = _ydata  # HACK
         xdata = _xdata  # HACK
     # L________________
@@ -551,7 +610,6 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     num_yticks = kwargs.get('num_yticks', None)
 
     if num_xticks is not None:
-        # TODO check if xdata is integral
         if xdata.dtype.kind == 'i':
             xticks = np.linspace(np.ceil(xmin), np.floor(xmax),
                                  num_xticks).astype(np.int32)
