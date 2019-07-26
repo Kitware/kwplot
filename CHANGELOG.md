@@ -8,7 +8,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changes
 * Starting a changelog
-* Tweaking build scripts and CI configurations. This is a non-functional version bump.
+* Tweaking build scripts and CI configurations. 
+* Minor improvements to `multi_plot`
+* `Color` no longer directly depends on `matplotlib`, might be ported to `kwimage` in the future.
 
 
 ## Version 0.3.0
