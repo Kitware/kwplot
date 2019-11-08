@@ -272,6 +272,7 @@ def draw_clf_on_image(im, classes, tcx, probs=None, pcx=None, border=1):
         pcx (int): predicted class index. (if none uses argmax of probs)
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> import torch
         >>> import kwarray
         >>> import kwplot

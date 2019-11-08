@@ -2,7 +2,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import ubelt as ub
-import torch  # NOQA
+try:
+    import torch  # NOQA
+except ImportError:
+    print('warning: torch not available')
+    torch = None
 
 
 def make_conv_images(conv, color=None, norm_per_feat=True):
@@ -18,6 +22,7 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         - [ ] better normalization options
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
         >>> weights_tohack = conv.weight[0:7].data.numpy()
         >>> weights_flat = make_conv_images(conv, norm_per_feat=False)
@@ -29,6 +34,7 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         >>> kwplot.show_if_requested()
 
     Ignore:
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> import torchvision
         >>> conv = torchvision.models.resnet50(pretrained=True).conv1
         >>> #conv = torchvision.models.vgg11(pretrained=True).features[0]
@@ -118,11 +124,13 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         https://matplotlib.org/devdocs/gallery/mplot3d/voxels.html
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
         >>> plot_convolutional_features(conv, colorspace=None, fnum=None, limit=2)
 
     Example:
         >>> # xdoctest: +REQUIRES(--comprehensive)
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> import torchvision
         >>> # 2d uncolored gray-images
         >>> conv = torch.nn.Conv3d(1, 2, (3, 4, 5))
@@ -164,6 +172,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
 
     Example:
         >>> # xdoctest: +REQUIRES(--network)
+        >>> # xdoctest: +REQUIRES(module:torch)
         >>> import torchvision
         >>> model = torchvision.models.resnet50(pretrained=True)
         >>> conv = model.conv1
