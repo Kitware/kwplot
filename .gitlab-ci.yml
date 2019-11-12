@@ -47,7 +47,7 @@ stages:
         - source venv/bin/activate
         - pip install pip -U
         - pip install pip setuptools -U
-        - pip install -r requirements.txt
+        - pip install -r requirements/build.txt
 
     script: 
         - python setup.py bdist_wheel --universal
@@ -76,7 +76,7 @@ stages:
 
     script: 
         - ls dist
-        - MB_PYTHON_TAG="-none-any"
+        - MB_PYTHON_TAG="none-any"
         - VERSION=$(python -c "import setup; print(setup.version)")
         - BDIST_WHEEL_PATH=dist/kwplot-${VERSION}-${MB_PYTHON_TAG}-*.whl
         - pip install $BDIST_WHEEL_PATH
