@@ -278,17 +278,17 @@ test/cp36-cp36m-universal:
 #    image:
 #        python:3.5
 
-#test/cp35-cp35m-universal:
-#    <<: 
-#        - *test_template
-#    image:
-#        python:3.5
-
-gpgsign/cp35-cp35m-universal:
+test/cp35-cp35m-universal:
     <<: 
-        - *gpgsign_template
+        - *test_template
     image:
         python:3.5
+
+#gpgsign/cp35-cp35m-universal:
+#    <<: 
+#        - *gpgsign_template
+#    image:
+#        python:3.5
 
 #deploy/cp35-cp35m-universal:
 #    <<: 
