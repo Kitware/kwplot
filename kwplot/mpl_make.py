@@ -3,11 +3,10 @@
 Functions used to explicitly make images as ndarrays using mpl/cv2 utilities
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-# import numpy as np
 
 from kwimage import make_heatmask, make_vector_field, make_orimask  # NOQA
 
-
+# import numpy as np
 # def make_heatmask(probs, cmap='plasma', with_alpha=1.0, space='rgb',
 #                   dsize=None):
 #     """
