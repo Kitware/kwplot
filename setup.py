@@ -1,38 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from os.path import exists
 from setuptools import setup
 import sys
-from os.path import dirname
-from os.path import join
 
 
-repodir = dirname(__file__)
-
-
-def parse_version(package):
+def parse_version(fpath):
     """
-    Statically parse the version number from __init__.py
-
-    CommandLine:
-        python -c "import setup; print(setup.parse_version('kwplot'))"
+    Statically parse the version number from a python file
     """
-    from os.path import dirname, join, exists
     import ast
-
-    # Check if the package is a single-file or multi-file package
-    _candiates = [
-        join(dirname(__file__), package + '.py'),
-        join(dirname(__file__), package, '__init__.py'),
-    ]
-    _found = [init_fpath for init_fpath in _candiates if exists(init_fpath)]
-    if len(_found) > 0:
-        init_fpath = _found[0]
-    elif len(_found) > 1:
-        raise Exception('parse_version found multiple init files')
-    elif len(_found) == 0:
-        raise Exception('Cannot find package init file')
-
-    with open(init_fpath) as file_:
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
     class VersionVisitor(ast.NodeVisitor):
@@ -63,110 +43,130 @@ def parse_description():
     return ''
 
 
-def parse_requirements_alt(fname='requirements.txt'):
-    """
-    pip install requirements-parser
-    fname='requirements.txt'
-    """
-    import requirements
-    from os.path import dirname, join, exists
-    require_fpath = join(dirname(__file__), fname)
-    if exists(require_fpath):
-        # Dont use until this handles platform specific dependencies
-        with open(require_fpath, 'r') as file:
-            requires = list(requirements.parse(file))
-        packages = [r.name for r in requires]
-        return packages
-    return []
-
-
-def parse_requirements(fname='requirements.txt', with_version=False):
+def parse_requirements(fname='requirements.txt'):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
 
-    Args:
-        fname (str): path to requirements file
-        with_version (bool, default=False): if true include version specs
-
-    Returns:
-        List[str]: list of requirements items
+    TODO:
+        perhaps use https://github.com/davidfischer/requirements-parser instead
 
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
-        python -c "import setup; print(chr(10).join(setup.parse_requirements(with_version=True)))"
     """
     from os.path import exists
     import re
     require_fpath = fname
 
-    def parse_line(line, base='.'):
+    def parse_line(line):
         """
         Parse information from a line in a requirements text file
         """
         if line.startswith('-r '):
             # Allow specifying requirements in other files
-            new_fname = line.split(' ')[1]
-            new_fpath = join(base, new_fname)
-            for info in parse_require_file(new_fpath):
+            target = line.split(' ')[1]
+            for info in parse_require_file(target):
                 yield info
+        elif line.startswith('-e '):
+            info = {}
+            info['package'] = line.split('#egg=')[1]
+            yield info
         else:
-            info = {'line': line}
-            if line.startswith('-e '):
-                info['package'] = line.split('#egg=')[1]
-            else:
-                # Remove versioning from the package
-                pat = '(' + '|'.join(['>=', '==', '>']) + ')'
-                parts = re.split(pat, line, maxsplit=1)
-                parts = [p.strip() for p in parts]
+            # Remove versioning from the package
+            pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+            parts = re.split(pat, line, maxsplit=1)
+            parts = [p.strip() for p in parts]
 
-                info['package'] = parts[0]
-                if len(parts) > 1:
-                    op, rest = parts[1:]
-                    if ';' in rest:
-                        # Handle platform specific dependencies
-                        # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
-                        version, platform_deps = map(str.strip, rest.split(';'))
-                        info['platform_deps'] = platform_deps
-                    else:
-                        version = rest  # NOQA
-                    info['version'] = (op, version)
+            info = {}
+            info['package'] = parts[0]
+            if len(parts) > 1:
+                op, rest = parts[1:]
+                if ';' in rest:
+                    # Handle platform specific dependencies
+                    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                    version, platform_deps = map(str.strip, rest.split(';'))
+                    info['platform_deps'] = platform_deps
+                else:
+                    version = rest  # NOQA
+                info['version'] = (op, version)
             yield info
 
     def parse_require_file(fpath):
-        base = dirname(fpath)
         with open(fpath, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    for info in parse_line(line, base):
+                    for info in parse_line(line):
                         yield info
 
-    def gen_packages_items():
-        if exists(require_fpath):
-            for info in parse_require_file(require_fpath):
-                parts = [info['package']]
-                if with_version and 'version' in info:
-                    parts.extend(info['version'])
-                if not sys.version.startswith('3.4'):
-                    # apparently package_deps are broken in 3.4
-                    platform_deps = info.get('platform_deps')
-                    if platform_deps is not None:
-                        parts.append(';' + platform_deps)
-                item = ''.join(parts)
-                yield item
-
-    packages = list(gen_packages_items())
+    # This breaks on pip install, so check that it exists.
+    packages = []
+    if exists(require_fpath):
+        for info in parse_require_file(require_fpath):
+            package = info['package']
+            if not sys.version.startswith('3.4'):
+                # apparently package_deps are broken in 3.4
+                platform_deps = info.get('platform_deps')
+                if platform_deps is not None:
+                    package += ';' + platform_deps
+            packages.append(package)
     return packages
 
 
-version = parse_version('kwplot')  # needs to be a global var for git tags
+def native_mb_python_tag(plat_impl=None, version_info=None):
+    """
+    Example:
+        >>> print(native_mb_python_tag())
+        >>> print(native_mb_python_tag('PyPy', (2, 7)))
+        >>> print(native_mb_python_tag('CPython', (3, 8)))
+    """
+    if plat_impl is None:
+        import platform
+        plat_impl = platform.python_implementation()
+
+    if version_info is None:
+        import sys
+        version_info = sys.version_info
+
+    major, minor = version_info[0:2]
+    ver = '{}{}'.format(major, minor)
+
+    if plat_impl == 'CPython':
+        # TODO: get if cp27m or cp27mu
+        impl = 'cp'
+        if ver == '27':
+            IS_27_BUILT_WITH_UNICODE = True  # how to determine this?
+            if IS_27_BUILT_WITH_UNICODE:
+                abi = 'mu'
+            else:
+                abi = 'm'
+        else:
+            if ver == '38':
+                # no abi in 38?
+                abi = ''
+            else:
+                abi = 'm'
+        mb_tag = '{impl}{ver}-{impl}{ver}{abi}'.format(**locals())
+    elif plat_impl == 'PyPy':
+        abi = ''
+        impl = 'pypy'
+        ver = '{}{}'.format(major, minor)
+        mb_tag = '{impl}-{ver}'.format(**locals())
+    else:
+        raise NotImplementedError(plat_impl)
+    return mb_tag
+
+
+NAME = 'kwplot'
+VERSION = version = parse_version('kwplot/__init__.py')  # needs to be a global var for git tags
 
 if __name__ == '__main__':
     setup(
-        name='kwplot',
-        version=version,
-        author='Jon Crall',
+        name=NAME,
+        version=VERSION,
+        author='Kitware Inc., Jon Crall',
+        author_email='kitware@kitware.com, jon.crall@kitware.com',
+        url='https://gitlab.kitware.com/computer-vision/kwplot',
         description='A wrapper around matplotlib',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-            'Development Status :: 3 - Alpha',
+            'Development Status :: 4 - Beta',
             #'Intended Audience :: <?TODO: Developers>',
             #'Topic :: <?TODO: Software Development :: Libraries :: Python Modules>',
             #'Topic :: <?TODO: Utilities>'',
