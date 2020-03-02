@@ -149,6 +149,10 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         >>> matrix = pd.DataFrame(matrix, index=classes, columns=classes)
         >>> matrix.index.name = 'real'
         >>> matrix.columns.name = 'pred'
+        >>> # xdoc: +REQUIRES(--show)
+        >>> import matplotlib.pyplot as plt
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> plot_matrix(matrix, showvals=True)
     """
     import matplotlib as mpl
