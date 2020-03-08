@@ -355,10 +355,11 @@ def imshow(img,
             imgRGB = kwimage.convert_colorspace(img, src_space=colorspace,
                                                 dst_space=dst_space,
                                                 implicit=True)
-            if not norm and imgRGB.dtype.kind == 'f':
-                maxval = imgRGB.max()
-                if maxval > 1.01 and maxval < 256:
-                    imgRGB = np.array(imgRGB, dtype=np.uint8)
+            if not norm:
+                if  imgRGB.dtype.kind == 'f':
+                    maxval = imgRGB.max()
+                    if maxval > 1.01 and maxval < 256:
+                        imgRGB = np.array(imgRGB, dtype=np.uint8)
             cs = ax.imshow(imgRGB, **plt_imshow_kwargs)
 
         elif len(img.shape) == 2 or (len(img.shape) == 3 and img.shape[2] == 1):
@@ -372,8 +373,9 @@ def imshow(img,
             if isinstance(cmap, six.string_types):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
-            if not norm and imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
-                imgGRAY = (imgGRAY * 255).astype(np.uint8)
+            if not norm:
+                if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
+                    imgGRAY = (imgGRAY * 255).astype(np.uint8)
             cs = ax.imshow(imgGRAY, cmap=cmap, **plt_imshow_kwargs)
         else:
             raise AssertionError(
