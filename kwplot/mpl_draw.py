@@ -168,6 +168,12 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         >>> import kwplot
         >>> kwplot.autompl()
         >>> plot_matrix(matrix)
+
+    Example:
+        >>> from kwplot.mpl_draw import *  # NOQA
+        >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
+        >>> classes = ['cls1', 'cls2', 'cls3']
+        >>> plot_matrix(matrix, index=classes, columns=classes)
     """
     import matplotlib as mpl
     import matplotlib.cm  # NOQA
