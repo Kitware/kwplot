@@ -14,6 +14,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
                fill=False, ax=None, lw=2):
     """
     Args:
+        boxes (kwimage.Boxes):
         labels (List[str]): of labels
         alpha (List[float]): alpha for each box
         centers (bool): draw centers or not
