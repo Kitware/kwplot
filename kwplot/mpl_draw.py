@@ -131,7 +131,8 @@ def draw_line_segments(pts1, pts2, ax=None, **kwargs):
 
 def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
                 label=None, zerodiag=False, cmap='viridis', showvals=False,
-                showzero=True, logscale=False, xlabel=None, ylabel=None):
+                showzero=True, logscale=False, xlabel=None, ylabel=None,
+                fnum=None, pnum=None):
     """
     Helper for plotting confusion matrices
 
@@ -144,19 +145,30 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         - [ ] Replace internals with seaborn
 
     Example:
+        >>> from kwplot.mpl_draw import *  # NOQA
         >>> classes = ['cls1', 'cls2', 'cls3']
         >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
         >>> matrix = pd.DataFrame(matrix, index=classes, columns=classes)
         >>> matrix.index.name = 'real'
         >>> matrix.columns.name = 'pred'
+        >>> plot_matrix(matrix, showvals=True)
         >>> # xdoc: +REQUIRES(--show)
         >>> import matplotlib.pyplot as plt
         >>> import kwplot
         >>> kwplot.autompl()
         >>> plot_matrix(matrix, showvals=True)
+
+    Example:
+        >>> from kwplot.mpl_draw import *  # NOQA
+        >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
+        >>> plot_matrix(matrix)
+        >>> # xdoc: +REQUIRES(--show)
+        >>> import matplotlib.pyplot as plt
+        >>> import kwplot
+        >>> kwplot.autompl()
+        >>> plot_matrix(matrix)
     """
     import matplotlib as mpl
-    from matplotlib import pyplot as plt
     import matplotlib.cm  # NOQA
 
     assert len(matrix.shape) == 2
@@ -173,17 +185,17 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         values = matrix
 
     if index is None:
-        index = np.arange(len(matrix))
+        index = np.arange(matrix.shape[0])
 
     if columns is None:
-        index = np.arange(matrix)
+        columns = np.arange(matrix.shape[1])
 
     if ax is None:
-        fig = plt.gcf()
-        # figure(fnum=1, pnum=(1, 1, 1))
+        import kwplot
+        fig = kwplot.figure(fnum=fnum, pnum=pnum)
         fig.clear()
-        ax = plt.gca()
-    ax = plt.gca()
+        ax = fig.gca()
+
     if zerodiag:
         values = values.copy()
         values = values - np.diag(np.diag(values))
@@ -206,19 +218,19 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     aximg = ax.matshow(values, interpolation='none', cmap=cmap, norm=norm)
 
     ax.grid(False)
-    cax = plt.colorbar(aximg, ax=ax)
+    cax = ax.figure.colorbar(aximg, ax=ax)
     if label is not None:
         cax.set_label(label)
 
     ax.set_xticks(list(range(len(index))))
-    ax.set_xticklabels([lbl[0:100] for lbl in index])
+    ax.set_xticklabels([str(lbl)[0:100] for lbl in index])
     for lbl in ax.get_xticklabels():
         lbl.set_rotation(rot)
     for lbl in ax.get_xticklabels():
         lbl.set_horizontalalignment('center')
 
     ax.set_yticks(list(range(len(columns))))
-    ax.set_yticklabels([lbl[0:100] for lbl in columns])
+    ax.set_yticklabels([str(lbl)[0:100] for lbl in columns])
     for lbl in ax.get_yticklabels():
         lbl.set_horizontalalignment('right')
     for lbl in ax.get_yticklabels():
