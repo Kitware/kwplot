@@ -180,6 +180,7 @@ if __name__ == '__main__':
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
             'Development Status :: 4 - Beta',
+            'Framework :: Matplotlib',
             #'Intended Audience :: <?TODO: Developers>',
             #'Topic :: <?TODO: Software Development :: Libraries :: Python Modules>',
             #'Topic :: <?TODO: Utilities>'',
