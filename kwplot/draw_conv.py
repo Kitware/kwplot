@@ -14,9 +14,13 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
     Convert convolutional weights to a list of visualize-able images
 
     Args:
+        conv (Conv2d)
         color (bool): if True output images are colorized
         norm_per_feat (bool): if True normalizes over each feature separately,
             otherwise normalizes all features together.
+
+    Returns:
+        ndarray:
 
     TODO:
         - [ ] better normalization options
@@ -118,7 +122,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         stride (list): only applicable if voxels=True
 
     Returns:
-        fig (matplotlib.pyplot): a Matplotlib figure
+        matplotlib.figure.Figure: fig - a Matplotlib figure
 
     References:
         https://matplotlib.org/devdocs/gallery/mplot3d/voxels.html

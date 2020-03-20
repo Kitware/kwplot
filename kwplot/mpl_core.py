@@ -83,12 +83,12 @@ def _ensure_fig(fnum):
     if fnum is None:
         try:
             fig = plt.gcf()
-        except Exception as ex:
+        except Exception:
             fig = plt.figure()
     else:
         try:
             fig = plt.figure(fnum)
-        except Exception as ex:
+        except Exception:
             fig = plt.gcf()
     return fig
 
@@ -355,10 +355,11 @@ def imshow(img,
             imgRGB = kwimage.convert_colorspace(img, src_space=colorspace,
                                                 dst_space=dst_space,
                                                 implicit=True)
-            if not norm and imgRGB.dtype.kind == 'f':
-                maxval = imgRGB.max()
-                if maxval > 1.01 and maxval < 256:
-                    imgRGB = np.array(imgRGB, dtype=np.uint8)
+            if not norm:
+                if  imgRGB.dtype.kind == 'f':
+                    maxval = imgRGB.max()
+                    if maxval > 1.01 and maxval < 256:
+                        imgRGB = np.array(imgRGB, dtype=np.uint8)
             cs = ax.imshow(imgRGB, **plt_imshow_kwargs)
 
         elif len(img.shape) == 2 or (len(img.shape) == 3 and img.shape[2] == 1):
@@ -372,8 +373,9 @@ def imshow(img,
             if isinstance(cmap, six.string_types):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
-            if not norm and imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
-                imgGRAY = (imgGRAY * 255).astype(np.uint8)
+            if not norm:
+                if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
+                    imgGRAY = (imgGRAY * 255).astype(np.uint8)
             cs = ax.imshow(imgGRAY, cmap=cmap, **plt_imshow_kwargs)
         else:
             raise AssertionError(
@@ -483,23 +485,28 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
 
 def distinct_markers(num, style='astrisk', total=None, offset=0):
     r"""
+    Creates distinct marker codes (as best as possible)
+
     Args:
-        num (?):
+        num (int): number of markers to make
+        style (str): mplt style code
+        total (int): alternative to num
+        offset (float): angle offset
 
-    CommandLine:
-        python -m .draw_func2 --exec-distinct_markers --show
-        python -m .draw_func2 --exec-distinct_markers --style=star --show
-        python -m .draw_func2 --exec-distinct_markers --style=polygon --show
+    Returns:
+        List[Tuple]: marker codes
 
-    Ignore:
-        >>> autompl()
-        >>> style = ub.get_argval('--style', type_=str, default='astrisk')
-        >>> marker_list = distinct_markers(10, style)
+    Example:
+        >>> import kwplot
+        >>> plt = kwplot.autoplt()
+        >>> style = ub.argval('--style', default='astrisk')
+        >>> marker_list = kwplot.distinct_markers(10, style)
+        >>> print('marker_list = {}'.format(ub.repr2(marker_list, nl=1)))
         >>> x_data = np.arange(0, 3)
         >>> for count, (marker) in enumerate(marker_list):
         >>>     plt.plot(x_data, [count] * len(x_data), marker=marker, markersize=10, linestyle='', label=str(marker))
-        >>> legend()
-        >>> show_if_requested()
+        >>> plt.legend()
+        >>> kwplot.show_if_requested()
     """
     num_sides = 3
     style_num = {
@@ -510,11 +517,9 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
     }[style]
     if total is None:
         total = num
-    total_degrees = 360 / num_sides
-    marker_list = [
-        (num_sides, style_num,  total_degrees * (count + offset) / total)
-        for count in range(num)
-    ]
+    total_degrees = 360.0 / num_sides
+    angles = [total_degrees * (count + offset) / total for count in range(num)]
+    marker_list = [(num_sides, style_num,  angle) for angle in angles]
     return marker_list
 
 
