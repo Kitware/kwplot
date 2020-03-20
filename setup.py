@@ -180,10 +180,13 @@ if __name__ == '__main__':
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
             'Development Status :: 4 - Beta',
-            'Framework :: Matplotlib',
-            #'Intended Audience :: <?TODO: Developers>',
-            #'Topic :: <?TODO: Software Development :: Libraries :: Python Modules>',
-            #'Topic :: <?TODO: Utilities>'',
+            'Intended Audience :: Developers',
+            'Intended Audience :: Science/Research',
+            'Topic :: Scientific/Engineering',
+            'Topic :: Scientific/Engineering :: Visualization',
+            'Topic :: Software Development',
+            'Topic :: Software Development :: Libraries :: Python Modules',
+            'Topic :: Utilities',
             # This should be interpreted as Apache License v2.0
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
