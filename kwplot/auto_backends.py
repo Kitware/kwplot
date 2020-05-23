@@ -91,7 +91,7 @@ def set_mpl_backend(backend, verbose=None):
 _AUTOMPL_WAS_RUN = False
 
 
-def autompl(verbose=0, recheck=False):
+def autompl(verbose=0, recheck=False, force=None):
     """
     Uses platform heuristics to automatically set the matplotlib backend.
     If no display is available it will be set to `agg`, otherwise we will try
@@ -107,6 +107,13 @@ def autompl(verbose=0, recheck=False):
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
     """
     global _AUTOMPL_WAS_RUN
+    if force == 'auto':
+        recheck = True
+        force = None
+    elif force is not None:
+        set_mpl_backend(force)
+        _AUTOMPL_WAS_RUN = True
+
     if recheck or not _AUTOMPL_WAS_RUN:
         if verbose:
             print('AUTOMPL')

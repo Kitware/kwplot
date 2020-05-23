@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.4.6 - Unreleased
 
+### Added 
+* Added "force" kwarg to autompl, which will change the backend and prevent
+  future non-force autompl calls from changing the backend.
+
 ## Version 0.4.5 -
 
 ## Version 0.4.3
