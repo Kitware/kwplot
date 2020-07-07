@@ -42,3 +42,5 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.3.0
 
 * Changes at and before this version are undocumented
+
+## Version 0.4.7 - Unreleased
