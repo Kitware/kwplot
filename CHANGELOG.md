@@ -3,6 +3,20 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
+## Version 0.4.6 - 
+
+### Added 
+* Added "force" kwarg to autompl, which will change the backend and prevent
+  future non-force autompl calls from changing the backend.
+
+* BackendContext - a context manager for matplotlib backends. Primary purpose
+  is to allow the user to ensure that the agg backend is used in certain
+  places.
+
+* `mpl_draw.draw_points` - draws 2d points
+
+## Version 0.4.5 -
+
 ## Version 0.4.3
 
 ### Fixed
@@ -28,5 +42,3 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.3.0
 
 * Changes at and before this version are undocumented
-
-## Version 0.4.4 - Unreleased

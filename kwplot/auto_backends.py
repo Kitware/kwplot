@@ -91,7 +91,7 @@ def set_mpl_backend(backend, verbose=None):
 _AUTOMPL_WAS_RUN = False
 
 
-def autompl(verbose=0, recheck=False):
+def autompl(verbose=0, recheck=False, force=None):
     """
     Uses platform heuristics to automatically set the matplotlib backend.
     If no display is available it will be set to `agg`, otherwise we will try
@@ -102,11 +102,19 @@ def autompl(verbose=0, recheck=False):
         recheck (bool, default=False): if False, this function will not run if
             it has already been called (this can save a significant amount of
             time).
+        force (str, default=None): backend to force to or "auto"
 
     References:
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
     """
     global _AUTOMPL_WAS_RUN
+    if force == 'auto':
+        recheck = True
+        force = None
+    elif force is not None:
+        set_mpl_backend(force)
+        _AUTOMPL_WAS_RUN = True
+
     if recheck or not _AUTOMPL_WAS_RUN:
         if verbose:
             print('AUTOMPL')
@@ -162,3 +170,37 @@ def autoplt(verbose=0, recheck=False):
     autompl(verbose=verbose, recheck=recheck)
     from matplotlib import pyplot as plt
     return plt
+
+
+class BackendContext(object):
+    """
+    Context manager that ensures a specific backend, but then reverts after the
+    context has ended.
+
+    Ignore:
+        >>> from kwplot.auto_backends import *  # NOQA
+        >>> import matplotlib as mpl
+        >>> import kwplot
+        >>> print(mpl.get_backend())
+        >>> kwplot.autompl(force='auto')
+        >>> print(mpl.get_backend())
+        >>> fig1 = kwplot.figure(fnum=3)
+        >>> print(mpl.get_backend())
+        >>> with BackendContext('agg'):
+        >>>     print(mpl.get_backend())
+        >>>     fig2 = kwplot.figure(fnum=4)
+        >>> print(mpl.get_backend())
+    """
+
+    def __init__(self, backend):
+        self.backend = backend
+        self.prev = None
+
+    def __enter__(self):
+        import matplotlib as mpl
+        self.prev = mpl.get_backend()
+        set_mpl_backend(self.backend)
+
+    def __exit__(self, *args):
+        if self.prev is not None:
+            set_mpl_backend(self.prev)

@@ -282,5 +282,88 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         ax.set_ylabel(ylabel)
     return ax
 
+
+def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
+                alpha=None, radius=1, **kwargs):
+    """
+
+    Args:
+        xy (ndarray): of points.
+
+    Example:
+        >>> from kwplot.mpl_draw import *  # NOQA
+        >>> import kwimage
+        >>> xy = kwimage.Points.random(10).xy
+        >>> draw_points(xy, radius=0.01)
+        >>> draw_points(xy, class_idxs=np.random.randint(0, 3, 10),
+        >>>         radius=0.01, classes=['a', 'b', 'c'], color='classes')
+
+    Ignore:
+        >>> import kwplot
+        >>> kwplot.autompl()
+    """
+    import kwimage
+    import matplotlib as mpl
+    from matplotlib import pyplot as plt
+    if ax is None:
+        ax = plt.gca()
+
+    xy = xy.reshape(-1, 2)
+
+    # More grouped patches == more efficient runtime
+    if alpha is None:
+        alpha = [1.0] * len(xy)
+    elif not ub.iterable(alpha):
+        alpha = [alpha] * len(xy)
+
+    if color == 'distinct':
+        colors = kwimage.Color.distinct(len(alpha))
+    elif color == 'classes':
+        # TODO: read colors from categories if they exist
+        if class_idxs is None or classes is None:
+            raise Exception('cannot draw class colors without class_idxs and classes')
+        try:
+            cls_colors = kwimage.Color.distinct(len(classes))
+        except KeyError:
+            raise Exception('cannot draw class colors without class_idxs and classes')
+        import kwarray
+        _keys, _vals = kwarray.group_indices(class_idxs)
+        colors = list(ub.take(cls_colors, class_idxs))
+    else:
+        colors = [color] * len(alpha)
+
+    ptcolors = [kwimage.Color(c, alpha=a).as01('rgba')
+                for c, a in zip(colors, alpha)]
+    color_groups = ub.group_items(range(len(ptcolors)), ptcolors)
+
+    circlekw = {
+        'radius': radius,
+        'fill': True,
+        'ec': None,
+    }
+    if 'fc' in kwargs:
+        import warnings
+        warnings.warning(
+            'Warning: specifying fc to Points.draw overrides '
+            'the color argument. Use color instead')
+    circlekw.update(kwargs)
+    fc = circlekw.pop('fc', None)  # hack
+
+    collections = []
+    for pcolor, idxs in color_groups.items():
+
+        # hack for fc
+        if fc is not None:
+            pcolor = fc
+
+        patches = [
+            mpl.patches.Circle((x, y), fc=pcolor, **circlekw)
+            for x, y in xy[idxs]
+        ]
+        col = mpl.collections.PatchCollection(patches, match_original=True)
+        collections.append(col)
+        ax.add_collection(col)
+    return collections
+
 # backwards compat
 from kwimage import draw_boxes_on_image, draw_clf_on_image, draw_text_on_image  # NOQA
