@@ -4,6 +4,10 @@ import sys
 import os
 import ubelt as ub
 
+__all__ = [
+    'autompl', 'autoplt', 'set_mpl_backend', 'BackendContext',
+]
+
 
 _qtensured = False
 

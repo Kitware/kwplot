@@ -9,6 +9,17 @@ import pandas as pd
 import copy
 import numpy as np
 
+__all__ = [
+    'draw_boxes',
+    'draw_line_segments',
+    'plot_matrix',
+    'draw_points',
+    # draw_*_on_image functions are deprecated in favor of kwimage versions
+    'draw_text_on_image',
+    'draw_boxes_on_image',
+    'draw_clf_on_image',
+]
+
 
 def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
                fill=False, ax=None, lw=2):
@@ -58,7 +69,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
     if centers not in [None, False]:
         default_centerkw = {
-            'radius': 1,
+            # 'radius': 1,
             'fill': True
         }
         centerkw = default_centerkw.copy()
@@ -66,6 +77,10 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
             centerkw.update(centers)
         xy_centers = boxes.xy_center
         for fcolor, idxs in color_groups.items():
+            # TODO: radius based on size of bbox
+            # if 'radius' not in centerkw:
+            #     boxes.area[idxs]
+
             patches = [
                 mpl.patches.Circle((x, y), ec=None, fc=fcolor, **centerkw)
                 for x, y in xy_centers[idxs]
@@ -365,5 +380,7 @@ def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
         ax.add_collection(col)
     return collections
 
+
+# DEPRECATED FUNCTIONS. STILL EXISTS FOR BACKWARDS COMPAT
 # backwards compat
 from kwimage import draw_boxes_on_image, draw_clf_on_image, draw_text_on_image  # NOQA
