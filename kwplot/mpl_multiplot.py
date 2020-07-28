@@ -633,14 +633,18 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     if yticklabels is not None:
         # Hack ONLY WORKS WHEN TRANSPOSE = True
         # Overrides num_yticks
+        missing_labels = max(len(ydata) - len(yticklabels), 0)
+        yticklabels_ = yticklabels + [''] * missing_labels
         ax.set_yticks(ydata)
-        ax.set_yticklabels(yticklabels)
+        ax.set_yticklabels(yticklabels_)
 
     xticklabels = kwargs.get('xticklabels', None)
     if xticklabels is not None:
         # Overrides num_xticks
+        missing_labels = max(len(xdata) - len(xticklabels), 0)
+        xticklabels_ = xticklabels + [''] * missing_labels
         ax.set_xticks(xdata)
-        ax.set_xticklabels(xticklabels)
+        ax.set_xticklabels(xticklabels_)
 
     xticks = kwargs.get('xticks', None)
     if xticks is not None:
