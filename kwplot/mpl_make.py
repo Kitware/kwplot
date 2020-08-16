@@ -210,15 +210,11 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
     """
     import io
     import cv2
-    # import matplotlib as mpl
-    # axes_extents = extract_axes_extents(fig)
-    # extent = mpl.transforms.Bbox.union(axes_extents)
     extent = 'tight'  # mpl might do this correctly these days
     with io.BytesIO() as stream:
         # This call takes 23% - 15% of the time depending on settings
         fig.savefig(stream, bbox_inches=extent, dpi=dpi,
                     transparent=transparent, **savekw)
-        # fig.savefig(stream, **savekw)
         stream.seek(0)
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
     im_bgra = cv2.imdecode(data, cv2.IMREAD_UNCHANGED)
