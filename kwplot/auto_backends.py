@@ -4,6 +4,10 @@ import sys
 import os
 import ubelt as ub
 
+__all__ = [
+    'autompl', 'autoplt', 'set_mpl_backend', 'BackendContext',
+]
+
 
 _qtensured = False
 
@@ -138,6 +142,22 @@ def autompl(verbose=0, recheck=False, force=None):
             if not DISPLAY:
                 backend = 'agg'
             else:
+                """
+                Note:
+
+                    May encounter error that crashes the program, not sure why
+                    this happens yet. The current workaround is to uninstall
+                    PyQt5, but that isn't sustainable.
+
+                    QObject::moveToThread: Current thread (0x7fe8d965d030) is not the object's thread (0x7fffb0f64340).
+                    Cannot move to target thread (0x7fe8d965d030)
+
+
+                    qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+                    This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+                    Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl, xcb.
+                """
                 if ub.modname_to_modpath('PyQt5'):
                     try:
                         import PyQt5  # NOQA

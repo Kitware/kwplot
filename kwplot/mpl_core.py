@@ -484,7 +484,7 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
 
 
 def distinct_markers(num, style='astrisk', total=None, offset=0):
-    r"""
+    """
     Creates distinct marker codes (as best as possible)
 
     Args:
@@ -499,7 +499,7 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
     Example:
         >>> import kwplot
         >>> plt = kwplot.autoplt()
-        >>> style = ub.argval('--style', default='astrisk')
+        >>> style = 'astrisk'
         >>> marker_list = kwplot.distinct_markers(10, style)
         >>> print('marker_list = {}'.format(ub.repr2(marker_list, nl=1)))
         >>> x_data = np.arange(0, 3)
