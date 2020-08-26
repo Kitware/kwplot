@@ -3,7 +3,7 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.4.6 - 
+## Version 0.4.7 - Released 2020-08-26
 
 ### Added 
 * Added "force" kwarg to autompl, which will change the backend and prevent
@@ -42,5 +42,3 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.3.0
 
 * Changes at and before this version are undocumented
-
-## Version 0.4.7 - Unreleased
