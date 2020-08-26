@@ -3,6 +3,9 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
+## Version 0.4.8 - Unreleased
+
+
 ## Version 0.4.7 - Released 2020-08-26
 
 ### Added 
