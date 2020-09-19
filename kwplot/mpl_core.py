@@ -158,8 +158,13 @@ def legend(loc='best', fontproperties=None, size=None, fc='w', alpha=1,
            ax=None, handles=None):
     r"""
     Args:
-        loc (str): (default = 'best')
+        loc (str): (default = 'best') one of 'best',
+            'upper right', 'upper left', 'lower left', 'lower right',
+            'right', 'center left', 'center right', 'lower center', or
+            'upper center'.
+
         fontproperties (None): (default = None)
+
         size (None): (default = None)
 
     Ignore:
