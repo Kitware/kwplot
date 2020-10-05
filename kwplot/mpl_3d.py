@@ -55,6 +55,12 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     if mode is None:
         mode = 'wire' if wire else 'surface'
 
+    if len(xgrid.shape) == 1:
+        # TODO: if we are given long-form data points can we quickly check and
+        # reshape to the necessary grid
+        pass
+        # maybe use ax.scatter3D
+
     if mode == 'wire':
         ax.plot_wireframe(xgrid, ygrid, zdata, rstride=rstride,
                           cstride=cstride, *args, **kwargs)
