@@ -92,6 +92,9 @@ def set_mpl_backend(backend, verbose=None):
         print('* new_backend = {!r}'.format(mpl.get_backend()))
 
 
+
+
+
 _AUTOMPL_WAS_RUN = False
 
 
@@ -178,6 +181,15 @@ def autompl(verbose=0, recheck=False, force=None):
                     backend = 'agg'
 
             set_mpl_backend(backend, verbose=verbose)
+
+        if 0:
+            # TODO:
+            # IF IN A NOTEBOOK, BE SURE TO SET INLINE BEHAVIOR
+            # THIS EFFECTIVELY REPRODUCES THE %matplotlib inline behavior
+            # BUT USING AN ACTUAL PYTHON FUNCTION
+            shell = _current_ipython_session()
+            if shell:
+                shell.enable_matplotlib('inline')
 
         _AUTOMPL_WAS_RUN = True
 

@@ -14,15 +14,16 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     Example:
         >>> # DISABLE_DOCTEST
         >>> import kwplot
-        >>> import vtool as vt
+        >>> import matplotlib as mpl
+        >>> import kwimage
         >>> shape=(19, 19)
         >>> sigma1, sigma2 = 2.0, 1.0
         >>> ybasis = np.arange(shape[0])
         >>> xbasis = np.arange(shape[1])
         >>> xgrid, ygrid = np.meshgrid(xbasis, ybasis)
         >>> sigma = [sigma1, sigma2]
-        >>> gausspatch = vt.gaussian_patch(shape, sigma=sigma)
-        >>> title = 'ksize=%r, sigma=%r' % (shape, (sigma1, sigma2),)
+        >>> gausspatch = kwimage.gaussian_patch(shape, sigma=sigma)
+        >>> title = 'ksize={!r}, sigma={!r}'.format(shape, (sigma1, sigma2))
         >>> kwplot.plot_surface3d(xgrid, ygrid, gausspatch, rstride=1, cstride=1,
         >>>                   cmap=mpl.cm.coolwarm, title=title)
         >>> kwplot.show_if_requested()
