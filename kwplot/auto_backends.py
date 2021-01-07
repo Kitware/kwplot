@@ -246,10 +246,10 @@ class BackendContext(object):
         >>> import matplotlib as mpl
         >>> import kwplot
         >>> print(mpl.get_backend())
-        >>> kwplot.autompl(force='auto')
-        >>> print(mpl.get_backend())
-        >>> fig1 = kwplot.figure(fnum=3)
-        >>> print(mpl.get_backend())
+        >>> #kwplot.autompl(force='auto')
+        >>> #print(mpl.get_backend())
+        >>> #fig1 = kwplot.figure(fnum=3)
+        >>> #print(mpl.get_backend())
         >>> with BackendContext('agg'):
         >>>     print(mpl.get_backend())
         >>>     fig2 = kwplot.figure(fnum=4)
