@@ -92,9 +92,6 @@ def set_mpl_backend(backend, verbose=None):
         print('* new_backend = {!r}'.format(mpl.get_backend()))
 
 
-
-
-
 _AUTOMPL_WAS_RUN = False
 
 
@@ -160,6 +157,21 @@ def autompl(verbose=0, recheck=False, force=None):
                     This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
 
                     Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl, xcb.
+
+
+                UPDATE 2020-01-04:
+
+                    By setting
+
+                    export QT_DEBUG_PLUGINS=1
+
+                    I was able to look at more debug information. It turns out
+                    that it was grabbing the xcb plugin from the opencv-python
+                    package. I uninstalled that package and then installed
+                    opencv-python-headless which does not include an xcb
+                    binary. However, now the it is missing "libxcb-xinerama".
+
+
                 """
                 if ub.modname_to_modpath('PyQt5'):
                     try:
