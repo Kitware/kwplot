@@ -147,6 +147,8 @@ def autompl(verbose=0, recheck=False, force=None):
                 print(' * DISPLAY = {!r}'.format(DISPLAY))
 
             print('DISPLAY = {!r}'.format(DISPLAY))
+            print('DISPLAY = {!r}'.format(DISPLAY))
+            print('DISPLAY = {!r}'.format(DISPLAY))
             if not DISPLAY:
                 backend = 'agg'
             else:
