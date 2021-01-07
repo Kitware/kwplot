@@ -108,6 +108,13 @@ def autompl(verbose=0, recheck=False, force=None):
             time).
         force (str, default=None): backend to force to or "auto"
 
+    Checks:
+        xdoctest -m kwplot.auto_backends autompl --check
+
+    Example:
+        >>> # xdoctest +REQUIRES(--check)
+        >>> autompl(verbose=1)
+
     References:
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
     """
@@ -139,6 +146,7 @@ def autompl(verbose=0, recheck=False, force=None):
             if verbose:
                 print(' * DISPLAY = {!r}'.format(DISPLAY))
 
+            print('DISPLAY = {!r}'.format(DISPLAY))
             if not DISPLAY:
                 backend = 'agg'
             else:
@@ -159,7 +167,7 @@ def autompl(verbose=0, recheck=False, force=None):
                     Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl, xcb.
 
 
-                UPDATE 2020-01-04:
+                UPDATE 2021-01-04:
 
                     By setting
 
@@ -170,6 +178,15 @@ def autompl(verbose=0, recheck=False, force=None):
                     package. I uninstalled that package and then installed
                     opencv-python-headless which does not include an xcb
                     binary. However, now the it is missing "libxcb-xinerama".
+
+                Update 2021-01-07
+
+                    Running on in an ssh-session (where in this case ssh did
+                    not have an X server, but an X server was running
+                    elsewhere) we got this error.
+
+                    ImportError: Cannot load backend 'Qt5Agg' which requires the 'qt5' interactive framework, as 'headless' is currently running
+
 
 
                 """
