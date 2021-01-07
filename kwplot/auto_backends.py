@@ -146,9 +146,9 @@ def autompl(verbose=0, recheck=False, force=None):
             if verbose:
                 print(' * DISPLAY = {!r}'.format(DISPLAY))
 
-            print('DISPLAY = {!r}'.format(DISPLAY))
-            print('DISPLAY = {!r}'.format(DISPLAY))
-            print('DISPLAY = {!r}'.format(DISPLAY))
+            with open('blahblahblah', 'a') as file:
+                file.write('DISPLAY = {!r}\n'.format(DISPLAY))
+
             if not DISPLAY:
                 backend = 'agg'
             else:
