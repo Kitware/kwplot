@@ -146,9 +146,6 @@ def autompl(verbose=0, recheck=False, force=None):
             if verbose:
                 print(' * DISPLAY = {!r}'.format(DISPLAY))
 
-            with open('blahblahblah', 'a') as file:
-                file.write('DISPLAY = {!r}\n'.format(DISPLAY))
-
             if not DISPLAY:
                 backend = 'agg'
             else:
@@ -240,7 +237,11 @@ class BackendContext(object):
     Context manager that ensures a specific backend, but then reverts after the
     context has ended.
 
-    Ignore:
+    Checks:
+        xdoctest -m kwplot.auto_backends BackendContext --check
+
+    Example:
+        >>> # xdoctest +REQUIRES(--check)
         >>> from kwplot.auto_backends import *  # NOQA
         >>> import matplotlib as mpl
         >>> import kwplot
