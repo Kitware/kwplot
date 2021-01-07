@@ -178,14 +178,6 @@ def autompl(verbose=0, recheck=False, force=None):
                     opencv-python-headless which does not include an xcb
                     binary. However, now the it is missing "libxcb-xinerama".
 
-                Update 2021-01-07
-
-                    Running on in an ssh-session (where in this case ssh did
-                    not have an X server, but an X server was running
-                    elsewhere) we got this error.
-
-                    ImportError: Cannot load backend 'Qt5Agg' which requires the 'qt5' interactive framework, as 'headless' is currently running
-
 
 
                 """
@@ -259,6 +251,7 @@ class BackendContext(object):
     def __init__(self, backend):
         self.backend = backend
         self.prev = None
+        self._prev_backend_was_loaded = 'matplotlib.pyplot' in sys.modules
 
     def __enter__(self):
         import matplotlib as mpl
@@ -267,4 +260,27 @@ class BackendContext(object):
 
     def __exit__(self, *args):
         if self.prev is not None:
-            set_mpl_backend(self.prev)
+            """
+            Note: 2021-01-07
+                Running on in an ssh-session (where in this case ssh did
+                not have an X server, but an X server was running
+                elsewhere) we got this error.
+
+                ImportError: Cannot load backend 'Qt5Agg' which requires the
+                'qt5' interactive framework, as 'headless' is currently running
+
+                when using BackendContext('agg')
+
+                This is likely because the default was Qt5Agg, but it was not
+                loaded. We switched to agg just fine, but when we switched back
+                it tried to load Qt5Agg, which was not available and thus it
+                failed.
+            """
+            try:
+                # Note
+                set_mpl_backend(self.prev)
+            except Exception:
+                if self._prev_backend_was_loaded:
+                    # Only propogate the error if we had explicitly used pyplot
+                    # beforehand. Note sure if this is the right thing to do.
+                    raise
