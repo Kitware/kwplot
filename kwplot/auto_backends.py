@@ -109,11 +109,13 @@ def autompl(verbose=0, recheck=False, force=None):
         force (str, default=None): backend to force to or "auto"
 
     Checks:
+        export QT_DEBUG_PLUGINS=1
         xdoctest -m kwplot.auto_backends autompl --check
 
     Example:
         >>> # xdoctest +REQUIRES(--check)
-        >>> autompl(verbose=1)
+        >>> plt = autoplt(verbose=1)
+        >>> plt.figure()
 
     References:
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
@@ -178,8 +180,14 @@ def autompl(verbose=0, recheck=False, force=None):
                     opencv-python-headless which does not include an xcb
                     binary. However, now the it is missing "libxcb-xinerama".
 
+                    May be able to do something with:
+                        conda install -c conda-forge xorg-libxinerama
 
+                        # But that didnt work I had to
+                        pip uninstall PyQt5
 
+                        # This seems to work correctly
+                        conda install -c anaconda pyqt
                 """
                 if ub.modname_to_modpath('PyQt5'):
                     try:
