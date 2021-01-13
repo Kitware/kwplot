@@ -256,6 +256,21 @@ class BackendContext(object):
     def __enter__(self):
         import matplotlib as mpl
         self.prev = mpl.get_backend()
+
+        if self.prev == 'Qt5Agg':
+            # Hack for the case where our default matplotlib backend is Qt5Agg
+            # but we don't have Qt bindings available. (I think this may be a
+            # configuration error on my part). Either way, its easy to test for
+            # and fix. If the default backend is Qt5Agg, but importing the
+            # bindings causes an error, just set the default to agg, which will
+            # supress the warnings.
+            try:
+                from matplotlib.backends.qt_compat import QtGui  # NOQA
+            except ImportError:
+                # TODO: should we try this instead?
+                # mpl.rcParams['backend_fallback']
+                self.prev = 'agg'
+
         set_mpl_backend(self.backend)
 
     def __exit__(self, *args):
