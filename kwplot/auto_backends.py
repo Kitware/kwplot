@@ -111,6 +111,8 @@ def autompl(verbose=0, recheck=False, force=None):
     Checks:
         export QT_DEBUG_PLUGINS=1
         xdoctest -m kwplot.auto_backends autompl --check
+        KWPLOT_UNSAFE=1 xdoctest -m kwplot.auto_backends autompl --check
+        KWPLOT_UNSAFE=0 xdoctest -m kwplot.auto_backends autompl --check
 
     Example:
         >>> # xdoctest +REQUIRES(--check)
@@ -197,6 +199,41 @@ def autompl(verbose=0, recheck=False, force=None):
                         backend = 'agg'
                     else:
                         backend = 'Qt5Agg'
+
+                        KWPLOT_UNSAFE = os.environ.get('KWPLOT_UNSAFE', '')
+                        TRY_AVOID_CRASH = KWPLOT_UNSAFE.lower() not in ['1', 'true', 'yes']
+
+                        if TRY_AVOID_CRASH and ub.LINUX:
+                            # HOLD UP. Lets try to avoid a crash.
+                            if 'cv2' in sys.modules:
+                                from os.path import dirname, join, exists
+                                cv2 = sys.modules['cv2']
+                                cv2_mod_dpath = dirname(cv2.__file__)
+                                cv2_lib_dpath = join(cv2_mod_dpath, 'qt/plugins/platforms')
+                                cv2_qxcb_fpath = join(cv2_lib_dpath, 'libqxcb.so')
+
+                                qt_mod_dpath = dirname(QtCore.__file__)
+                                qt_lib_dpath = join(qt_mod_dpath, 'Qt/plugins/platforms')
+                                qt_qxcb_fpath = join(qt_lib_dpath, 'libqxcb.so')
+
+                                if exists(cv2_qxcb_fpath) and exists(qt_qxcb_fpath):
+                                    # Can we use ldd to make the test better?
+                                    import warnings
+                                    warnings.warn(ub.paragraph(
+                                        '''
+                                        Autompl has detected libqxcb in PyQt
+                                        and cv2.  Falling back to agg to avoid
+                                        a potential crash. This can be worked
+                                        around by installing
+                                        opencv-python-headless instead of
+                                        opencv-python.
+
+                                        Disable this check by setting the
+                                        environ KWPLOT_UNSAFE=1
+                                        '''
+                                    ))
+                                    backend = 'agg'
+
                 elif ub.modname_to_modpath('PyQt4'):
                     try:
                         import Qt4Agg  # NOQA
