@@ -68,7 +68,10 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
             Misc:
                 use_legend (bool): ...
-                legend_loc (str): ...
+                legend_loc (str):
+                    one of 'best', 'upper right', 'upper left', 'lower left',
+                    'lower right', 'right', 'center left', 'center right',
+                    'lower center', or 'upper center'.
 
             Layout:
                 xlabel (str): label for x-axis
@@ -299,7 +302,6 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             if not isinstance(val_list, list):
                 # Coerce a scalar value into a list
                 val_list = [val_list] * num_lines
-
         return val_list
 
     if kind == 'plot':
@@ -459,7 +461,6 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
                         barlbl = '%.3f' % (numlbl,)
                         ax.text(xpos, ypos, barlbl, ha=ha, va=va)
 
-            # print('extra_kw = %r' % (extra_kw,))
             if kind == 'plot' and extra_kw.get('fill', False):
                 ax.fill_between(_xdata, ydata_, alpha=plot_kw.get('alpha', 1.0),
                                 color=plot_kw.get('color', None))  # , zorder=0)
@@ -648,7 +649,6 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     xticks = kwargs.get('xticks', None)
     if xticks is not None:
-        print('xticks = {!r}'.format(xticks))
         ax.set_xticks(xticks)
 
     yticks = kwargs.get('yticks', None)

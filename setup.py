@@ -172,7 +172,10 @@ if __name__ == '__main__':
         long_description_content_type='text/x-rst',
         install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
-            'all': parse_requirements('requirements.txt')
+            'all': parse_requirements('requirements.txt'),
+            # Really annoying that this is the best we can do
+            'headless': ['opencv-python-headless'],
+            'graphics': ['opencv-python'],
         },
         license='Apache 2',
         packages=['kwplot'],

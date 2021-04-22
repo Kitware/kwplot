@@ -3,6 +3,14 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
+## Version 0.4.8 - Unreleased
+
+### Fixed
+* Fixed potential crash in autompl on some systems with conflicting PyQt5 and
+  python-opencv libraries. This involves falling back to agg if there *might*
+  be a conflict. The environ KWPLOT_UNSAFE=1 can be set to use the old behavior
+
+
 ## Version 0.4.7 - Released 2020-08-26
 
 ### Added 

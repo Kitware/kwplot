@@ -238,13 +238,13 @@ build/cp38-cp38-linux:
     <<: 
         - *build_template
     image:
-        python:3.8
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.8
 
 test_full/cp38-cp38-linux:
     <<: 
         - *test_full_template
     image:
-        python:3.8
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.8
 
 
 # for universal builds we only need to gpg sign once
@@ -252,13 +252,13 @@ gpgsign/cp38-cp38-linux:
     <<: 
         - *gpgsign_template
     image:
-        python:3.8
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.8
 
 deploy/cp38-cp38-linux:
     <<: 
         - *deploy_template
     image:
-        python:3.8
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.8
 
 # ---------------
 # Python 3.7 Jobs
@@ -273,7 +273,7 @@ test_full/cp37-cp37m-linux:
     <<: 
         - *test_full_template
     image:
-        python:3.7
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.7
 
 
 # ---------------
@@ -283,13 +283,13 @@ build/cp36-cp36m-linux:
     <<: 
         - *build_template
     image:
-        python:3.6
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.6
 
 test_full/cp36-cp36m-linux:
     <<: 
         - *test_full_template
     image:
-        python:3.6
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.6
 
 # ---------------
 # Python 3.5 Jobs
@@ -298,13 +298,13 @@ build/cp35-cp35m-linux:
     <<: 
         - *build_template
     image:
-        python:3.5
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.5
 
 test_full/cp35-cp35m-linux:
     <<: 
         - *test_full_template
     image:
-        python:3.5
+        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.5
 
 # ---------------
 # Python 2.7 Jobs
@@ -313,13 +313,13 @@ test_full/cp35-cp35m-linux:
 #    <<: 
 #        - *build_template
 #    image:
-#        python:2.7
+#        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:2.7
 
 #test_full/cp27-cp27mu-linux:
 #    <<: 
 #        - *test_full_template
 #    image:
-#        python:2.7
+#        gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:2.7
 
 
 .__local_docker_heredoc__:
