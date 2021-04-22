@@ -64,7 +64,8 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     w, h = shape[1] / dpi, shape[0] / dpi
     fig.set_size_inches(w, h)
 
-    ax = fig.add_subplot('111')
+    # ax = fig.add_subplot('111')
+    ax = fig.add_subplot(1, 1, 1)
     for label, color in label_to_color.items():
         color = kwimage.Color(color).as01()
         append_phantom_legend_label(label, color, type_=mode, ax=ax)
