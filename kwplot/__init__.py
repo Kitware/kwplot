@@ -2,7 +2,7 @@
 mkinit ~/code/kwplot/kwplot/__init__.py -w --relative --nomods
 """
 
-__version__ = '0.4.8'
+__version__ = '0.4.9'
 
 from .auto_backends import (BackendContext, autompl, autoplt, set_mpl_backend,)
 from .draw_conv import (make_conv_images, plot_convolutional_features,)
