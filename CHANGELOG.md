@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.4.9 - Unreleased
 
+### Added
+* `kwplot.autosns` for auto seaborn convenience.
 
 ## Version 0.4.8 - Released 2021-04-22
 

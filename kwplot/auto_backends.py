@@ -5,7 +5,7 @@ import os
 import ubelt as ub
 
 __all__ = [
-    'autompl', 'autoplt', 'set_mpl_backend', 'BackendContext',
+    'autompl', 'autoplt', 'autosns', 'set_mpl_backend', 'BackendContext',
 ]
 
 
@@ -267,6 +267,17 @@ def autoplt(verbose=0, recheck=False):
     autompl(verbose=verbose, recheck=recheck)
     from matplotlib import pyplot as plt
     return plt
+
+
+def autosns(verbose=0, recheck=False):
+    """
+    Like autosns, but also calls `seaborn.set` and returns the `seaborn` module
+    for convenience.
+    """
+    autompl(verbose=verbose, recheck=recheck)
+    import seaborn as sns
+    sns.set()
+    return sns
 
 
 class BackendContext(object):
