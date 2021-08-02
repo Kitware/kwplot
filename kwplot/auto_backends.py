@@ -139,13 +139,14 @@ def autompl(verbose=0, recheck=False, force=None):
         else:
             DISPLAY = os.environ.get('DISPLAY', '')
             if DISPLAY:
-                # Check if we can actually connect to X
-                # NOTE: this call takes a significant amount of time
-                info = ub.cmd('xdpyinfo', shell=True)
-                if verbose:
-                    print('xdpyinfo-info = {}'.format(ub.repr2(info)))
-                if info['ret'] != 0:
-                    DISPLAY = None
+                if sys.platform.startswith('linux') and ub.find_exe('xdpyinfo'):
+                    # On Linux, check if we can actually connect to X
+                    # NOTE: this call takes a significant amount of time
+                    info = ub.cmd('xdpyinfo', shell=True)
+                    if verbose:
+                        print('xdpyinfo-info = {}'.format(ub.repr2(info)))
+                    if info['ret'] != 0:
+                        DISPLAY = None
 
             if verbose:
                 print(' * DISPLAY = {!r}'.format(DISPLAY))
