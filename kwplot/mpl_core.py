@@ -237,7 +237,7 @@ def imshow(img,
            norm=None, cmap=None, data_colorbar=False,
            colorspace='rgb',
            interpolation='nearest', alpha=None,
-           **kwargs):
+           show_ticks=False, **kwargs):
     r"""
     Args:
         img (ndarray): image data. Height, Width, and Channel dimensions
@@ -402,8 +402,10 @@ def imshow(img,
         print('[imshow] img.shape = %r' % (img.shape,))
         print('[imshow] imshow ERROR %r' % ex)
         raise
-    ax.set_xticks([])
-    ax.set_yticks([])
+
+    if not show_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
     if data_colorbar:
         # Use the axes to supply the colorbar info
