@@ -338,7 +338,10 @@ def imshow(img,
     else:
         if cmap is None and not nospecial:
             plt_imshow_kwargs['vmin'] = 0
-            plt_imshow_kwargs['vmax'] = 255
+            if img.dtype.kind == 'u':
+                plt_imshow_kwargs['vmax'] = 255
+            else:
+                plt_imshow_kwargs['vmax'] = 1.0
 
     # Handle tensor chw format in most cases
     try:
@@ -378,9 +381,9 @@ def imshow(img,
             if isinstance(cmap, six.string_types):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
-            if not norm:
-                if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
-                    imgGRAY = (imgGRAY * 255).astype(np.uint8)
+            # if not norm:
+            #     if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
+            #         imgGRAY = (imgGRAY * 255).astype(np.uint8)
             cs = ax.imshow(imgGRAY, cmap=cmap, **plt_imshow_kwargs)
         else:
             raise AssertionError(
