@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 * Add `show_ticks=False` keyword argument to `imshow`
+* Add `phantom_legend` function
 
 ## Version 0.4.9 - Released 2021-08-23
 

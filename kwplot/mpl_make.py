@@ -44,21 +44,6 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     import kwimage
     plt = kwplot.autoplt()
 
-    def append_phantom_legend_label(label, color, type_='line', alpha=1.0, ax=None):
-        if ax is None:
-            ax = plt.gca()
-        _phantom_legend_list = getattr(ax, '_phantom_legend_list', None)
-        if _phantom_legend_list is None:
-            _phantom_legend_list = []
-            setattr(ax, '_phantom_legend_list', _phantom_legend_list)
-        if type_ == 'line':
-            phantom_actor = plt.Line2D((0, 0), (1, 1), color=color, label=label,
-                                       alpha=alpha)
-        else:
-            phantom_actor = plt.Circle((0, 0), 1, fc=color, label=label,
-                                       alpha=alpha)
-        _phantom_legend_list.append(phantom_actor)
-
     fig = plt.figure(dpi=dpi)
 
     w, h = shape[1] / dpi, shape[0] / dpi
@@ -66,15 +51,7 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
 
     # ax = fig.add_subplot('111')
     ax = fig.add_subplot(1, 1, 1)
-    for label, color in label_to_color.items():
-        color = kwimage.Color(color).as01()
-        append_phantom_legend_label(label, color, type_=mode, ax=ax)
-
-    _phantom_legend_list = getattr(ax, '_phantom_legend_list', None)
-    if _phantom_legend_list is None:
-        _phantom_legend_list = []
-        setattr(ax, '_phantom_legend_list', _phantom_legend_list)
-    ax.legend(handles=_phantom_legend_list)
+    kwplot.phantom_legend(label_to_color, mode=mode, ax=ax)
     ax.grid(False)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
