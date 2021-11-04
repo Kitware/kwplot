@@ -1,11 +1,16 @@
 
 def main():
+    """
+    """
     import kwplot
-    plt = kwplot.autoplt()
     import sys
-    fpath = sys.argv[1]
     import kwimage
+    plt = kwplot.autoplt()
+    fpath = sys.argv[1]
     imdata = kwimage.imread(fpath)
+
+    imdata = kwimage.normalize_intensity(imdata)
+    kwplot.imshow(imdata)
 
     plt.show()
 
