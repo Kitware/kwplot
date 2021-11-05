@@ -1,6 +1,12 @@
+# See ~/local/tools/supported_python_versions_pip.py for helper script
+# python ~/local/tools/supported_python_versions_pip.py matplotlib
+
 six >= 1.11.0
 ubelt >= 0.10.1
-matplotlib >= 3.4.3
+
+matplotlib>=3.4.0     ;                            python_version >= '3.7'    # Python 3.7+
+matplotlib>=3.1.0     ; python_version < '3.7' and python_version >= '3.6'    # Python 3.6
+matplotlib>=3.0.0     ; python_version < '3.6' and python_version >= '3.5'    # Python 3.5
 
 # We can't do one or the other. Kind of annoying
 # opencv-python >= 3.4.1.15

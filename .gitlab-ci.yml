@@ -627,10 +627,12 @@ test_minimal_strict/cp35-cp35m-linux:
             # STRICT VARIANT
             ./dev/make_strict_req.sh
             pip install -r requirements-strict.txt
+            pip install opencv-python-headless==4.5.3.56
             pip install -e .
             ./run_tests.py
 
             # LOOSE VARIANT
             pip install -r requirements.txt
+            pip install opencv-python-headless
             pip install -e .
             ./run_tests.py
