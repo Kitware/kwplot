@@ -738,7 +738,7 @@ def is_listlike(data):
     try:
         import pandas as pd
         flag = isinstance(data, (list, np.ndarray, tuple, pd.Series))
-    except ImportError:
+    except Exception:
         flag = isinstance(data, (list, np.ndarray, tuple))
     flag &= hasattr(data, '__getitem__') and hasattr(data, '__len__')
     return flag
