@@ -1,4 +1,4 @@
-python ~/local/tools/supported_python_versions_pip.py
+# python ~/local/tools/supported_python_versions_pip.py
 
 seaborn >= 0.9.0
 
