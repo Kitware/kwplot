@@ -5,7 +5,6 @@ on-image drawings.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
-import pandas as pd
 import copy
 import numpy as np
 
@@ -161,7 +160,9 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         - [ ] Replace internals with seaborn
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
         >>> from kwplot.mpl_draw import *  # NOQA
+        >>> import pandas as pd
         >>> classes = ['cls1', 'cls2', 'cls3']
         >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
         >>> matrix = pd.DataFrame(matrix, index=classes, columns=classes)
@@ -175,6 +176,7 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         >>> plot_matrix(matrix, showvals=True)
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
         >>> from kwplot.mpl_draw import *  # NOQA
         >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
         >>> plot_matrix(matrix)
@@ -185,11 +187,13 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         >>> plot_matrix(matrix)
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
         >>> from kwplot.mpl_draw import *  # NOQA
         >>> matrix = np.array([[2, 2, 1], [3, 1, 0], [1, 0, 0]])
         >>> classes = ['cls1', 'cls2', 'cls3']
         >>> plot_matrix(matrix, index=classes, columns=classes)
     """
+    import pandas as pd
     import matplotlib as mpl
     import matplotlib.cm  # NOQA
 
