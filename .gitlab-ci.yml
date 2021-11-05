@@ -632,5 +632,5 @@ test_minimal_strict/cp35-cp35m-linux:
 
             # LOOSE VARIANT
             pip install -r requirements.txt
-            pip install .[tests,headless]
+            pip install -e .[tests,headless]
             ./run_tests.py

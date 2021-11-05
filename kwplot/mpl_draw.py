@@ -4,9 +4,9 @@ Note, this module should be refactored into MPL figure drawings and cv2
 on-image drawings.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-import ubelt as ub
 import copy
 import numpy as np
+import ubelt as ub
 
 __all__ = [
     'draw_boxes',
