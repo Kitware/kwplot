@@ -116,7 +116,7 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_minimal_requirements
-        - pip install opencv-python-headless==4.5.3.56
+        - pip install opencv-python-headless==3.4.11.39
         - pip install .[tests,headless]  
 
 
@@ -128,7 +128,7 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_full_requirements
-        - pip install opencv-python-headless==4.5.3.56
+        - pip install opencv-python-headless==3.4.11.39
         - pip install .[all,headless]
 
 .test_minimal_loose_template: &test_minimal_loose_template
@@ -626,7 +626,7 @@ test_minimal_strict/cp35-cp35m-linux:
             # STRICT VARIANT
             ./dev/make_strict_req.sh
             pip install -r requirements-strict.txt
-            pip install opencv-python-headless==4.5.3.56
+            pip install opencv-python-headless==3.4.11.39
             pip install -e .
             ./run_tests.py
 

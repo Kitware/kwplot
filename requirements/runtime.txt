@@ -1,5 +1,8 @@
 # See ~/local/tools/supported_python_versions_pip.py for helper script
 # python ~/local/tools/supported_python_versions_pip.py matplotlib
+# python ~/local/tools/supported_python_versions_pip.py opencv-python-headless
+
+
 
 six >= 1.11.0
 ubelt >= 0.10.1
