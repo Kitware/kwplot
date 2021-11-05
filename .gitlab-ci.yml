@@ -116,8 +116,8 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_minimal_requirements
-        - pip install .[tests]  
         - pip install opencv-python-headless==4.5.3.56
+        - pip install .[tests]  
 
 
 .test_full_strict_template: &test_full_strict_template
@@ -128,8 +128,8 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_full_requirements
-        - pip install .[all]  
         - pip install opencv-python-headless==4.5.3.56
+        - pip install .[all]  
 
 .test_minimal_loose_template: &test_minimal_loose_template
     # Tags define which runners will accept which jobs
@@ -138,8 +138,8 @@ stages:
 
     before_script:
         - *_setup_virtualenv_template
-        - pip install .[tests]  
         - pip install opencv-python-headless
+        - pip install .[tests]  
 
 
 .test_full_loose_template: &test_full_loose_template
@@ -149,8 +149,8 @@ stages:
 
     before_script:
         - *_setup_virtualenv_template
-        - pip install .[all]  
         - pip install opencv-python-headless
+        - pip install .[all]  
 
 
 
