@@ -209,8 +209,8 @@ if __name__ == '__main__':
             'tests': parse_requirements('requirements/tests.txt'),
             'optional': parse_requirements('requirements/optional.txt'),
             # Really annoying that this is the best we can do
-            'headless': ['opencv-python-headless'],
-            'graphics': ['opencv-python'],
+            'headless': parse_requirements('requirements/headless.txt'),
+            'graphics': parse_requirements('requirements/graphics.txt'),
         },
         license='Apache 2',
         packages=['kwplot'],

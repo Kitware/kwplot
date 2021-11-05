@@ -5,6 +5,9 @@
         NOTE: INSTRUCTION HAVE BEEN MOVED TO ./dev/setup_secrets.sh
         This file should need minimal modification.
 
+        Template for this files is from
+        ~/misc/templates/PYPKG/.gitlab-ci.yml
+
         Enable the opencv-hack if needed, and turn on/off the desired versions
         of Python.
 
@@ -78,10 +81,10 @@ stages:
     # Coverage is a regex that will parse the coverage from the test stdout
     coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
-    #except:
-    #    refs:
-    #      - release 
-    #      - tags
+    except:
+        refs:
+          - release 
+          - tags
     #    changes:
     #        - README.rst
     #        - CHANGELOG.md
@@ -100,12 +103,12 @@ stages:
 
 ._install_strict_minimal_requirements: &_install_strict_minimal_requirements |-
     ./dev/make_strict_req.sh
-    pip install -r requirements-strict/runtime.txt -r requirements-strict/tests.txt
+    pip install -r requirements-strict/runtime.txt -r requirements-strict/tests.txt -r requirements-strict/headless.txt
 
 
 ._install_strict_full_requirements: &_install_strict_full_requirements |-
     ./dev/make_strict_req.sh
-    pip install -r requirements-strict/optional.txt -r requirements-strict/runtime.txt -r requirements-strict/tests.txt
+    pip install -r requirements-strict/optional.txt -r requirements-strict/runtime.txt -r requirements-strict/tests.txt -r requirements-strict/headless.txt
 
 
 .test_minimal_strict_template: &test_minimal_strict_template
@@ -116,7 +119,6 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_minimal_requirements
-        - pip install opencv-python-headless==3.4.11.39
         - pip install .[tests,headless]  
 
 
@@ -128,7 +130,6 @@ stages:
     before_script:
         - *_setup_virtualenv_template
         - *_install_strict_full_requirements
-        - pip install opencv-python-headless==3.4.11.39
         - pip install .[all,headless]
 
 .test_minimal_loose_template: &test_minimal_loose_template
