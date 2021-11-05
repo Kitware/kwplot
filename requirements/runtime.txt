@@ -1,10 +1,10 @@
 six >= 1.11.0
-ubelt >= 0.8.2
-matplotlib >= 2.2.2
+ubelt >= 0.10.1
+matplotlib >= 3.4.3
 
 # We can't do one or the other. Kind of annoying
 # opencv-python >= 3.4.1.15
 # opencv-python-headless >= 3.4.1.15
 
-kwarray >= 0.4.0
-kwimage >= 0.4.2
+kwarray >= 0.5.19
+kwimage >= 0.7.14
