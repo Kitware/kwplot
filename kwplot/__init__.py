@@ -17,7 +17,7 @@ from .mpl_draw import (draw_boxes, draw_boxes_on_image, draw_clf_on_image,
                        draw_line_segments, draw_points, draw_text_on_image,
                        plot_matrix,)
 from .mpl_make import (make_heatmask, make_legend_img, make_orimask,
-                       make_vector_field,)
+                       make_vector_field, render_figure_to_image,)
 from .mpl_multiplot import (multi_plot,)
 from .mpl_plotnums import (PlotNums,)
 
@@ -29,4 +29,5 @@ __all__ = ['BackendContext', 'Color', 'PlotNums', 'autompl', 'autoplt',
            'make_legend_img', 'make_orimask', 'make_vector_field',
            'multi_plot', 'next_fnum', 'phantom_legend',
            'plot_convolutional_features', 'plot_matrix', 'plot_surface3d',
-           'set_figtitle', 'set_mpl_backend', 'show_if_requested']
+           'render_figure_to_image', 'set_figtitle', 'set_mpl_backend',
+           'show_if_requested']

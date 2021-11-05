@@ -8,7 +8,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 from kwimage import make_heatmask, make_vector_field, make_orimask  # NOQA
 
-__all__ = ['make_heatmask', 'make_vector_field', 'make_orimask', 'make_legend_img']
+__all__ = [
+    'make_heatmask', 'make_vector_field', 'make_orimask', 'make_legend_img',
+    'render_figure_to_image',
+
+]
 
 
 def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
@@ -41,7 +45,6 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
         >>> kwplot.show_if_requested()
     """
     import kwplot
-    import kwimage
     plt = kwplot.autoplt()
 
     fig = plt.figure(dpi=dpi)
@@ -57,7 +60,6 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     ax.get_yaxis().set_visible(False)
     plt.axis('off')
     legend_img = render_figure_to_image(fig, dpi=dpi, transparent=transparent)
-    legend_img = kwimage.convert_colorspace(legend_img, src_space='bgr', dst_space='rgb')
     legend_img = crop_border_by_color(legend_img)
 
     plt.close(fig)
@@ -180,20 +182,40 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
             pad_inches, frameon.
 
     Returns:
-        np.ndarray: an image in BGR or BGRA format.
+        np.ndarray: an image in RGB or RGBA format.
 
     Notes:
         Be sure to use `fig.set_size_inches` to an appropriate size before
         calling this function.
+
+    Example:
+        >>> import kwplot
+        >>> fig = kwplot.figure(fnum=1, doclf=True)
+        >>> ax = fig.gca()
+        >>> ax.cla()
+        >>> ax.plot([0, 10], [0, 10])
+        >>> canvas_rgb = kwplot.render_figure_to_image(fig, transparent=False)
+        >>> canvas_rgba = kwplot.render_figure_to_image(fig, transparent=True)
+        >>> assert canvas_rgb.shape[2] == 3
+        >>> assert canvas_rgba.shape[2] == 4
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> kwplot.autompl()
+        >>> kwplot.imshow(canvas_rgb, fnum=2)
+        >>> kwplot.show_if_requested()
     """
     import io
     import cv2
+    import kwimage
     extent = 'tight'  # mpl might do this correctly these days
     with io.BytesIO() as stream:
         # This call takes 23% - 15% of the time depending on settings
         fig.savefig(stream, bbox_inches=extent, dpi=dpi,
                     transparent=transparent, **savekw)
         stream.seek(0)
-        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+        data = np.frombuffer(stream.getvalue(), dtype=np.uint8)
     im_bgra = cv2.imdecode(data, cv2.IMREAD_UNCHANGED)
-    return im_bgra
+    if transparent is not None and not transparent:
+        im_rgba = kwimage.convert_colorspace(im_bgra, src_space='bgra', dst_space='rgb')
+    else:
+        im_rgba = kwimage.convert_colorspace(im_bgra, src_space='bgra', dst_space='rgba')
+    return im_rgba

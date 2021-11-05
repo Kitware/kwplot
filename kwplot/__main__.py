@@ -19,10 +19,11 @@ def main():
     print('stats = {}'.format(ub.repr2(stats, nl=1)))
 
     print('normalize')
-    imdata = kwimage.normalize_intensity(imdata)
+    imdata = kwimage.normalize_intensity(imdata, nodata=0)
 
     print('showing')
-    kwplot.imshow(imdata)
+    from os.path import basename
+    kwplot.imshow(imdata, title=basename(fpath))
 
     plt.show()
 
