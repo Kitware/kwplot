@@ -621,6 +621,7 @@ test_minimal_strict/cp35-cp35m-linux:
             pip install virtualenv
             virtualenv venv$PYVER
             source venv$PYVER/bin/activate
+
             pip install pip -U
             pip install pip setuptools -U
 
@@ -635,4 +636,6 @@ test_minimal_strict/cp35-cp35m-linux:
             pip install -r requirements.txt
             pip install opencv-python-headless
             pip install -e .
+            pip install opencv-python-headless
+            pip install .[tests]  
             ./run_tests.py
