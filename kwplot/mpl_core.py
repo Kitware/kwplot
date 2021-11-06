@@ -237,7 +237,7 @@ def imshow(img,
            norm=None, cmap=None, data_colorbar=False,
            colorspace='rgb',
            interpolation='nearest', alpha=None,
-           **kwargs):
+           show_ticks=False, **kwargs):
     r"""
     Args:
         img (ndarray): image data. Height, Width, and Channel dimensions
@@ -338,7 +338,10 @@ def imshow(img,
     else:
         if cmap is None and not nospecial:
             plt_imshow_kwargs['vmin'] = 0
-            plt_imshow_kwargs['vmax'] = 255
+            if img.dtype.kind == 'u':
+                plt_imshow_kwargs['vmax'] = 255
+            else:
+                plt_imshow_kwargs['vmax'] = 1.0
 
     # Handle tensor chw format in most cases
     try:
@@ -378,9 +381,9 @@ def imshow(img,
             if isinstance(cmap, six.string_types):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
-            if not norm:
-                if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
-                    imgGRAY = (imgGRAY * 255).astype(np.uint8)
+            # if not norm:
+            #     if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
+            #         imgGRAY = (imgGRAY * 255).astype(np.uint8)
             cs = ax.imshow(imgGRAY, cmap=cmap, **plt_imshow_kwargs)
         else:
             raise AssertionError(
@@ -402,8 +405,10 @@ def imshow(img,
         print('[imshow] img.shape = %r' % (img.shape,))
         print('[imshow] imshow ERROR %r' % ex)
         raise
-    ax.set_xticks([])
-    ax.set_yticks([])
+
+    if not show_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
     if data_colorbar:
         # Use the axes to supply the colorbar info
@@ -652,3 +657,53 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         rng = kwarray.ensure_rng(rng=0)
         rng.shuffle(RGB_tuples)
     return RGB_tuples
+
+
+def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
+    """
+    Creates a legend on an axis based on a label-to-color map.
+
+    Args:
+        label_to_color (Dict[str, Color]):
+            mapping from string label to the color.
+
+    TODO:
+        - [ ] More docs and ensure this exists in the right place
+    """
+    import kwplot
+    import kwimage
+    import ubelt as ub
+    plt = kwplot.autoplt()
+
+    if ax is None:
+        ax = plt.gca()
+
+    _phantom_legends = getattr(ax, '_phantom_legends', None)
+    if _phantom_legends is None:
+        _phantom_legends = ax._phantom_legends = ub.ddict(dict)
+
+    phantom = _phantom_legends[legend_id]
+    handles = phantom['handles'] = []
+    handles.clear()
+
+    alpha = 1.0
+    for label, color in label_to_color.items():
+        color = kwimage.Color(color).as01()
+        if mode == 'line':
+            phantom_actor = plt.Line2D(
+                (0, 0), (1, 1), color=color, label=label, alpha=alpha)
+        elif mode == 'circle':
+            phantom_actor = plt.Circle(
+                (0, 0), 1, fc=color, label=label, alpha=alpha)
+        else:
+            raise KeyError
+        handles.append(phantom_actor)
+
+    legend_artist = ax.legend(handles=handles, loc=loc)
+    phantom['artist'] = legend_artist
+
+    # Re-add other legends
+    for _phantom in _phantom_legends.values():
+        artist = _phantom['artist']
+        if artist is not legend_artist:
+            ax.add_artist(artist)

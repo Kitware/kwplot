@@ -43,78 +43,99 @@ def parse_description():
     return ''
 
 
-def parse_requirements(fname='requirements.txt'):
+def parse_requirements(fname='requirements.txt', with_version=False):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
 
-    TODO:
-        perhaps use https://github.com/davidfischer/requirements-parser instead
+    Args:
+        fname (str): path to requirements file
+        with_version (bool, default=False): if true include version specs
 
-    CommandLine:
-        python -c "import setup; print(setup.parse_requirements())"
+    Returns:
+        List[str]: list of requirements items
     """
-    from os.path import exists
+    from os.path import exists, dirname, join
     import re
     require_fpath = fname
 
-    def parse_line(line):
+    def parse_line(line, dpath=''):
         """
         Parse information from a line in a requirements text file
+
+        line = 'git+https://a.com/somedep@sometag#egg=SomeDep'
+        line = '-e git+https://a.com/somedep@sometag#egg=SomeDep'
         """
+        # Remove inline comments
+        comment_pos = line.find(' #')
+        if comment_pos > -1:
+            line = line[:comment_pos]
+
         if line.startswith('-r '):
             # Allow specifying requirements in other files
-            target = line.split(' ')[1]
+            target = join(dpath, line.split(' ')[1])
             for info in parse_require_file(target):
                 yield info
-        elif line.startswith('-e '):
-            info = {}
-            info['package'] = line.split('#egg=')[1]
-            yield info
         else:
-            # Remove versioning from the package
-            pat = '(' + '|'.join(['>=', '==', '>']) + ')'
-            parts = re.split(pat, line, maxsplit=1)
-            parts = [p.strip() for p in parts]
-
-            info = {}
-            info['package'] = parts[0]
-            if len(parts) > 1:
-                op, rest = parts[1:]
-                if ';' in rest:
+            # See: https://www.python.org/dev/peps/pep-0508/
+            info = {'line': line}
+            if line.startswith('-e '):
+                info['package'] = line.split('#egg=')[1]
+            else:
+                if ';' in line:
+                    pkgpart, platpart = line.split(';')
                     # Handle platform specific dependencies
-                    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
-                    version, platform_deps = map(str.strip, rest.split(';'))
-                    info['platform_deps'] = platform_deps
+                    # setuptools.readthedocs.io/en/latest/setuptools.html
+                    # #declaring-platform-specific-dependencies
+                    plat_deps = platpart.strip()
+                    info['platform_deps'] = plat_deps
                 else:
+                    pkgpart = line
+                    platpart = None
+
+                # Remove versioning from the package
+                pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+                parts = re.split(pat, pkgpart, maxsplit=1)
+                parts = [p.strip() for p in parts]
+
+                info['package'] = parts[0]
+                if len(parts) > 1:
+                    op, rest = parts[1:]
                     version = rest  # NOQA
-                info['version'] = (op, version)
+                    info['version'] = (op, version)
             yield info
 
     def parse_require_file(fpath):
+        dpath = dirname(fpath)
         with open(fpath, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    for info in parse_line(line):
+                    for info in parse_line(line, dpath=dpath):
                         yield info
 
-    # This breaks on pip install, so check that it exists.
-    packages = []
-    if exists(require_fpath):
-        for info in parse_require_file(require_fpath):
-            package = info['package']
-            if not sys.version.startswith('3.4'):
-                # apparently package_deps are broken in 3.4
-                platform_deps = info.get('platform_deps')
-                if platform_deps is not None:
-                    package += ';' + platform_deps
-            packages.append(package)
+    def gen_packages_items():
+        if exists(require_fpath):
+            for info in parse_require_file(require_fpath):
+                parts = [info['package']]
+                if with_version and 'version' in info:
+                    parts.extend(info['version'])
+                if not sys.version.startswith('3.4'):
+                    # apparently package_deps are broken in 3.4
+                    plat_deps = info.get('platform_deps')
+                    if plat_deps is not None:
+                        parts.append(';' + plat_deps)
+                item = ''.join(parts)
+                yield item
+
+    packages = list(gen_packages_items())
     return packages
 
 
 def native_mb_python_tag(plat_impl=None, version_info=None):
     """
+    Get the correct manylinux python version tag for this interpreter
+
     Example:
         >>> print(native_mb_python_tag())
         >>> print(native_mb_python_tag('PyPy', (2, 7)))
@@ -129,7 +150,11 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
         version_info = sys.version_info
 
     major, minor = version_info[0:2]
-    ver = '{}{}'.format(major, minor)
+    major, minor = version_info[0:2]
+    if minor > 9:
+        ver = '{}_{}'.format(major, minor)
+    else:
+        ver = '{}{}'.format(major, minor)
 
     if plat_impl == 'CPython':
         # TODO: get if cp27m or cp27mu
@@ -141,8 +166,9 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
             else:
                 abi = 'm'
         else:
-            if ver == '38':
-                # no abi in 38?
+            import sys
+            if sys.version_info[:2] >= (3, 8):
+                # bpo-36707: 3.8 dropped the m flag
                 abi = ''
             else:
                 abi = 'm'
@@ -155,6 +181,13 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
     else:
         raise NotImplementedError(plat_impl)
     return mb_tag
+
+
+try:
+    MB_PYTHON_TAG = native_mb_python_tag()
+except Exception:
+    # raise
+    MB_PYTHON_TAG = '???'
 
 
 NAME = 'kwplot'
@@ -173,9 +206,11 @@ if __name__ == '__main__':
         install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
             'all': parse_requirements('requirements.txt'),
+            'tests': parse_requirements('requirements/tests.txt'),
+            'optional': parse_requirements('requirements/optional.txt'),
             # Really annoying that this is the best we can do
-            'headless': ['opencv-python-headless'],
-            'graphics': ['opencv-python'],
+            'headless': parse_requirements('requirements/headless.txt'),
+            'graphics': parse_requirements('requirements/graphics.txt'),
         },
         license='Apache 2',
         packages=['kwplot'],

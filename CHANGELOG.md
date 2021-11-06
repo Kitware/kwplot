@@ -3,7 +3,15 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.4.9 - Unreleased
+## Version 0.4.10 - Unreleased
+
+### Added
+* Add `show_ticks=False` keyword argument to `imshow`
+* Add `phantom_legend` function
+* Exposed `render_figure_to_image` function
+* Added `__main__` script to show a normalized image.
+
+## Version 0.4.9 - Released 2021-08-23
 
 ### Added
 * `kwplot.autosns` for auto seaborn convenience.

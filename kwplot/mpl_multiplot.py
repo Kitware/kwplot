@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import pandas as pd
 import ubelt as ub
 import six
 import warnings
@@ -736,7 +735,11 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
 
 def is_listlike(data):
-    flag = isinstance(data, (list, np.ndarray, tuple, pd.Series))
+    try:
+        import pandas as pd
+        flag = isinstance(data, (list, np.ndarray, tuple, pd.Series))
+    except Exception:
+        flag = isinstance(data, (list, np.ndarray, tuple))
     flag &= hasattr(data, '__getitem__') and hasattr(data, '__len__')
     return flag
 
