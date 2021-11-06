@@ -161,7 +161,7 @@ stages:
         gpgsign
 
     script: 
-        - export GPG_EXECUTABVE=gpg
+        - export GPG_EXECUTABLE=gpg
         - export GPG_KEYID=$(cat dev/public_gpg_key)
         - echo "GPG_KEYID = $GPG_KEYID"
         - source dev/secrets_configuration.sh
