@@ -3,7 +3,7 @@ mkinit ~/code/kwplot/kwplot/__init__.py -w --relative --nomods
 mkinit ~/code/kwplot/kwplot/__init__.py --diff --relative --nomods
 """
 
-__version__ = '0.4.10'
+__version__ = '0.4.11'
 
 from .auto_backends import (BackendContext, autompl, autoplt, autosns,
                             set_mpl_backend,)
