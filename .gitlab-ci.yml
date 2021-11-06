@@ -164,8 +164,9 @@ stages:
         - export GPG_EXECUTABLE=gpg
         - export GPG_KEYID=$(cat dev/public_gpg_key)
         - echo "GPG_KEYID = $GPG_KEYID"
+        # source repo-specific secrets
+        # VARNAME_CI_SECRET points to a protected variable only available on main and release branch
         - source dev/secrets_configuration.sh
-        # note the variable pointed to by VARNAME_CI_SECRET is a protected variables only available on main and release branch
         - CI_SECRET=${!VARNAME_CI_SECRET}
         - $GPG_EXECUTABLE --version
         - openssl version
@@ -209,8 +210,11 @@ stages:
         - export GPG_KEYID=$(cat dev/public_gpg_key)
         - echo "GPG_KEYID = $GPG_KEYID"
         - source dev/secrets_configuration.sh
-        # note the variable pointed to by VARNAME_CI_SECRET is a protected variables only available on main and release branch
+        # source repo-specific secrets
+        # VARNAME_CI_SECRET points to a protected variable only available on main and release branch
+        - source dev/secrets_configuration.sh
         - CI_SECRET=${!VARNAME_CI_SECRET}
+        - PUSH_TOKEN=${!VARNAME_PUSH_TOKEN}
         - $GPG_EXECUTABLE --version
         - openssl version
         - $GPG_EXECUTABLE --list-keys
@@ -241,7 +245,7 @@ stages:
                 echo "Tag already exists"
             else
                 git tag $VERSION -m "tarball tag $VERSION"
-                git push --tags "https://${GITLAB_ORG_PUSH_TOKEN}@${URL_HOST}"
+                git push --tags "https://${PUSH_TOKEN}@${URL_HOST}"
             fi
             
     only:
