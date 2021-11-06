@@ -600,7 +600,7 @@ test_minimal_strict/cp35-cp35m-linux:
             # the watch repo, create the environment, and run the tests. 
             docker login gitlab.kitware.com:4567
 
-            IMAGE_NAME=gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.8
+            IMAGE_NAME=gitlab.kitware.com:4567/computer-vision/ci-docker/gl-python:3.7
             docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
             # Will need to chmod things afterwords
             export PIP_CACHE_DIR=/pip_cache
@@ -620,14 +620,12 @@ test_minimal_strict/cp35-cp35m-linux:
             pip install virtualenv
             virtualenv venv$PYVER
             source venv$PYVER/bin/activate
-
-            pip install pip -U
-            pip install pip setuptools -U
+            #pip install pip -U
+            #pip install pip setuptools -U
 
             # STRICT VARIANT
             ./dev/make_strict_req.sh
-            pip install -r requirements-strict.txt
-            pip install opencv-python-headless==3.4.11.39
+            pip install -r requirements-strict.txt -r requirements-strict/headless.txt
             pip install -e .
             ./run_tests.py
 
