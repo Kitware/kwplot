@@ -334,97 +334,97 @@ stages:
 # Python 3.9 Jobs
 
 
-build/cp39-cp39-linux:
-    <<: 
-        - *build_template
-    image:
-        *image_python39
-
-test_full_loose/cp39-cp39-linux:
-    <<: 
-        - *test_full_loose_template
-    image:
-        *image_python39
-    needs: 
-        -  build/cp39-cp39-linux
-
-test_minimal_loose/cp39-cp39-linux:
-    <<: 
-        - *test_minimal_loose_template
-    image:
-        *image_python39
-    needs: 
-        -  build/cp39-cp39-linux
-
-test_full_strict/cp39-cp39-linux:
-    <<: 
-        - *test_full_strict_template
-    image:
-        *image_python39
-    needs: 
-        -  build/cp39-cp39-linux
-
-test_minimal_strict/cp39-cp39-linux:
-    <<: 
-        - *test_minimal_strict_template
-    image:
-        *image_python39
-    needs: 
-        -  build/cp39-cp39-linux
-
-## ---------------
-## Python 3.8 Jobs
-
-#build/cp38-cp38-linux:
+#build/cp39-cp39-linux:
 #    <<: 
 #        - *build_template
 #    image:
-#        *image_python38
+#        *image_python39
 
-#test_full_loose/cp38-cp38-linux:
+#test_full_loose/cp39-cp39-linux:
 #    <<: 
 #        - *test_full_loose_template
 #    image:
-#        *image_python38
+#        *image_python39
 #    needs: 
-#        -  build/cp38-cp38-linux
+#        -  build/cp39-cp39-linux
 
-#test_minimal_loose/cp38-cp38-linux:
+#test_minimal_loose/cp39-cp39-linux:
 #    <<: 
 #        - *test_minimal_loose_template
 #    image:
-#        *image_python38
+#        *image_python39
 #    needs: 
-#        -  build/cp38-cp38-linux
+#        -  build/cp39-cp39-linux
 
-#test_full_strict/cp38-cp38-linux:
+#test_full_strict/cp39-cp39-linux:
 #    <<: 
 #        - *test_full_strict_template
 #    image:
-#        *image_python38
+#        *image_python39
 #    needs: 
-#        -  build/cp38-cp38-linux
+#        -  build/cp39-cp39-linux
 
-#test_minimal_strict/cp38-cp38-linux:
+#test_minimal_strict/cp39-cp39-linux:
 #    <<: 
 #        - *test_minimal_strict_template
 #    image:
-#        *image_python38
+#        *image_python39
 #    needs: 
-#        -  build/cp38-cp38-linux
+#        -  build/cp39-cp39-linux
 
-## for universal builds we only need to gpg sign once
-#gpgsign/cp38-cp38-linux:
-#    <<: 
-#        - *gpgsign_template
-#    image:
-#        *image_python38
+# ---------------
+# Python 3.8 Jobs
 
-#deploy/cp38-cp38-linux:
-#    <<: 
-#        - *deploy_template
-#    image:
-#        *image_python38
+build/cp38-cp38-linux:
+    <<: 
+        - *build_template
+    image:
+        *image_python38
+
+test_full_loose/cp38-cp38-linux:
+    <<: 
+        - *test_full_loose_template
+    image:
+        *image_python38
+    needs: 
+        -  build/cp38-cp38-linux
+
+test_minimal_loose/cp38-cp38-linux:
+    <<: 
+        - *test_minimal_loose_template
+    image:
+        *image_python38
+    needs: 
+        -  build/cp38-cp38-linux
+
+test_full_strict/cp38-cp38-linux:
+    <<: 
+        - *test_full_strict_template
+    image:
+        *image_python38
+    needs: 
+        -  build/cp38-cp38-linux
+
+test_minimal_strict/cp38-cp38-linux:
+    <<: 
+        - *test_minimal_strict_template
+    image:
+        *image_python38
+    needs: 
+        -  build/cp38-cp38-linux
+
+# for universal builds we only need to gpg sign once
+gpgsign/cp38-cp38-linux:
+    <<: 
+        - *gpgsign_template
+    image:
+        *image_python38
+
+deploy/cp38-cp38-linux:
+    <<: 
+        - *deploy_template
+    image:
+        *image_python38
       
 
 ## ---------------
