@@ -212,6 +212,12 @@ if __name__ == '__main__':
             'headless': parse_requirements('requirements/headless.txt'),
             'graphics': parse_requirements('requirements/graphics.txt'),
         },
+        entry_points={
+            # the console_scripts entry point creates the xdoctest executable
+            'console_scripts': [
+                'kwplot = kwplot.__main__:main'
+            ]
+        },
         license='Apache 2',
         packages=['kwplot'],
         classifiers=[
