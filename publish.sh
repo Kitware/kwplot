@@ -4,7 +4,7 @@ Script to publish a new version of this library on PyPI.
 
 If your script has binary dependencies then we assume that you have built a
 proper binary wheel with auditwheel and it exists in the wheelhouse directory.
-Otherwise, for source tarballs and universal wheels this script runs the
+Otherwise, for source tarballs and wheels this script runs the
 setup.py script to create the wheels as well.
 
 Running this script with the default arguments will perform any builds and gpg
@@ -73,9 +73,9 @@ NAME=${NAME:=$(python -c "import setup; print(setup.NAME)")}
 VERSION=$(python -c "import setup; print(setup.VERSION)")
 
 # The default should change depending on the application
-#DEFAULT_MODE_LIST=("sdist" "universal" "bdist")
-#DEFAULT_MODE_LIST=("sdist" "native" "universal")
+#DEFAULT_MODE_LIST=("sdist" "bdist")
 #DEFAULT_MODE_LIST=("sdist" "native")
+DEFAULT_MODE_LIST=("sdist" "native")
 #DEFAULT_MODE_LIST=("sdist" "bdist")
 
 check_variable DEPLOY_REMOTE
@@ -116,6 +116,7 @@ WAS_INTERACTION="False"
 
 echo "
 === PYPI BUILDING SCRIPT ==
+NAME='$NAME'
 VERSION='$VERSION'
 TWINE_USERNAME='$TWINE_USERNAME'
 TWINE_REPOSITORY_URL = $TWINE_REPOSITORY_URL
@@ -226,28 +227,18 @@ if [ "$DO_BUILD" == "True" ]; then
 
     echo "LIVE BUILDING"
     # Build wheel and source distribution
-
-    #WHEEL_PATHS=()
     for _MODE in "${MODE_LIST[@]}"
     do
         echo "_MODE = $_MODE"
         if [[ "$_MODE" == "sdist" ]]; then
             python setup.py sdist || { echo 'failed to build sdist wheel' ; exit 1; }
-            WHEEL_PATH=$(ls dist/$NAME-$VERSION*.tar.gz)
-            #WHEEL_PATHS+=($WHEEL_PATH)
+            WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.tar.gz)
         elif [[ "$_MODE" == "native" ]]; then
             python setup.py bdist_wheel || { echo 'failed to build native wheel' ; exit 1; }
-            WHEEL_PATH=$(ls dist/$NAME-$VERSION*.whl)
-            #WHEEL_PATHS+=($WHEEL_PATH)
-        elif [[ "$_MODE" == "universal" ]]; then
-            python setup.py bdist_wheel --universal || { echo 'failed to build universal wheel' ; exit 1; }
-            UNIVERSAL_TAG="py3-none-any"
-            WHEEL_PATH=$(ls dist/$NAME-$VERSION-$UNIVERSAL_TAG*.whl)
-            #WHEEL_PATHS+=($WHEEL_PATH)
+            WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.whl)
         elif [[ "$_MODE" == "bdist" ]]; then
             echo "Assume wheel has already been built"
-            WHEEL_PATH=$(ls wheelhouse/$NAME-$VERSION-*.whl)
-            #WHEEL_PATHS+=($WHEEL_PATH)
+            WHEEL_PATH=$(ls "wheelhouse/$NAME-$VERSION-"*.whl)
         else
             echo "bad mode"
             exit 1
@@ -269,18 +260,14 @@ for _MODE in "${MODE_LIST[@]}"
 do
     echo "_MODE = $_MODE"
     if [[ "$_MODE" == "sdist" ]]; then
-        WHEEL_PATH=$(ls dist/$NAME-$VERSION*.tar.gz)
-        WHEEL_PATHS+=($WHEEL_PATH)
+        WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.tar.gz)
+        WHEEL_PATHS+=("$WHEEL_PATH")
     elif [[ "$_MODE" == "native" ]]; then
-        WHEEL_PATH=$(ls dist/$NAME-$VERSION*.whl)
-        WHEEL_PATHS+=($WHEEL_PATH)
-    elif [[ "$_MODE" == "universal" ]]; then
-        UNIVERSAL_TAG="py3-none-any"
-        WHEEL_PATH=$(ls dist/$NAME-$VERSION-$UNIVERSAL_TAG*.whl)
-        WHEEL_PATHS+=($WHEEL_PATH)
+        WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.whl)
+        WHEEL_PATHS+=("$WHEEL_PATH")
     elif [[ "$_MODE" == "bdist" ]]; then
-        WHEEL_PATH=$(ls wheelhouse/$NAME-$VERSION-*.whl)
-        WHEEL_PATHS+=($WHEEL_PATH)
+        WHEEL_PATH=$(ls "wheelhouse/$NAME-$VERSION-"*.whl)
+        WHEEL_PATHS+=("$WHEEL_PATH")
     else
         echo "bad mode"
         exit 1
@@ -318,13 +305,13 @@ if [ "$DO_GPG" == "True" ]; then
             echo "Signing wheels"
             GPG_SIGN_CMD="$GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user $GPG_KEYID"
             echo "GPG_SIGN_CMD = $GPG_SIGN_CMD"
-            $GPG_SIGN_CMD --output $WHEEL_PATH.asc $WHEEL_PATH
+            $GPG_SIGN_CMD --output "$WHEEL_PATH".asc "$WHEEL_PATH"
 
             echo "Checking wheels"
-            twine check $WHEEL_PATH.asc $WHEEL_PATH || { echo 'could not check wheels' ; exit 1; }
+            twine check "$WHEEL_PATH".asc "$WHEEL_PATH" || { echo 'could not check wheels' ; exit 1; }
 
             echo "Verifying wheels"
-            $GPG_EXECUTABLE --verify $WHEEL_PATH.asc $WHEEL_PATH || { echo 'could not verify wheels' ; exit 1; }
+            $GPG_EXECUTABLE --verify "$WHEEL_PATH".asc "$WHEEL_PATH" || { echo 'could not verify wheels' ; exit 1; }
     done
     echo "
     === <END GPG SIGN> ===
@@ -340,7 +327,7 @@ if [[ "$DO_TAG" == "True" ]]; then
     # git push origin :refs/tags/$TAG_NAME
     # and then tag with -f
     # 
-    git tag $TAG_NAME -m "tarball tag $VERSION"
+    git tag "$TAG_NAME" -m "tarball tag $VERSION"
     git push --tags $DEPLOY_REMOTE
     echo "Should also do a: git push $DEPLOY_REMOTE main:release"
     echo "For github should draft a new release: https://github.com/PyUtils/line_profiler/releases/new"
@@ -356,13 +343,13 @@ if [[ "$DO_UPLOAD" == "True" ]]; then
     for WHEEL_PATH in "${WHEEL_PATHS[@]}"
     do
         if [ "$DO_GPG" == "True" ]; then
-            twine upload --username $TWINE_USERNAME --password=$TWINE_PASSWORD  \
-                --repository-url $TWINE_REPOSITORY_URL \
-                --sign $WHEEL_PATH.asc $WHEEL_PATH --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
+            twine upload --username "$TWINE_USERNAME" --password=$TWINE_PASSWORD  \
+                --repository-url "$TWINE_REPOSITORY_URL" \
+                --sign "$WHEEL_PATH".asc "$WHEEL_PATH" --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
         else
-            twine upload --username $TWINE_USERNAME --password=$TWINE_PASSWORD \
-                --repository-url $TWINE_REPOSITORY_URL \
-                $WHEEL_PATH --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
+            twine upload --username "$TWINE_USERNAME" --password=$TWINE_PASSWORD \
+                --repository-url "$TWINE_REPOSITORY_URL" \
+                "$WHEEL_PATH" --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
         fi
     done
     echo """
