@@ -1,6 +1,7 @@
 
 def main():
     """
+
     """
     import kwplot
     import sys
@@ -17,6 +18,8 @@ def main():
 
     stats = kwarray.stats_dict(imdata)
     print('stats = {}'.format(ub.repr2(stats, nl=1)))
+
+    imdata = kwarray.atleast_nd(imdata, 3)[..., 0:3]
 
     print('normalize')
     imdata = kwimage.normalize_intensity(imdata, nodata=0)

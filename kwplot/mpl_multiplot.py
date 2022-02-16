@@ -384,11 +384,11 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     # nest into a list of dicts for each line in the multiplot
     valid_keys = list(set(plot_list_kw.keys()) - set(extra_plot_kw_keys))
-    valid_vals = list(ub.dict_take(plot_list_kw, valid_keys))
+    valid_vals = list(ub.take(plot_list_kw, valid_keys))
     plot_kw_list = [dict(zip(valid_keys, vals)) for vals in zip(*valid_vals)]
 
     extra_kw_keys = [key for key in extra_plot_kw_keys if key in plot_list_kw]
-    extra_kw_vals = list(ub.dict_take(plot_list_kw, extra_kw_keys))
+    extra_kw_vals = list(ub.take(plot_list_kw, extra_kw_keys))
     extra_kw_list = [dict(zip(extra_kw_keys, vals)) for vals in zip(*extra_kw_vals)]
 
     # Get passed in axes or setup a new figure

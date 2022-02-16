@@ -260,22 +260,22 @@ def autompl(verbose=0, recheck=False, force=None):
         _AUTOMPL_WAS_RUN = True
 
 
-def autoplt(verbose=0, recheck=False):
+def autoplt(verbose=0, recheck=False, force=None):
     """
     Like autompl, but also returns the `matplotlib.pyplot` module for
     convenience.
     """
-    autompl(verbose=verbose, recheck=recheck)
+    autompl(verbose=verbose, recheck=recheck, force=force)
     from matplotlib import pyplot as plt
     return plt
 
 
-def autosns(verbose=0, recheck=False):
+def autosns(verbose=0, recheck=False, force=None):
     """
     Like autosns, but also calls `seaborn.set` and returns the `seaborn` module
     for convenience.
     """
-    autompl(verbose=verbose, recheck=recheck)
+    autompl(verbose=verbose, recheck=recheck, force=force)
     import seaborn as sns
     sns.set()
     return sns
