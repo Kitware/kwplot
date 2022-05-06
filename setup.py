@@ -5,7 +5,7 @@ from setuptools import setup
 import sys
 
 
-def parse_version(fpath):
+def static_parse(varname, fpath):
     """
     Statically parse the version number from a python file
     """
@@ -18,7 +18,7 @@ def parse_version(fpath):
     class VersionVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, 'id', None) == '__version__':
+                if getattr(target, 'id', None) == varname:
                     self.version = node.value.s
     visitor = VersionVisitor()
     visitor.visit(pt)
@@ -191,15 +191,16 @@ except Exception:
 
 
 NAME = 'kwplot'
-VERSION = version = parse_version('kwplot/__init__.py')  # needs to be a global var for git tags
+INIT_PATH = 'kwplot/__init__.py'
+VERSION = version = static_parse('__version__', INIT_PATH)  # needs to be a global var for git tags
 
 if __name__ == '__main__':
     setup(
         name=NAME,
         version=VERSION,
-        author='Kitware Inc., Jon Crall',
-        author_email='kitware@kitware.com, jon.crall@kitware.com',
-        url='https://gitlab.kitware.com/computer-vision/kwplot',
+        author=static_parse('__author___', INIT_PATH),
+        author_email=static_parse('__author_email___', INIT_PATH),
+        url=static_parse('__author_email___', INIT_PATH),
         description='A wrapper around matplotlib',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',

@@ -707,3 +707,43 @@ def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
         artist = _phantom['artist']
         if artist is not legend_artist:
             ax.add_artist(artist)
+
+
+def close_figures(figures=None):
+    """
+    Close specified figures. If no figures are specified, close all figure.
+
+    Args:
+        figures (List[Figure]): list of figures to close
+    """
+    if figures is None:
+        figures = all_figures()
+    for fig in figures:
+        # TODO: make work for more than QT
+        try:
+            qwin = fig.canvas.manager.window
+        except AttributeError:
+            qwin = fig.canvas.window()
+        qwin.close()
+
+
+def all_figures():
+    """
+    Return a list of all open figures
+
+    Returns:
+        List[Figure]: list of all figures
+    """
+    import matplotlib as mpl
+    manager_list = mpl._pylab_helpers.Gcf.get_all_fig_managers()
+    all_figures = []
+    # Make sure you dont show figures that this module closed
+    for manager in manager_list:
+        try:
+            fig = manager.canvas.figure
+        except AttributeError:
+            continue
+        all_figures.append(fig)
+    # Return all the figures sorted by their number
+    all_figures = sorted(all_figures, key=lambda fig: fig.number)
+    return all_figures
