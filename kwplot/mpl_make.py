@@ -11,7 +11,6 @@ from kwimage import make_heatmask, make_vector_field, make_orimask  # NOQA
 __all__ = [
     'make_heatmask', 'make_vector_field', 'make_orimask', 'make_legend_img',
     'render_figure_to_image',
-
 ]
 
 
@@ -68,15 +67,24 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
 
 def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
     r"""
-    Crops image to remove fillval
+    Crops image to remove any constant color padding.
 
     Args:
-        img (ndarray[uint8_t, ndim=2]):  image data
-        fillval (None): (default = None)
-        thresh (int): (default = 0)
+        img (ndarray[uint8_t, ndim=2]):
+            image data
+
+        fillval (None):
+            The color to replace.
+            Defaults "white" (i.e. `(255,) * num_channels`)
+
+        thresh (int):
+            Allowable difference to `fillval` (default = 0)
 
     Returns:
         ndarray: cropped_img
+
+    TODO:
+        does this belong in kwimage?
     """
     import kwimage
     if fillval is None:

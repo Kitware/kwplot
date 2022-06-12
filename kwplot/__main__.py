@@ -1,15 +1,26 @@
 
 def main():
     """
-
     """
-    import kwplot
     import sys
+    from os.path import exists
+
+    mode = sys.argv[1]
+
+    if exists(mode):
+        fpath = mode
+        mode = 'imshow'
+
+    if mode == 'imshow':
+        cli_imshow(fpath)
+
+
+def cli_imshow(fpath):
     import ubelt as ub
     import kwimage
     import kwarray
+    import kwplot
     plt = kwplot.autoplt()
-    fpath = sys.argv[1]
     print('read fpath = {!r}'.format(fpath))
     imdata = kwimage.imread(fpath, nodata='float')
 
