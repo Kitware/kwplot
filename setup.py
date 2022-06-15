@@ -238,6 +238,9 @@ if __name__ == '__main__':
                 'kwplot = kwplot.__main__:main'
             ]
         },
+        package_data={
+            'kwplot': ['py.typed', '*.pyi'],
+        },
         license='Apache 2',
         packages=find_packages('.'),
         python_requires='>=3.6',

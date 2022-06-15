@@ -28,7 +28,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             x-coordinate data common to all y-coordinate values or xdata for
             each line/bar in ydata.  Mutually exclusive with xydata.
 
-        ydata (List[ndarray] | Dict[str, ndarray] | ndarary):
+        ydata (List[ndarray] | Dict[str, ndarray] | ndarray):
             y-coordinate values for each line/bar to plot. Can also
             be just a single ndarray of scalar values. Mutually exclusive with
             xydata.

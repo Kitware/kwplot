@@ -69,11 +69,13 @@ mkinit -m kwplot -w --relative --nomods
 mkinit -m kwplot --diff --relative --nomods
 """
 
+# Backwards compat
+from kwimage import Color  # noqa
+
 from .auto_backends import (BackendContext, autompl, autoplt, autosns,
                             set_mpl_backend,)
 from .draw_conv import (make_conv_images, plot_convolutional_features,)
 from .mpl_3d import (plot_surface3d,)
-from .mpl_color import (Color,)
 from .mpl_core import (all_figures, close_figures, distinct_colors,
                        distinct_markers, ensure_fnum, figure, imshow, legend,
                        next_fnum, phantom_legend, set_figtitle,
@@ -85,6 +87,7 @@ from .mpl_make import (make_heatmask, make_legend_img, make_orimask,
                        make_vector_field, render_figure_to_image,)
 from .mpl_multiplot import (multi_plot,)
 from .mpl_plotnums import (PlotNums,)
+
 
 __all__ = ['BackendContext', 'Color', 'PlotNums', 'all_figures', 'autompl',
            'autoplt', 'autosns', 'close_figures', 'distinct_colors',

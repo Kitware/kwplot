@@ -48,7 +48,7 @@ def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
         doclf (bool): (default = False)
 
     Returns:
-        mpl.Figure: fig
+        mpl.figure.Figure: fig
 
     Example:
         >>> import kwplot
@@ -264,22 +264,24 @@ def imshow(img,
         norm (bool): if True, normalizes the image intensities to fit in a
             colormap.
 
-        cmap (Colormap): color map used if data is not starndard image data
+        cmap (mpl.colors.Colormap | None):
+            color map used if data is not starndard image data
 
         data_colorbar (bool): if True, displays a color scale indicating how
             colors map to image intensities.
 
-        fnum (int): figure number
+        fnum (int | None): figure number
 
-        pnum (tuple): plot number
+        pnum (tuple | None): plot number
 
-        xlabel (str): sets the label for the x axis
+        xlabel (str | None): sets the label for the x axis
 
-        title (str): set axes title (if ax is not given)
+        title (str | None): set axes title (if ax is not given)
 
-        figtitle (None): set figure title (if ax is not given)
+        figtitle (str | None): set figure title (if ax is not given)
 
-        ax (Axes): axes to draw on (alternative to fnum and pnum)
+        ax (mpl.axes.Axes | None):
+            axes to draw on (alternative to fnum and pnum)
 
         **kwargs: docla, doclf, projection
 
@@ -450,9 +452,12 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
                  size=None, fontfamily=None, fontweight=None,
                  fig=None):
     r"""
+    A wrapper around subtitle that also sets the canvas window title if using a
+    Qt backend.
+
     Args:
-        figtitle (?):
-        subtitle (str): (default = '')
+        figtitle (str):
+        subtitle (str):
         forcefignum (bool): (default = True)
         incanvas (bool): (default = True)
         fontfamily (None): (default = None)
@@ -461,7 +466,7 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         fig (None): (default = None)
 
     CommandLine:
-        python -m .custom_figure set_figtitle --show
+        python -m kwplot.mpl_core set_figtitle --show
 
     Example:
         >>> # DISABLE_DOCTEST
@@ -674,7 +679,7 @@ def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
     Creates a legend on an axis based on a label-to-color map.
 
     Args:
-        label_to_color (Dict[str, Color]):
+        label_to_color (Dict[str, kwimage.Color]):
             mapping from string label to the color.
 
     TODO:
@@ -724,7 +729,7 @@ def close_figures(figures=None):
     Close specified figures. If no figures are specified, close all figure.
 
     Args:
-        figures (List[Figure]): list of figures to close
+        figures (List[mpl.figure.Figure]): list of figures to close
     """
     if figures is None:
         figures = all_figures()
@@ -742,7 +747,7 @@ def all_figures():
     Return a list of all open figures
 
     Returns:
-        List[Figure]: list of all figures
+        List[mpl.figure.Figure]: list of all figures
     """
     import matplotlib as mpl
     manager_list = mpl._pylab_helpers.Gcf.get_all_fig_managers()

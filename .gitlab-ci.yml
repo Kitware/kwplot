@@ -641,11 +641,18 @@ test_minimal_strict/cp36-cp36m-linux:
         #pip install pip -U
         #pip install pip setuptools -U
 
-        # STRICT VARIANT
-        pip install -e .[runtime-strict,tests-strict,headless-strict]
+        # FULL STRICT VARIANT
+        pip install -e .[all-strict,headless-strict]
         ./run_tests.py
 
-        # LOOSE VARIANT
-        #pip install -e .[all,headless]
+        # FULL LOOSE VARIANT
+        pip install -e .[all,headless]
+        ./run_tests.py
+
+        # MINIMAL STRICT VARIANT
+        pip install -e .[runtime-strict,tests-strict]
+        ./run_tests.py
+
+        # MINIMAL LOOSE VARIANT
         pip install -e .[tests]
         ./run_tests.py

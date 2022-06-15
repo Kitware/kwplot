@@ -19,7 +19,7 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
     Convert convolutional weights to a list of visualize-able images
 
     Args:
-        conv (Conv2d)
+        conv (torch.nn.Conv2d): a torch convolutional layer
         color (bool): if True output images are colorized
         norm_per_feat (bool): if True normalizes over each feature separately,
             otherwise normalizes all features together.
@@ -114,8 +114,9 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         - [ ] refactor to use make_conv_images
 
     Args:
-        conv (torch.nn.ConvNd): torch convolutional layer with weights to draw
-        limit (int, optional): the limit on the number of filters drawn in the
+        conv (torch.nn.modules.conv._ConvNd): torch convolutional layer with weights to draw
+
+        limit (int): the limit on the number of filters drawn in the
             figure, achieved by simply dropping any filters past the limit
             starting at the first filter.  Detaults to 144.
 
@@ -123,7 +124,9 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
             (if applicable), so we can convert to rgb for display.
 
         voxels (bool): if True, and we have a 3d conv, show the voxels
+
         alpha (float): only applicable if voxels=True
+
         stride (list): only applicable if voxels=True
 
     Returns:

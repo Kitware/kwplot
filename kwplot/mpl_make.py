@@ -20,8 +20,8 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     Makes an image of a categorical legend
 
     Args:
-        label_to_color (Dict[str, Color]): mapping from string label to the
-            color.
+        label_to_color (Dict[str, kwimage.Color]):
+            mapping from string label to the color.
 
     CommandLine:
         xdoctest -m kwplot.mpl_make make_legend_img --show
@@ -70,7 +70,7 @@ def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
     Crops image to remove any constant color padding.
 
     Args:
-        img (ndarray[uint8_t, ndim=2]):
+        img (NDArray):
             image data
 
         fillval (None):
@@ -175,7 +175,7 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
     Args:
         fig (matplotlib.figure.Figure): figure to save
 
-        dpi (int or str, Optional):
+        dpi (Optional[int | str]):
             The resolution in dots per inch.  If *None* it will default to the
             value ``savefig.dpi`` in the matplotlibrc file.  If 'figure' it
             will set the dpi to be the value of the figure.
@@ -185,14 +185,14 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
             figure patch will also be transparent unless facecolor
             and/or edgecolor are specified via kwargs.
 
-        **savekw: other keywords passed to `fig.savefig`. Valid keywords
+        **savekw: other keywords passed to ``fig.savefig``. Valid keywords
             include: facecolor, edgecolor, orientation, papertype, format,
             pad_inches, frameon.
 
     Returns:
         np.ndarray: an image in RGB or RGBA format.
 
-    Notes:
+    Note:
         Be sure to use `fig.set_size_inches` to an appropriate size before
         calling this function.
 
