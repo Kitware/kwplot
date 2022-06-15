@@ -10,20 +10,34 @@ def parse_version(fpath):
     """
     Statically parse the version number from a python file
     """
+    value = static_parse('__version__', fpath)
+    return value
+
+
+def static_parse(varname, fpath):
+    """
+    Statically parse the a constant variable from a python file
+    """
     import ast
     if not exists(fpath):
         raise ValueError('fpath={!r} does not exist'.format(fpath))
     with open(fpath, 'r') as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
-    class VersionVisitor(ast.NodeVisitor):
+    class StaticVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, 'id', None) == '__version__':
-                    self.version = node.value.s
-    visitor = VersionVisitor()
+                if getattr(target, 'id', None) == varname:
+                    self.static_value = node.value.s
+    visitor = StaticVisitor()
     visitor.visit(pt)
-    return visitor.version
+    try:
+        value = visitor.static_value
+    except AttributeError:
+        import warnings
+        value = 'Unknown {}'.format(varname)
+        warnings.warn(value)
+    return value
 
 
 def parse_description():
@@ -186,26 +200,6 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
     else:
         raise NotImplementedError(plat_impl)
     return mb_tag
-
-
-def static_parse(varname, fpath):
-    """
-    Statically parse the version number from a python file
-    """
-    import ast
-    if not exists(fpath):
-        raise ValueError('fpath={!r} does not exist'.format(fpath))
-    with open(fpath, 'r') as file_:
-        sourcecode = file_.read()
-    pt = ast.parse(sourcecode)
-    class VersionVisitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            for target in node.targets:
-                if getattr(target, 'id', None) == varname:
-                    self.version = node.value.s
-    visitor = VersionVisitor()
-    visitor.visit(pt)
-    return visitor.version
 
 
 NAME = 'kwplot'
