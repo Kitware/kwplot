@@ -209,12 +209,8 @@ def static_parse(varname, fpath):
 
 
 NAME = 'kwplot'
-VERSION = parse_version('kwplot/__init__.py')
-
-
-NAME = 'kwplot'
-VERSION = parse_version('kwplot/__init__.py')
 INIT_PATH = 'kwplot/__init__.py'
+VERSION = parse_version(INIT_PATH)
 
 
 if __name__ == '__main__':
@@ -223,7 +219,7 @@ if __name__ == '__main__':
         version=VERSION,
         author=static_parse('__author__', INIT_PATH),
         author_email=static_parse('__author_email__', INIT_PATH),
-        url=static_parse('__author_email__', INIT_PATH),
+        url=static_parse('__url__', INIT_PATH),
         description='A wrapper around matplotlib',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',
