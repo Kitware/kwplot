@@ -1,7 +1,7 @@
 The Kitware Plot Module
 =======================
 
-|GitlabCIPipeline| |GitlabCICoverage| |Appveyor| |Pypi| |Downloads| 
+|GitlabCIPipeline| |GitlabCICoverage| |Appveyor| |Pypi| |Downloads| |ReadTheDocs|
 
 The main webpage for this project is: https://gitlab.kitware.com/computer-vision/kwplot
 

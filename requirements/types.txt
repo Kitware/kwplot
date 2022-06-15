@@ -1,0 +1,3 @@
+# If doing type checking
+
+pandas-stubs>=1.2.0.61

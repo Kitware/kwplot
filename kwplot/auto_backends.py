@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+This module handles automatically determening a "good" matplotlib backend to
+use before importing pyplot.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 import os
@@ -108,7 +112,8 @@ def autompl(verbose=0, recheck=False, force=None):
             time).
         force (str, default=None): backend to force to or "auto"
 
-    Checks:
+    CommandLine:
+        # Checks
         export QT_DEBUG_PLUGINS=1
         xdoctest -m kwplot.auto_backends autompl --check
         KWPLOT_UNSAFE=1 xdoctest -m kwplot.auto_backends autompl --check
@@ -262,8 +267,11 @@ def autompl(verbose=0, recheck=False, force=None):
 
 def autoplt(verbose=0, recheck=False, force=None):
     """
-    Like autompl, but also returns the `matplotlib.pyplot` module for
+    Like autompl, but also returns the :mod:`matplotlib.pyplot` module for
     convenience.
+
+    Returns:
+        ModuleType
     """
     autompl(verbose=verbose, recheck=recheck, force=force)
     from matplotlib import pyplot as plt
@@ -272,8 +280,11 @@ def autoplt(verbose=0, recheck=False, force=None):
 
 def autosns(verbose=0, recheck=False, force=None):
     """
-    Like autosns, but also calls `seaborn.set` and returns the `seaborn` module
-    for convenience.
+    Like autompl, but also calls :func:`seaborn.set` and returns the
+    :mod:`seaborn` module for convenience.
+
+    Returns:
+        ModuleType
     """
     autompl(verbose=verbose, recheck=recheck, force=force)
     import seaborn as sns
@@ -286,7 +297,12 @@ class BackendContext(object):
     Context manager that ensures a specific backend, but then reverts after the
     context has ended.
 
-    Checks:
+    Because this changes the backend after pyplot has initialized, there is a
+    chance for odd behavior to occur. Please submit and issue if you experience
+    this and can document the environment that caused it.
+
+    CommandLine:
+        # Checks
         xdoctest -m kwplot.auto_backends BackendContext --check
 
     Example:

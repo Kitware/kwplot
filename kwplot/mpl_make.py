@@ -11,7 +11,6 @@ from kwimage import make_heatmask, make_vector_field, make_orimask  # NOQA
 __all__ = [
     'make_heatmask', 'make_vector_field', 'make_orimask', 'make_legend_img',
     'render_figure_to_image',
-
 ]
 
 
@@ -21,8 +20,8 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     Makes an image of a categorical legend
 
     Args:
-        label_to_color (Dict[str, Color]): mapping from string label to the
-            color.
+        label_to_color (Dict[str, kwimage.Color]):
+            mapping from string label to the color.
 
     CommandLine:
         xdoctest -m kwplot.mpl_make make_legend_img --show
@@ -68,15 +67,24 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
 
 def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
     r"""
-    Crops image to remove fillval
+    Crops image to remove any constant color padding.
 
     Args:
-        img (ndarray[uint8_t, ndim=2]):  image data
-        fillval (None): (default = None)
-        thresh (int): (default = 0)
+        img (NDArray):
+            image data
+
+        fillval (None):
+            The color to replace.
+            Defaults "white" (i.e. `(255,) * num_channels`)
+
+        thresh (int):
+            Allowable difference to `fillval` (default = 0)
 
     Returns:
         ndarray: cropped_img
+
+    TODO:
+        does this belong in kwimage?
     """
     import kwimage
     if fillval is None:
@@ -167,7 +175,7 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
     Args:
         fig (matplotlib.figure.Figure): figure to save
 
-        dpi (int or str, Optional):
+        dpi (Optional[int | str]):
             The resolution in dots per inch.  If *None* it will default to the
             value ``savefig.dpi`` in the matplotlibrc file.  If 'figure' it
             will set the dpi to be the value of the figure.
@@ -177,14 +185,14 @@ def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
             figure patch will also be transparent unless facecolor
             and/or edgecolor are specified via kwargs.
 
-        **savekw: other keywords passed to `fig.savefig`. Valid keywords
+        **savekw: other keywords passed to ``fig.savefig``. Valid keywords
             include: facecolor, edgecolor, orientation, papertype, format,
             pad_inches, frameon.
 
     Returns:
         np.ndarray: an image in RGB or RGBA format.
 
-    Notes:
+    Note:
         Be sure to use `fig.set_size_inches` to an appropriate size before
         calling this function.
 

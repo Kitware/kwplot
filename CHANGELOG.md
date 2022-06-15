@@ -3,7 +3,13 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.4.11 - Unreleased
+## Version 0.4.12 - Unreleased
+
+### Added
+* Add `kwplot.close_figures` and `kwplot.all_figures`.
+
+
+## Version 0.4.11 - Released 2022-02-16
 
 
 ## Version 0.4.10 - Released 2021-11-05

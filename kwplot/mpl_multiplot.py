@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+DEPRECATED: Use seaborn instead
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import ubelt as ub
@@ -25,7 +28,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             x-coordinate data common to all y-coordinate values or xdata for
             each line/bar in ydata.  Mutually exclusive with xydata.
 
-        ydata (List[ndarray] | Dict[str, ndarray] | ndarary):
+        ydata (List[ndarray] | Dict[str, ndarray] | ndarray):
             y-coordinate values for each line/bar to plot. Can also
             be just a single ndarray of scalar values. Mutually exclusive with
             xydata.
@@ -34,28 +37,29 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             mapping from labels to a tuple of xdata and ydata for a each line.
 
         **kwargs:
-
             fnum (int):
                 figure number to draw on
 
             pnum (Tuple[int, int, int]):
-                plot number to draw on within the figure: e.g. (1, 1, 1)
+                plot number to draw on within the figure, e.g. (1, 1, 1)
 
-            label (List|Dict): if you specified ydata as a List[ndarray]
-                this is the label for each line in that list. Note this is
-                unnecessary if you specify input as a dictionary mapping labels
-                to lines.
+            label (List|Dict):
+                if you specified ydata as a List[ndarray] this is the label for
+                each line in that list. Note this is unnecessary if you specify
+                input as a dictionary mapping labels to lines.
 
-            color (str|List|Dict): either a special color code, a single color,
-                or a color for each item in ydata. In the later case, this
-                should be specified as either a list or a dict depending on how
-                ydata was specified.
+            color (str|List|Dict):
+                either a special color code, a single color, or a color for
+                each item in ydata. In the later case, this should be specified
+                as either a list or a dict depending on how ydata was
+                specified.
 
-            marker (str|List|Dict): type of matplotlib marker to use at every
-                data point. Can be specified for all lines jointly or for each
-                line independently.
+            marker (str|List|Dict):
+                type of matplotlib marker to use at every data point. Can be
+                specified for all lines jointly or for each line independently.
 
-            transpose (bool, default=False): swaps x and y data.
+            transpose (bool, default=False):
+                swaps x and y data.
 
             kind (str, default='plot'):
                 The kind of plot. Can either be 'plot' or 'bar'.
@@ -108,22 +112,21 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             Data:
                 spread (List | Dict): Plots a spread around plot lines usually
                     indicating standard deviation
-
                 markersize (float|List|Dict): marker size for all or each plot
-
                 markeredgewidth (float|List|Dict): marker edge width for all or each plot
-
                 linewidth (float|List|Dict): line width for all or each plot
-
                 linestyle (str|List|Dict): line style for all or each plot
 
-    Notes:
+    Note:
         any plot_kw key can be a scalar (corresponding to all ydatas),
         a list if ydata was specified as a list, or a dict if ydata was
         specified as a dict.
 
         plot_kw_keys = ['label', 'color', 'marker', 'markersize',
             'markeredgewidth', 'linewidth', 'linestyle']
+
+    Note:
+        In general this should be deprecated in favor of using seaborn
 
     Returns:
         matplotlib.axes.Axes: ax : the axes that was drawn on

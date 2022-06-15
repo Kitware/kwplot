@@ -1,0 +1,6 @@
+def main() -> None:
+    ...
+
+
+def cli_imshow(fpath) -> None:
+    ...
