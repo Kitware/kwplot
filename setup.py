@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from os.path import exists
-from setuptools import setup
 import sys
+from os.path import exists
+
+from setuptools import find_packages
+from setuptools import setup
 
 
-def static_parse(varname, fpath):
+def parse_version(fpath):
     """
     Statically parse the version number from a python file
     """
@@ -18,7 +19,7 @@ def static_parse(varname, fpath):
     class VersionVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, 'id', None) == varname:
+                if getattr(target, 'id', None) == '__version__':
                     self.version = node.value.s
     visitor = VersionVisitor()
     visitor.visit(pt)
@@ -43,14 +44,16 @@ def parse_description():
     return ''
 
 
-def parse_requirements(fname='requirements.txt', with_version=False):
+def parse_requirements(fname='requirements.txt', versions=False):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
 
     Args:
         fname (str): path to requirements file
-        with_version (bool, default=False): if true include version specs
+        versions (bool | str, default=False):
+            If true include version specs.
+            If strict, then pin to the minimum version.
 
     Returns:
         List[str]: list of requirements items
@@ -118,8 +121,15 @@ def parse_requirements(fname='requirements.txt', with_version=False):
         if exists(require_fpath):
             for info in parse_require_file(require_fpath):
                 parts = [info['package']]
-                if with_version and 'version' in info:
-                    parts.extend(info['version'])
+                if versions and 'version' in info:
+                    if versions == 'strict':
+                        # In strict mode, we pin to the minimum version
+                        if info['version']:
+                            # Only replace the first >= instance
+                            verstr = ''.join(info['version']).replace('>=', '==', 1)
+                            parts.append(verstr)
+                    else:
+                        parts.extend(info['version'])
                 if not sys.version.startswith('3.4'):
                     # apparently package_deps are broken in 3.4
                     plat_deps = info.get('platform_deps')
@@ -150,11 +160,7 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
         version_info = sys.version_info
 
     major, minor = version_info[0:2]
-    major, minor = version_info[0:2]
-    if minor > 9:
-        ver = '{}_{}'.format(major, minor)
-    else:
-        ver = '{}{}'.format(major, minor)
+    ver = '{}{}'.format(major, minor)
 
     if plat_impl == 'CPython':
         # TODO: get if cp27m or cp27mu
@@ -166,7 +172,6 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
             else:
                 abi = 'm'
         else:
-            import sys
             if sys.version_info[:2] >= (3, 8):
                 # bpo-36707: 3.8 dropped the m flag
                 abi = ''
@@ -183,35 +188,58 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
     return mb_tag
 
 
-try:
-    MB_PYTHON_TAG = native_mb_python_tag()
-except Exception:
-    # raise
-    MB_PYTHON_TAG = '???'
+def static_parse(varname, fpath):
+    """
+    Statically parse the version number from a python file
+    """
+    import ast
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
+        sourcecode = file_.read()
+    pt = ast.parse(sourcecode)
+    class VersionVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            for target in node.targets:
+                if getattr(target, 'id', None) == varname:
+                    self.version = node.value.s
+    visitor = VersionVisitor()
+    visitor.visit(pt)
+    return visitor.version
 
 
 NAME = 'kwplot'
+VERSION = parse_version('kwplot/__init__.py')
+
+
+NAME = 'kwplot'
+VERSION = parse_version('kwplot/__init__.py')
 INIT_PATH = 'kwplot/__init__.py'
-VERSION = version = static_parse('__version__', INIT_PATH)  # needs to be a global var for git tags
+
 
 if __name__ == '__main__':
     setup(
         name=NAME,
         version=VERSION,
-        author=static_parse('__author___', INIT_PATH),
-        author_email=static_parse('__author_email___', INIT_PATH),
-        url=static_parse('__author_email___', INIT_PATH),
+        author=static_parse('__author__', INIT_PATH),
+        author_email=static_parse('__author_email__', INIT_PATH),
+        url=static_parse('__author_email__', INIT_PATH),
         description='A wrapper around matplotlib',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',
-        install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
             'all': parse_requirements('requirements.txt'),
             'tests': parse_requirements('requirements/tests.txt'),
             'optional': parse_requirements('requirements/optional.txt'),
-            # Really annoying that this is the best we can do
-            'headless': parse_requirements('requirements/headless.txt'),
-            'graphics': parse_requirements('requirements/graphics.txt'),
+            'headless': parse_requirements('requirements/headless.txt'),  # kwplot: +UNCOMMENT_IF(cv2)
+            'graphics': parse_requirements('requirements/graphics.txt'),  # kwplot: +UNCOMMENT_IF(cv2)
+            # Strict versions
+            'headless-strict': parse_requirements('requirements/headless.txt', versions='strict'),  # kwplot: +UNCOMMENT_IF(cv2)
+            'graphics-strict': parse_requirements('requirements/graphics.txt', versions='strict'),  # kwplot: +UNCOMMENT_IF(cv2)
+            'all-strict': parse_requirements('requirements.txt', versions='strict'),
+            'runtime-strict': parse_requirements('requirements/runtime.txt', versions='strict'),
+            'tests-strict': parse_requirements('requirements/tests.txt', versions='strict'),
+            'optional-strict': parse_requirements('requirements/optional.txt', versions='strict'),
         },
         entry_points={
             # the console_scripts entry point creates the xdoctest executable
@@ -220,25 +248,24 @@ if __name__ == '__main__':
             ]
         },
         license='Apache 2',
-        packages=['kwplot'],
+        packages=find_packages('.'),
+        python_requires='>=3.6',
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-            'Development Status :: 4 - Beta',
+            'Development Status :: 3 - Alpha',
             'Intended Audience :: Developers',
-            'Intended Audience :: Science/Research',
-            'Topic :: Scientific/Engineering',
-            'Topic :: Scientific/Engineering :: Visualization',
-            'Topic :: Software Development',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Utilities',
             # This should be interpreted as Apache License v2.0
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
             # 'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3.5',
+            # 'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
         ],
     )
