@@ -217,6 +217,7 @@ if __name__ == '__main__':
         description='A wrapper around matplotlib',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',
+        install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
             'all': parse_requirements('requirements.txt'),
             'tests': parse_requirements('requirements/tests.txt'),

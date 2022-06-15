@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+Defines the :class:`kwplot.mpl_plotnums.PlotNums` class to help manage a grid
+of subplot numbers.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import six
@@ -7,6 +11,13 @@ import six
 class PlotNums(object):
     """
     Convinience class for dealing with plot numberings (pnums)
+
+    This is useful in the case where you want a certain number of subplots, but
+    you might swap the order in which those subplots are called. This class
+    introduces the idea of either getting the "next" subplot, or getting one at
+    a specific instance. The total number of subplots can be modified in just a
+    single place in the code (the arguments to the ``PlotNums`` constructor)
+    instead of each instance where you would specify a pnum normally.
 
     Example:
         >>> import ubelt as ub

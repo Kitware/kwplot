@@ -1,3 +1,7 @@
+"""
+A simple CLI for helping with plotting and viewing tasks
+"""
+
 
 def main():
     """

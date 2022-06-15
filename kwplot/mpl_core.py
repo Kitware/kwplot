@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+"""
+Extensions of pyplot functionality. Main improvements are
+
+* :func:`kwplot.mpl_core.figure` can be called with a specific figure number, plot number, and other attributes like if it needs to be cleared or not.
+
+* :func:`kwplot.mpl_core.imshow` uses simpler defaults for showing image data. Extra normalization is only added if requested.
+
+* :func:`kwplot.mpl_core.close_figures` This function closes all open figures, which can be helpful in interactive sessions.
+
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import six

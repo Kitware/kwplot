@@ -646,5 +646,6 @@ test_minimal_strict/cp36-cp36m-linux:
         ./run_tests.py
 
         # LOOSE VARIANT
-        pip install -e .[all,headless]
+        #pip install -e .[all,headless]
+        pip install -e .[tests]
         ./run_tests.py
