@@ -74,4 +74,8 @@ class mcolors:
     }
 
 
-from kwimage import Color  # noqa
+# Backwards compat
+try:
+    from kwimage import Color  # noqa
+except ImportError:
+    Color = None

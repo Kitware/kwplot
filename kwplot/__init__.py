@@ -70,7 +70,10 @@ mkinit -m kwplot --diff --relative --nomods
 """
 
 # Backwards compat
-from kwimage import Color  # noqa
+try:
+    from kwimage import Color  # noqa
+except ImportError:
+    Color = None
 
 from .auto_backends import (BackendContext, autompl, autoplt, autosns,
                             set_mpl_backend,)
