@@ -24,10 +24,11 @@ python:
   version: 3.7
   install:
     - requirements: requirements/docs.txt
+    - requirements: requirements/headless.txt
     - method: pip
       path: .
-      extra_requirements:
-        - headless
+      #extra_requirements:
+      #  - headless
 
 #conda:
 #  environment: environment.yml
