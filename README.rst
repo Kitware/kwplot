@@ -47,8 +47,8 @@ the density of visualization code in research scripts).
 .. |Downloads| image:: https://img.shields.io/pypi/dm/kwplot.svg
    :target: https://pypistats.org/packages/kwplot
 
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/kwplot/badge/?version=latest
-    :target: http://kwplot.readthedocs.io/en/latest/
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/kwplot/badge/?version=main
+    :target: http://kwplot.readthedocs.io/en/main/
 
 .. # See: https://ci.appveyor.com/project/jon.crall/kwplot/settings/badges
 .. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/py3s2d6tyfjc8lm3/branch/master?svg=true
