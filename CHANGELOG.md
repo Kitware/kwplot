@@ -12,6 +12,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Add `kwplot.close_figures` and `kwplot.all_figures`.
 
 
+### Changed
+* Replaced deprecated pylab magic with matplotlib magic when in IPython.
+
+
 ## Version 0.4.11 - Released 2022-02-16
 
 

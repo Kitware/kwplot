@@ -41,10 +41,9 @@ def _qtensure():
         if ipython:
             if 'PyQt4' in sys.modules:
                 ipython.magic('pylab qt4 --no-import-all')
-                _qtensured = True
             else:
-                ipython.magic('pylab qt5 --no-import-all')
-                _qtensured = True
+                ipython.magic('%matplotlib qt')
+            _qtensured = True
 
 
 def _aggensure():
