@@ -23,12 +23,32 @@ __all__ = [
 def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
                fill=False, ax=None, lw=2):
     """
+    Draws boxes using matplotlib
+
     Args:
         boxes (kwimage.Boxes):
-        labels (List[str]): of labels
-        alpha (List[float]): alpha for each box
-        centers (bool): draw centers or not
-        lw (float): linewidth
+
+        color (str | Any | List[Any]):
+            one color for all boxes or a list of colors for each box
+            Can be any type accepted by kwimage.Color.coerce.
+            Extended types: str | ColorLike | List[ColorLike]
+
+        alpha (float | List[float] | None):
+            A single transparency for all boxes, or a list of
+            transparencies for each box.
+
+        labels (List[str] | None): a text label for each box
+
+        centers (bool): if True, draw box centers.
+
+        lw (float): linewidth for the box edges
+
+        ax (Optional[matplotlib.axes.Axes]):
+            if specified, draws on this existing axes, otherwise defaults
+            to the current axes.
+
+        setlim (bool):
+            if True will set the limit of the axes to show the drawn boxes.
 
     Example:
         >>> import kwimage
