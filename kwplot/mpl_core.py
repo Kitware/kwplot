@@ -662,7 +662,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         hue_skip_ranges = [_[1] - _[0] for _ in hue_skips]
         total_skip = sum(hue_skip_ranges)
         hmax_ = hmax - total_skip
-        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=np.float)
+        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=float)
         # Remove colors (like hard to see yellows) in specified ranges
         for skip, range_ in zip(hue_skips, hue_skip_ranges):
             hue_list = [hue if hue <= skip[0] else hue + range_ for hue in hue_list]
