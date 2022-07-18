@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.4.13 - Unreleased
 
+### Added
+* Gifify script
+
 
 ## Version 0.4.12 - Released 2022-09-27
 

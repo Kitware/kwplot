@@ -42,7 +42,12 @@ def _qtensure():
             if 'PyQt4' in sys.modules:
                 ipython.magic('pylab qt4 --no-import-all')
             else:
-                ipython.magic('%matplotlib qt')
+                if hasattr(ipython, 'run_line_magic'):
+                    # For IPython >= 8.1
+                    ipython.run_line_magic('matplotlib', 'qt')
+                else:
+                    # `magic(...)` is deprecated since IPython 0.13
+                    ipython.magic('%matplotlib qt')
             _qtensured = True
 
 
