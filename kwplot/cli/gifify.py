@@ -89,6 +89,7 @@ def main():
         ns['delay']
         # ns['delay']
         in_framerate = ns['frames_per_second']
+        frame_fpaths = frame_fpaths[0:16]
         ffmpeg_animate_frames(frame_fpaths, output_fpath,
                               in_framerate=in_framerate,
                               max_width=ns['max_width'])
