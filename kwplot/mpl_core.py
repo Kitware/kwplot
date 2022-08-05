@@ -225,18 +225,21 @@ def show_if_requested(N=1):
     import matplotlib.pyplot as plt
     # Process figures adjustments from command line before a show or a save
 
-    save_parts = ub.argflag('--saveparts')
+    # save_parts = ub.argflag('--saveparts')
+    # fpath_ = ub.argval('--save', default=None)
+    # if fpath_ is None:
+    #     fpath_ = ub.argval('--saveparts', default=None)
+    #     if fpath_ is not None:
+    #         save_parts = True
 
-    fpath_ = ub.argval('--save', default=None)
-    if fpath_ is None:
-        fpath_ = ub.argval('--saveparts', default=None)
-        if fpath_ is not None:
-            save_parts = True
+    # if save_parts:
+    #     raise NotImplementedError
+    # if fpath_ is not None:
+    #     raise NotImplementedError
 
-    if save_parts:
-        raise NotImplementedError
-    if fpath_ is not None:
-        raise NotImplementedError
+    if ub.argflag('--nointeract'):
+        return
+
     if ub.argflag('--show'):
         plt.show()
 
@@ -736,11 +739,18 @@ def close_figures(figures=None):
         figures = all_figures()
     for fig in figures:
         # TODO: make work for more than QT
-        try:
-            qwin = fig.canvas.manager.window
-        except AttributeError:
+        if hasattr(fig.canvas.manager, 'window'):
+            try:
+                qwin = fig.canvas.manager.window
+            except AttributeError:
+                qwin = fig.canvas.window()
+            qwin.close()
+        elif hasattr(fig.canvas, 'window'):
             qwin = fig.canvas.window()
-        qwin.close()
+            qwin.close()
+        else:
+            from matplotlib import pyplot as plt
+            plt.close(fig)
 
 
 def all_figures():

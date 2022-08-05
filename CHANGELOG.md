@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 * Gifify script
 
+### Fixed
+* Fixed close figures with agg.
+
 
 ## Version 0.4.12 - Released 2022-09-27
 
