@@ -43,7 +43,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
         lw (float): linewidth for the box edges
 
-        ax (Optional[matplotlib.axes.Axes]):
+        ax (matplotlib.axes.Axes | None):
             if specified, draws on this existing axes, otherwise defaults
             to the current axes.
 
