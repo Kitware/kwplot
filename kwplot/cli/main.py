@@ -43,6 +43,7 @@ def cli_imshow(fpath):
 
     print('normalize')
     imdata = kwimage.normalize_intensity(imdata)
+    imdata = kwimage.fill_nans_with_checkers(imdata)
 
     print('showing')
     from os.path import basename
