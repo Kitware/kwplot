@@ -5,11 +5,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.4.13 - Unreleased
 
+### Added
+* Gifify script
+
+### Fixed
+* Fixed close figures with agg.
+
 
 ## Version 0.4.12 - Released 2022-09-27
 
 ### Added
 * Add `kwplot.close_figures` and `kwplot.all_figures`.
+
+
+### Changed
+* Replaced deprecated pylab magic with matplotlib magic when in IPython.
 
 
 ## Version 0.4.11 - Released 2022-02-16

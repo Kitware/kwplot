@@ -41,10 +41,14 @@ def _qtensure():
         if ipython:
             if 'PyQt4' in sys.modules:
                 ipython.magic('pylab qt4 --no-import-all')
-                _qtensured = True
             else:
-                ipython.magic('pylab qt5 --no-import-all')
-                _qtensured = True
+                if hasattr(ipython, 'run_line_magic'):
+                    # For IPython >= 8.1
+                    ipython.run_line_magic('matplotlib', 'qt')
+                else:
+                    # `magic(...)` is deprecated since IPython 0.13
+                    ipython.magic('%matplotlib qt')
+            _qtensured = True
 
 
 def _aggensure():
@@ -66,34 +70,38 @@ def _aggensure():
 def set_mpl_backend(backend, verbose=None):
     """
     Args:
-        backend (str): name of backend to use (e.g. Agg, PyQt)
+        backend (str): name of backend as string that :func:`matplotlib.use`
+            would accept (e.g. Agg or Qt5Agg).
+
+        verbose (int, default=0):
+            verbosity level
     """
     import matplotlib as mpl
     if verbose:
-        print('set_mpl_backend backend={}'.format(backend))
+        print('[kwplot.set_mpl_backend] backend={}'.format(backend))
     if backend.lower().startswith('qt'):
         # handle interactive qt case
         _qtensure()
     current_backend = mpl.get_backend()
     if verbose:
-        print('* current_backend = {!r}'.format(current_backend))
+        print('[kwplot.set_mpl_backend] current_backend = {!r}'.format(current_backend))
     if backend != current_backend:
         # If we have already imported pyplot, then we need to use experimental
         # behavior. Otherwise, we can just set the backend.
         if 'matplotlib.pyplot' in sys.modules:
             from matplotlib import pyplot as plt
             if verbose:
-                print('plt.switch_backend({!r})'.format(current_backend))
+                print('[kwplot.set_mpl_backend] plt.switch_backend({!r})'.format(current_backend))
             plt.switch_backend(backend)
         else:
             if verbose:
-                print('mpl.use({!r})'.format(backend))
+                print('[kwplot.set_mpl_backend] mpl.use({!r})'.format(backend))
             mpl.use(backend)
     else:
         if verbose:
-            print('not changing backends')
+            print('[kwplot.set_mpl_backend] not changing backends')
     if verbose:
-        print('* new_backend = {!r}'.format(mpl.get_backend()))
+        print('[kwplot.set_mpl_backend]  new_backend = {!r}'.format(mpl.get_backend()))
 
 
 _AUTOMPL_WAS_RUN = False
@@ -106,11 +114,18 @@ def autompl(verbose=0, recheck=False, force=None):
     to use the cross-platform `Qt5Agg` backend.
 
     Args:
-        verbose (int, default=0): verbosity level
-        recheck (bool, default=False): if False, this function will not run if
-            it has already been called (this can save a significant amount of
-            time).
-        force (str, default=None): backend to force to or "auto"
+        verbose (int, default=0):
+            verbosity level
+
+        recheck (bool, default=False):
+            if False, this function will not run if it has already been called
+            (this can save a significant amount of time).
+
+        force (str, default=None):
+            If None or "auto", then the backend will only be set if this
+            function has not been run before. Otherwise it will be set to the
+            chosen backend, which is a string that :func:`matplotlib.use` would
+            accept (e.g. Agg or Qt5Agg).
 
     CommandLine:
         # Checks
@@ -128,131 +143,20 @@ def autompl(verbose=0, recheck=False, force=None):
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
     """
     global _AUTOMPL_WAS_RUN
+    if verbose > 2:
+        print('[kwplot.autompl] Called autompl')
+
     if force == 'auto':
         recheck = True
         force = None
     elif force is not None:
-        set_mpl_backend(force)
+        set_mpl_backend(force, verbose=verbose)
         _AUTOMPL_WAS_RUN = True
 
     if recheck or not _AUTOMPL_WAS_RUN:
-        if verbose:
-            print('AUTOMPL')
-        if sys.platform.startswith('win32'):
-            # TODO: something reasonable
-            pass
-        else:
-            DISPLAY = os.environ.get('DISPLAY', '')
-            if DISPLAY:
-                if sys.platform.startswith('linux') and ub.find_exe('xdpyinfo'):
-                    # On Linux, check if we can actually connect to X
-                    # NOTE: this call takes a significant amount of time
-                    info = ub.cmd('xdpyinfo', shell=True)
-                    if verbose:
-                        print('xdpyinfo-info = {}'.format(ub.repr2(info)))
-                    if info['ret'] != 0:
-                        DISPLAY = None
-
-            if verbose:
-                print(' * DISPLAY = {!r}'.format(DISPLAY))
-
-            if not DISPLAY:
-                backend = 'agg'
-            else:
-                """
-                Note:
-
-                    May encounter error that crashes the program, not sure why
-                    this happens yet. The current workaround is to uninstall
-                    PyQt5, but that isn't sustainable.
-
-                    QObject::moveToThread: Current thread (0x7fe8d965d030) is not the object's thread (0x7fffb0f64340).
-                    Cannot move to target thread (0x7fe8d965d030)
-
-
-                    qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
-                    This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
-
-                    Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl, xcb.
-
-
-                UPDATE 2021-01-04:
-
-                    By setting
-
-                    export QT_DEBUG_PLUGINS=1
-
-                    I was able to look at more debug information. It turns out
-                    that it was grabbing the xcb plugin from the opencv-python
-                    package. I uninstalled that package and then installed
-                    opencv-python-headless which does not include an xcb
-                    binary. However, now the it is missing "libxcb-xinerama".
-
-                    May be able to do something with:
-                        conda install -c conda-forge xorg-libxinerama
-
-                        # But that didnt work I had to
-                        pip uninstall PyQt5
-
-                        # This seems to work correctly
-                        conda install -c anaconda pyqt
-                """
-                if ub.modname_to_modpath('PyQt5'):
-                    try:
-                        import PyQt5  # NOQA
-                        from PyQt5 import QtCore  # NOQA
-                    except ImportError:
-                        backend = 'agg'
-                    else:
-                        backend = 'Qt5Agg'
-
-                        KWPLOT_UNSAFE = os.environ.get('KWPLOT_UNSAFE', '')
-                        TRY_AVOID_CRASH = KWPLOT_UNSAFE.lower() not in ['1', 'true', 'yes']
-
-                        if TRY_AVOID_CRASH and ub.LINUX:
-                            # HOLD UP. Lets try to avoid a crash.
-                            if 'cv2' in sys.modules:
-                                from os.path import dirname, join, exists
-                                cv2 = sys.modules['cv2']
-                                cv2_mod_dpath = dirname(cv2.__file__)
-                                cv2_lib_dpath = join(cv2_mod_dpath, 'qt/plugins/platforms')
-                                cv2_qxcb_fpath = join(cv2_lib_dpath, 'libqxcb.so')
-
-                                qt_mod_dpath = dirname(QtCore.__file__)
-                                qt_lib_dpath = join(qt_mod_dpath, 'Qt/plugins/platforms')
-                                qt_qxcb_fpath = join(qt_lib_dpath, 'libqxcb.so')
-
-                                if exists(cv2_qxcb_fpath) and exists(qt_qxcb_fpath):
-                                    # Can we use ldd to make the test better?
-                                    import warnings
-                                    warnings.warn(ub.paragraph(
-                                        '''
-                                        Autompl has detected libqxcb in PyQt
-                                        and cv2.  Falling back to agg to avoid
-                                        a potential crash. This can be worked
-                                        around by installing
-                                        opencv-python-headless instead of
-                                        opencv-python.
-
-                                        Disable this check by setting the
-                                        environ KWPLOT_UNSAFE=1
-                                        '''
-                                    ))
-                                    backend = 'agg'
-
-                elif ub.modname_to_modpath('PyQt4'):
-                    try:
-                        import Qt4Agg  # NOQA
-                        from PyQt4 import QtCore  # NOQA
-                    except ImportError:
-                        backend = 'agg'
-                    else:
-                        backend = 'Qt4Agg'
-                else:
-                    backend = 'agg'
-
+        backend = _determine_best_backend(verbose=verbose)
+        if backend is not None:
             set_mpl_backend(backend, verbose=verbose)
-
         if 0:
             # TODO:
             # IF IN A NOTEBOOK, BE SURE TO SET INLINE BEHAVIOR
@@ -263,12 +167,148 @@ def autompl(verbose=0, recheck=False, force=None):
                 shell.enable_matplotlib('inline')
 
         _AUTOMPL_WAS_RUN = True
+    else:
+        if verbose > 2:
+            print('[kwplot.autompl] Check already ran and recheck=False. Skipping')
+
+
+def _determine_best_backend(verbose):
+    """
+    Helper to determine what a good backend would be for autompl
+    """
+    if verbose:
+        print('[kwplot.autompl] Attempting to determening best backend')
+
+    if sys.platform.startswith('win32'):
+        if verbose:
+            # TODO something reasonable
+            print('[kwplot.autompl] No heuristics implemented on windows')
+        return None
+
+    DISPLAY = os.environ.get('DISPLAY', '')
+    if DISPLAY:
+        if sys.platform.startswith('linux') and ub.find_exe('xdpyinfo'):
+            # On Linux, check if we can actually connect to X
+            # NOTE: this call takes a significant amount of time
+            info = ub.cmd('xdpyinfo', shell=True)
+            if verbose > 3:
+                print('xdpyinfo-info = {}'.format(ub.repr2(info)))
+            if info['ret'] != 0:
+                DISPLAY = None
+
+    if verbose:
+        print('[kwplot.autompl] DISPLAY = {!r}'.format(DISPLAY))
+
+    if not DISPLAY:
+        if verbose:
+            print('[kwplot.autompl] No display, agg is probably best')
+        backend = 'agg'
+    else:
+        """
+        Note:
+
+            May encounter error that crashes the program, not sure why
+            this happens yet. The current workaround is to uninstall
+            PyQt5, but that isn't sustainable.
+
+            QObject::moveToThread: Current thread (0x7fe8d965d030) is not the object's thread (0x7fffb0f64340).
+            Cannot move to target thread (0x7fe8d965d030)
+
+
+            qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+            This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+            Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl, xcb.
+
+
+        UPDATE 2021-01-04:
+
+            By setting
+
+            export QT_DEBUG_PLUGINS=1
+
+            I was able to look at more debug information. It turns out
+            that it was grabbing the xcb plugin from the opencv-python
+            package. I uninstalled that package and then installed
+            opencv-python-headless which does not include an xcb
+            binary. However, now the it is missing "libxcb-xinerama".
+
+            May be able to do something with:
+                conda install -c conda-forge xorg-libxinerama
+
+                # But that didnt work I had to
+                pip uninstall PyQt5
+
+                # This seems to work correctly
+                conda install -c anaconda pyqt
+        """
+        if ub.modname_to_modpath('PyQt5'):
+            try:
+                import PyQt5  # NOQA
+                from PyQt5 import QtCore  # NOQA
+            except ImportError:
+                if verbose:
+                    print('[kwplot.autompl] No PyQt5, agg is probably best')
+                backend = 'agg'
+            else:
+                backend = 'Qt5Agg'
+
+                KWPLOT_UNSAFE = os.environ.get('KWPLOT_UNSAFE', '')
+                TRY_AVOID_CRASH = KWPLOT_UNSAFE.lower() not in ['1', 'true', 'yes']
+
+                if TRY_AVOID_CRASH and ub.LINUX:
+                    # HOLD UP. Lets try to avoid a crash.
+                    if 'cv2' in sys.modules:
+                        from os.path import dirname, join, exists
+                        cv2 = sys.modules['cv2']
+                        cv2_mod_dpath = dirname(cv2.__file__)
+                        cv2_lib_dpath = join(cv2_mod_dpath, 'qt/plugins/platforms')
+                        cv2_qxcb_fpath = join(cv2_lib_dpath, 'libqxcb.so')
+
+                        qt_mod_dpath = dirname(QtCore.__file__)
+                        qt_lib_dpath = join(qt_mod_dpath, 'Qt/plugins/platforms')
+                        qt_qxcb_fpath = join(qt_lib_dpath, 'libqxcb.so')
+
+                        if exists(cv2_qxcb_fpath) and exists(qt_qxcb_fpath):
+                            # Can we use ldd to make the test better?
+                            import warnings
+                            warnings.warn(ub.paragraph(
+                                '''
+                                Autompl has detected libqxcb in PyQt
+                                and cv2.  Falling back to agg to avoid
+                                a potential crash. This can be worked
+                                around by installing
+                                opencv-python-headless instead of
+                                opencv-python.
+
+                                Disable this check by setting the
+                                environ KWPLOT_UNSAFE=1
+                                '''
+                            ))
+                            backend = 'agg'
+
+        elif ub.modname_to_modpath('PyQt4'):
+            try:
+                import Qt4Agg  # NOQA
+                from PyQt4 import QtCore  # NOQA
+            except ImportError:
+                backend = 'agg'
+            else:
+                backend = 'Qt4Agg'
+        else:
+            backend = 'agg'
+
+    if verbose:
+        print('[kwplot.autompl] Determined best backend is probably backend={}'.format(backend))
+    return backend
 
 
 def autoplt(verbose=0, recheck=False, force=None):
     """
-    Like autompl, but also returns the :mod:`matplotlib.pyplot` module for
-    convenience.
+    Like :func:`kwplot.autompl`, but also returns the
+    :mod:`matplotlib.pyplot` module for convenience.
+
+    See :func:`kwplot.auto_backends.autompl` for argument details
 
     Returns:
         ModuleType
@@ -280,8 +320,10 @@ def autoplt(verbose=0, recheck=False, force=None):
 
 def autosns(verbose=0, recheck=False, force=None):
     """
-    Like autompl, but also calls :func:`seaborn.set` and returns the
-    :mod:`seaborn` module for convenience.
+    Like :func:`kwplot.autompl`, but also calls
+    :func:`seaborn.set` and returns the :mod:`seaborn` module for convenience.
+
+    See :func:`kwplot.auto_backends.autompl` for argument details
 
     Returns:
         ModuleType

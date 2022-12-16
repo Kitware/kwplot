@@ -225,18 +225,21 @@ def show_if_requested(N=1):
     import matplotlib.pyplot as plt
     # Process figures adjustments from command line before a show or a save
 
-    save_parts = ub.argflag('--saveparts')
+    # save_parts = ub.argflag('--saveparts')
+    # fpath_ = ub.argval('--save', default=None)
+    # if fpath_ is None:
+    #     fpath_ = ub.argval('--saveparts', default=None)
+    #     if fpath_ is not None:
+    #         save_parts = True
 
-    fpath_ = ub.argval('--save', default=None)
-    if fpath_ is None:
-        fpath_ = ub.argval('--saveparts', default=None)
-        if fpath_ is not None:
-            save_parts = True
+    # if save_parts:
+    #     raise NotImplementedError
+    # if fpath_ is not None:
+    #     raise NotImplementedError
 
-    if save_parts:
-        raise NotImplementedError
-    if fpath_ is not None:
-        raise NotImplementedError
+    if ub.argflag('--nointeract'):
+        return
+
     if ub.argflag('--show'):
         plt.show()
 
@@ -662,7 +665,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         hue_skip_ranges = [_[1] - _[0] for _ in hue_skips]
         total_skip = sum(hue_skip_ranges)
         hmax_ = hmax - total_skip
-        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=np.float)
+        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=float)
         # Remove colors (like hard to see yellows) in specified ranges
         for skip, range_ in zip(hue_skips, hue_skip_ranges):
             hue_list = [hue if hue <= skip[0] else hue + range_ for hue in hue_list]
@@ -736,11 +739,18 @@ def close_figures(figures=None):
         figures = all_figures()
     for fig in figures:
         # TODO: make work for more than QT
-        try:
-            qwin = fig.canvas.manager.window
-        except AttributeError:
+        if hasattr(fig.canvas.manager, 'window'):
+            try:
+                qwin = fig.canvas.manager.window
+            except AttributeError:
+                qwin = fig.canvas.window()
+            qwin.close()
+        elif hasattr(fig.canvas, 'window'):
             qwin = fig.canvas.window()
-        qwin.close()
+            qwin.close()
+        else:
+            from matplotlib import pyplot as plt
+            plt.close(fig)
 
 
 def all_figures():

@@ -2,6 +2,15 @@
 """
 Note, this module should be refactored into MPL figure drawings and cv2
 on-image drawings.
+
+
+TODO:
+    * Plot with arrow: https://stackoverflow.com/questions/34017866/arrow-on-a-line-plot-with-matplotlib
+    * Some function that enforces y=0 is on the top or bottom of the plot
+        * set_ydirection_image ?
+        * set_ydirection_blackboard ?
+        * set_y0_is_top ?
+        * set_y0_is_bottom ?
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
@@ -43,7 +52,7 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
         lw (float): linewidth for the box edges
 
-        ax (Optional[matplotlib.axes.Axes]):
+        ax (matplotlib.axes.Axes | None):
             if specified, draws on this existing axes, otherwise defaults
             to the current axes.
 
