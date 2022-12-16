@@ -151,6 +151,7 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         https://superuser.com/questions/624563/how-to-resize-a-video-to-make-it-smaller-with-ffmpeg
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:kwcoco)
         >>> import kwcoco
         >>> dset = kwcoco.CocoDataset.demo('shapes8')
         >>> ffmpeg_exe = ub.find_exe('ffmpeg')
