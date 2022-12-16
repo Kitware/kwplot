@@ -1,2 +1,2 @@
-#!/bin/bash
-xdoctest kwplot --style=google all
+#!/usr/bin/env bash
+xdoctest kwplot --style=google all "$@"
