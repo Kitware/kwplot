@@ -102,3 +102,34 @@ __all__ = ['BackendContext', 'Color', 'PlotNums', 'all_figures', 'autompl',
            'phantom_legend', 'plot_convolutional_features', 'plot_matrix',
            'plot_surface3d', 'render_figure_to_image', 'set_figtitle',
            'set_mpl_backend', 'show_if_requested']
+
+POC_MODULE_PROEPRTY = 0
+
+if POC_MODULE_PROEPRTY:
+    # Python 3.7+ only, experimental auto function support via properties
+    # See Also: https://stackoverflow.com/questions/880530/can-modules-have-properties-the-same-way-that-objects-can
+
+    __module_properties__ = {}
+
+    def module_property(func):
+        __module_properties__[func.__name__] = property(func)
+
+    @module_property
+    def plt():
+        import kwplot
+        return kwplot.autoplt()
+    del plt
+
+    @module_property
+    def sns():
+        import kwplot
+        return kwplot.autosns()
+    del sns
+
+    def __getattr__(key):
+        print(f'getattr key={key}')
+        if key in __module_properties__:
+            prop = __module_properties__[key]
+            return prop.fget()
+        raise AttributeError(key)
+    __all__ += ['sns', 'plt']
