@@ -505,7 +505,8 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
     # Set title in the window
     window_figtitle = ('fig(%d) ' % fig.number) + figtitle
     window_figtitle = window_figtitle.replace('\n', ' ')
-    fig.canvas.set_window_title(window_figtitle)
+    if fig.canvas.manager is not None:
+        fig.canvas.manager.set_window_title(window_figtitle)
 
 
 def distinct_markers(num, style='astrisk', total=None, offset=0):
