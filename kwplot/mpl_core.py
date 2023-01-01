@@ -705,8 +705,18 @@ def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
     handles = phantom['handles'] = []
     handles.clear()
 
+    label_to_color_rows = []
+    if isinstance(label_to_color, dict):
+        label_to_color_rows = [
+            {'label': k, 'color': c}
+            for k, c in label_to_color.items()]
+    else:
+        label_to_color_rows = label_to_color
+
     alpha = 1.0
-    for label, color in label_to_color.items():
+    for row in label_to_color_rows:
+        color = row['color']
+        label = row['label']
         color = kwimage.Color(color).as01()
         if mode == 'line':
             phantom_actor = plt.Line2D(

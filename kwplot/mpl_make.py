@@ -20,8 +20,9 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     Makes an image of a categorical legend
 
     Args:
-        label_to_color (Dict[str, kwimage.Color]):
-            mapping from string label to the color.
+        label_to_color (Dict[str, kwimage.Color] | List[Dict]):
+            Mapping from string label to the color.
+            Or a list of dictionaries that contain the keys label and color.
 
     CommandLine:
         xdoctest -m kwplot.mpl_make make_legend_img --show
