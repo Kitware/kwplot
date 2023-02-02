@@ -5,6 +5,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.4.14 - Unreleased
 
+### Added
+* Add `plot_points3d`
+
+
+### Fixed
+* Minor issue in `plot_surface3d`
+
 
 ## Version 0.4.13 - Released 2022-12-16
 
