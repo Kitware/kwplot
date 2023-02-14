@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 * Add `plot_points3d`
+* Experimental top-level lazy attributes `plt` and `sns`, which call autoplt
+  and autosns when invoked for the first time.
 
 
 ### Fixed
