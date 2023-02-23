@@ -25,20 +25,24 @@ The top-level API is:
     from .mpl_multiplot import (multi_plot,)
     from .mpl_plotnums import (PlotNums,)
 
-One of the key features is the ``kwplot.autompl`` function, which is able to somewhat
-intelligently set the notorious matplotlib backend. By default it will attempt
-to use ``PyQt5`` if it is installed and a ``DISPLAY`` is available. Otherwise it
-will ensure the backend is set to ``Agg``.
-
-The ``kwplot.multi_plot`` function is able to create line and bar plots with
-multiple lines/bars in a labeled axes using only a single function call. This
-can dramatically reduce the code size needed to perform simple plot
-visualizations as well as ensure that the code that produces the data is
-decoupled from the code that does the visualization.
+One of the key features is the `kwplot.autompl <https://kwplot.readthedocs.io/en/main/kwplot.html#kwplot.autompl>`_
+function, which is able to somewhat intelligently set the notorious matplotlib
+backend. 
+By default it will attempt to use ``PyQt5`` if it is installed and a
+``DISPLAY`` is available. Otherwise it will ensure the backend is set to
+``Agg``. For convinience, the functions:
+`kwplot.autoplt <https://kwplot.readthedocs.io/en/main/kwplot.html#kwplot.autoplt>`_ and
+`kwplot.autosns <https://kwplot.readthedocs.io/en/main/kwplot.html#kwplot.autosns>`_
+also execute this auto-backend behavior, but return the pyplot and seaborn
+module, respectively.  It is recommended to call one of these functions before
+any use of pyplot due to pyplot's import-time side effects (note: pre-importing
+most other matplotlib modules is ok).
 
 The ``kwplot.imshow`` and ``kwplot.figure`` functions are extensions of the
 ``matplotlib`` versions with slightly extended interfaces (again to help reduce
-the density of visualization code in research scripts).
+the density of visualization code in research scripts). The ``kwplot.PlotNums``
+helps manage subplots locations, especially when you are developing /
+reordering them.
 
 
 .. |Pypi| image:: https://img.shields.io/pypi/v/kwplot.svg

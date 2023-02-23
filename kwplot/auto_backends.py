@@ -310,6 +310,10 @@ def autoplt(verbose=0, recheck=False, force=None):
 
     See :func:`kwplot.auto_backends.autompl` for argument details
 
+    Note:
+        In Python 3.7 accessing ``kwplot.plt`` or ``kwplot.pyplot`` lazily
+        calls this function.
+
     Returns:
         ModuleType
     """
@@ -324,6 +328,9 @@ def autosns(verbose=0, recheck=False, force=None):
     :func:`seaborn.set` and returns the :mod:`seaborn` module for convenience.
 
     See :func:`kwplot.auto_backends.autompl` for argument details
+
+    Note:
+        In Python 3.7 accessing ``kwplot.sns`` or ``kwplot.seaborn`` lazily calls this function.
 
     Returns:
         ModuleType
