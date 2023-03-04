@@ -16,4 +16,4 @@ kwarray >= 0.5.19
 kwimage >= 0.7.14
 
 
-scriptconfig >= 0.7.0
+scriptconfig >= 0.7.3
