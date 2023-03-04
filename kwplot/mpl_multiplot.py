@@ -10,8 +10,6 @@ from . import mpl_core
 __all__ = ['multi_plot']
 
 
-# import xdev  # NOQA
-# @xdev.profile  # NOQA
 def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     r"""
     plots multiple lines, bars, etc...
