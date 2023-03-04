@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Note, this module should be refactored into MPL figure drawings and cv2
 on-image drawings.
-
 
 TODO:
     * Plot with arrow: https://stackoverflow.com/questions/34017866/arrow-on-a-line-plot-with-matplotlib
@@ -12,7 +10,6 @@ TODO:
         * set_y0_is_top ?
         * set_y0_is_bottom ?
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
 import numpy as np
 import ubelt as ub

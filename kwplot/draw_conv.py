@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Helper for drawing convolutional neural network weights.
 
 This may be removed in the future.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import ubelt as ub
 try:

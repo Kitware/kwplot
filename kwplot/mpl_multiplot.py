@@ -337,7 +337,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         # kwargs['color'] = 'gist_rainbow'
         kwargs['color'] = 'distinct'
 
-    if isinstance(kwargs['color'], six.string_types):
+    if isinstance(kwargs['color'], str):
         if kwargs['color'] == 'distinct':
             kwargs['color'] = mpl_core.distinct_colors(num_lines, randomize=0)
         else:

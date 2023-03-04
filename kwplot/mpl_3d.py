@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Helper for making 3D plots
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-import six
 
 
 def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
@@ -46,7 +43,7 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     import matplotlib as mpl
 
     cmap = kwargs.get('cmap', 'magma')  # cm.coolwarm)
-    if isinstance(cmap, six.string_types):
+    if isinstance(cmap, str):
         if cmap == 'magma':
             kwargs['cmap'] = cmap = mpl.cm.magma
     if pnum is None:
@@ -140,7 +137,7 @@ def plot_points3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     import matplotlib as mpl
 
     cmap = kwargs.get('cmap', 'magma')  # cm.coolwarm)
-    if isinstance(cmap, six.string_types):
+    if isinstance(cmap, str):
         if cmap == 'magma':
             kwargs['cmap'] = cmap = mpl.cm.magma
     if pnum is None:
