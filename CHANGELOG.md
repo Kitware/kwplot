@@ -9,10 +9,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Add `plot_points3d`
 * Experimental top-level lazy attributes `plt` and `sns`, which call autoplt
   and autosns when invoked for the first time.
+* New Modal CLI
 
 
 ### Fixed
 * Minor issue in `plot_surface3d`
+
+
+### Changed
+* Tweaks to phantom legend
+* Misc changes
 
 
 ## Version 0.4.13 - Released 2022-12-16

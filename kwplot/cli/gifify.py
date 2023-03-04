@@ -13,10 +13,13 @@ from os.path import isdir, join
 import scriptconfig as scfg
 
 
-class AnimateConfig(scfg.DataConfig):
+class Gifify(scfg.DataConfig):
     """
     Convert a sequence of images into a video or gif.
     """
+    __command__ = 'gifify'
+    __alias__ = ['movie']
+
     image_list = scfg.Value(None, required=True, help=ub.paragraph(
             '''
             list of images (or a text file containing a list of images)
@@ -34,74 +37,71 @@ class AnimateConfig(scfg.DataConfig):
         number of frames per second
         '''))
 
+    @classmethod
+    def main(cls, cmdline=True, **kwargs):
+        import glob
+        config = cls.cli(cmdline=cmdline, data=kwargs)
+        print('config = {}'.format(ub.repr2(dict(config), nl=1)))
 
-__config__ = AnimateConfig
+        image_paths = config['image_list']
 
+        print('Converting:')
+        print('image_paths = ' + ub.repr2(image_paths))
 
-def main(cmdline=True, **kwargs):
-    import glob
-    config = AnimateConfig.legacy(cmdline=cmdline, data=kwargs)
-    print('config = {}'.format(ub.repr2(dict(config), nl=1)))
+        assert image_paths is not None
 
-    image_paths = config['image_list']
+        auto_outname = 'out.mp4'
 
-    print('Converting:')
-    print('image_paths = ' + ub.repr2(image_paths))
-
-    assert image_paths is not None
-
-    auto_outname = 'out.mp4'
-
-    frame_fpaths = []
-    for p in image_paths:
-        if isdir(p):
-            if len(image_paths) == 1:
-                auto_outname = ub.Path(p) + '.mp4'
-            toadd = sorted(glob.glob(join(p, '*.png')))
-            toadd += sorted(glob.glob(join(p, '*.jpg')))
-            frame_fpaths.extend(toadd)
-        else:
-            if str(p).endswith('.txt'):
-                with open(p, 'r') as f:
-                    lines = list(f.read().split('\n'))
-                lines = [line.strip() for line in lines]
-                lines = [line for line in lines if line and not line.startswith('#')]
-                frame_fpaths.extend(lines)
+        frame_fpaths = []
+        for p in image_paths:
+            if isdir(p):
+                if len(image_paths) == 1:
+                    auto_outname = ub.Path(p) + '.mp4'
+                toadd = sorted(glob.glob(join(p, '*.png')))
+                toadd += sorted(glob.glob(join(p, '*.jpg')))
+                frame_fpaths.extend(toadd)
             else:
-                frame_fpaths.append(p)
+                if str(p).endswith('.txt'):
+                    with open(p, 'r') as f:
+                        lines = list(f.read().split('\n'))
+                    lines = [line.strip() for line in lines]
+                    lines = [line for line in lines if line and not line.startswith('#')]
+                    frame_fpaths.extend(lines)
+                else:
+                    frame_fpaths.append(p)
 
-    if config['output'] == 'auto':
-        print(f'Resolved output to {auto_outname}')
-        config['output'] = auto_outname
+        if config['output'] == 'auto':
+            print(f'Resolved output to {auto_outname}')
+            config['output'] = auto_outname
 
-    # frame_fpaths = frame_fpaths[::2]
+        # frame_fpaths = frame_fpaths[::2]
 
-    print('frame_fpaths = {!r}'.format(frame_fpaths))
+        print('frame_fpaths = {!r}'.format(frame_fpaths))
 
-    backend = 'imagemagik'
-    backend = 'ffmpeg'
-    if backend == 'imagemagik':
-        escaped_gif_fpath = config['output'].replace('%', '%%')
-        command = ['convert', '-delay', str(config['delay']), '-loop', '0']
-        command += frame_fpaths
-        command += [escaped_gif_fpath]
-        # print('command = {!r}'.format(command))
-        print('Converting {} images to gif: {}'.format(len(frame_fpaths), escaped_gif_fpath))
-        info = ub.cmd(command, verbose=3)
-        print('finished')
-        if info['ret'] != 0:
-            print(info['out'])
-            print(info['err'])
-            raise RuntimeError(info['err'])
-        return info['err']
-    elif backend == 'ffmpeg':
-        output_fpath = config['output']
-        config['delay']
-        # config['delay']
-        in_framerate = config['frames_per_second']
-        ffmpeg_animate_frames(frame_fpaths, output_fpath,
-                              in_framerate=in_framerate,
-                              max_width=config['max_width'])
+        backend = 'imagemagik'
+        backend = 'ffmpeg'
+        if backend == 'imagemagik':
+            escaped_gif_fpath = config['output'].replace('%', '%%')
+            command = ['convert', '-delay', str(config['delay']), '-loop', '0']
+            command += frame_fpaths
+            command += [escaped_gif_fpath]
+            # print('command = {!r}'.format(command))
+            print('Converting {} images to gif: {}'.format(len(frame_fpaths), escaped_gif_fpath))
+            info = ub.cmd(command, verbose=3)
+            print('finished')
+            if info['ret'] != 0:
+                print(info['out'])
+                print(info['err'])
+                raise RuntimeError(info['err'])
+            return info['err']
+        elif backend == 'ffmpeg':
+            output_fpath = config['output']
+            config['delay']
+            # config['delay']
+            in_framerate = config['frames_per_second']
+            ffmpeg_animate_frames(frame_fpaths, output_fpath,
+                                  in_framerate=in_framerate,
+                                  max_width=config['max_width'])
 
 
 def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3, max_width=None):
@@ -122,7 +122,8 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         https://superuser.com/questions/624563/how-to-resize-a-video-to-make-it-smaller-with-ffmpeg
 
     Example:
-        >>> from watch.cli.gifify import *  # NOQA
+        >>> # xdoctest: +REQUIRES(module:kwcoco)
+        >>> from kwplot.cli.gifify import *  # NOQA
         >>> import kwcoco
         >>> dset = kwcoco.CocoDataset.demo('shapes8')
         >>> ffmpeg_exe = ub.find_exe('ffmpeg')
@@ -136,7 +137,8 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         >>> ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=0.5)
 
     Example:
-        >>> from watch.cli.gifify import *  # NOQA
+        >>> # xdoctest: +REQUIRES(module:kwcoco)
+        >>> from kwplot.cli.gifify import *  # NOQA
         >>> import kwcoco
         >>> dset = kwcoco.CocoDataset.demo('shapes8')
         >>> ffmpeg_exe = ub.find_exe('ffmpeg')
@@ -326,4 +328,4 @@ if __name__ == '__main__':
     CommandLine:
         6 -i "$(ls -tr batch)"
     """
-    main()
+    Gifify.main()
