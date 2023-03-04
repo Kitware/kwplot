@@ -112,14 +112,14 @@ def autompl(verbose=0, recheck=False, force=None):
     to use the cross-platform `Qt5Agg` backend.
 
     Args:
-        verbose (int, default=0):
+        verbose (int):
             verbosity level
 
-        recheck (bool, default=False):
+        recheck (bool):
             if False, this function will not run if it has already been called
             (this can save a significant amount of time).
 
-        force (str, default=None):
+        force (str | int | None):
             If None or "auto", then the backend will only be set if this
             function has not been run before. Otherwise it will be set to the
             chosen backend, which is a string that :func:`matplotlib.use` would
