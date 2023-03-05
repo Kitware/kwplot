@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Defines the :class:`kwplot.mpl_plotnums.PlotNums` class to help manage a grid
 of subplot numbers.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import six
 
 
 class PlotNums(object):
@@ -72,7 +69,7 @@ class PlotNums(object):
         """
         if self._iter is None:
             self._iter = iter(self)
-        return six.next(self._iter)
+        return next(self._iter)
 
     def __iter__(self):
         r"""

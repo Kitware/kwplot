@@ -9,9 +9,7 @@ Extensions of pyplot functionality. Main improvements are
 * :func:`kwplot.mpl_core.close_figures` This function closes all open figures, which can be helpful in interactive sessions.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import six
 import ubelt as ub
 
 
@@ -114,7 +112,7 @@ def _convert_pnum_int_to_tup(int_pnum):
 
 def _pnum_to_subspec(pnum):
     import matplotlib.gridspec as gridspec
-    if isinstance(pnum, six.string_types):
+    if isinstance(pnum, str):
         pnum = list(pnum)
     nrow, ncols, plotnum = pnum
     # if kwargs.get('use_gridspec', True):
@@ -312,7 +310,7 @@ def imshow(img,
         ax = fig.gca()
         nospecial = False
 
-    if isinstance(img, six.string_types):
+    if isinstance(img, str):
         # Allow for path to image to be specified
         img_fpath = img
         import kwimage
@@ -334,7 +332,7 @@ def imshow(img,
     if norm is not None:
         if norm is True:
             norm = 'linear'
-        if isinstance(norm, six.string_types):
+        if isinstance(norm, str):
             norm_choices = {
                 'linear': mpl.colors.Normalize,
                 'log': mpl.colors.LogNorm,
@@ -393,7 +391,7 @@ def imshow(img,
                 imgGRAY = img
             if cmap is None:
                 cmap = plt.get_cmap('gray')
-            if isinstance(cmap, six.string_types):
+            if isinstance(cmap, str):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
             # if not norm:
@@ -678,13 +676,19 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
     return RGB_tuples
 
 
-def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
+def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=None, legend_id=None, loc=0):
     """
     Creates a legend on an axis based on a label-to-color map.
 
     Args:
         label_to_color (Dict[str, kwimage.Color]):
             mapping from string label to the color.
+
+        label_to_attrs (Dict[str, Dict[str, Any]):
+            mapping from a string label to attributes corresponding to
+            plt.Line2D or plt.Circle
+
+            NEW: Prefer this.
 
     TODO:
         - [ ] More docs and ensure this exists in the right place
@@ -706,14 +710,31 @@ def phantom_legend(label_to_color, mode='line', ax=None, legend_id=None, loc=0):
     handles.clear()
 
     alpha = 1.0
-    for label, color in label_to_color.items():
+    legend_rows = []
+    if isinstance(label_to_color, dict):
+        legend_rows = [
+            {'label': k, 'color': c, 'type': mode, 'alpha': alpha}
+            for k, c in label_to_color.items()]
+    else:
+        legend_rows = label_to_color
+
+    if label_to_attrs is not None:
+        legend_rows = []
+        for label, attrs in label_to_attrs.items():
+            legend_rows.append(ub.udict({
+                'label': label, 'type': mode, 'alpha': alpha,
+            }) | attrs)
+
+    for row in legend_rows:
+        row_type = row.pop('type')
+        color = row['color']
         color = kwimage.Color(color).as01()
-        if mode == 'line':
-            phantom_actor = plt.Line2D(
-                (0, 0), (1, 1), color=color, label=label, alpha=alpha)
-        elif mode == 'circle':
-            phantom_actor = plt.Circle(
-                (0, 0), 1, fc=color, label=label, alpha=alpha)
+        row['color'] = color
+        if row_type == 'line':
+            phantom_actor = plt.Line2D((0, 0), (1, 1), **row)
+        elif row_type == 'circle':
+            row['fc'] = row.pop('color')
+            phantom_actor = plt.Circle((0, 0), 1, **row)
         else:
             raise KeyError
         handles.append(phantom_actor)

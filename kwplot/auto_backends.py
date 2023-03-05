@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module handles automatically determening a "good" matplotlib backend to
 use before importing pyplot.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 import os
 import ubelt as ub
@@ -114,14 +112,14 @@ def autompl(verbose=0, recheck=False, force=None):
     to use the cross-platform `Qt5Agg` backend.
 
     Args:
-        verbose (int, default=0):
+        verbose (int):
             verbosity level
 
-        recheck (bool, default=False):
+        recheck (bool):
             if False, this function will not run if it has already been called
             (this can save a significant amount of time).
 
-        force (str, default=None):
+        force (str | int | None):
             If None or "auto", then the backend will only be set if this
             function has not been run before. Otherwise it will be set to the
             chosen backend, which is a string that :func:`matplotlib.use` would
@@ -310,6 +308,10 @@ def autoplt(verbose=0, recheck=False, force=None):
 
     See :func:`kwplot.auto_backends.autompl` for argument details
 
+    Note:
+        In Python 3.7 accessing ``kwplot.plt`` or ``kwplot.pyplot`` lazily
+        calls this function.
+
     Returns:
         ModuleType
     """
@@ -324,6 +326,9 @@ def autosns(verbose=0, recheck=False, force=None):
     :func:`seaborn.set` and returns the :mod:`seaborn` module for convenience.
 
     See :func:`kwplot.auto_backends.autompl` for argument details
+
+    Note:
+        In Python 3.7 accessing ``kwplot.sns`` or ``kwplot.seaborn`` lazily calls this function.
 
     Returns:
         ModuleType

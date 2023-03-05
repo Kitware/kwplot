@@ -59,7 +59,7 @@ There is also a small CLI that can be used to view multispectral or uint16
 images.
 """
 
-__version__ = '0.4.13'
+__version__ = '0.4.14'
 __author__ = 'Kitware Inc., Jon Crall'
 __author_email__ = 'kitware@kitware.com, jon.crall@kitware.com'
 __url__ = 'https://gitlab.kitware.com/computer-vision/kwplot'
@@ -103,9 +103,9 @@ __all__ = ['BackendContext', 'Color', 'PlotNums', 'all_figures', 'autompl',
            'plot_surface3d', 'render_figure_to_image', 'set_figtitle',
            'set_mpl_backend', 'show_if_requested']
 
-POC_MODULE_PROEPRTY = 0
+POC_MODULE_PROEPRTY = 2
 
-if POC_MODULE_PROEPRTY:
+if POC_MODULE_PROEPRTY == 1:
     # Python 3.7+ only, experimental auto function support via properties
     # See Also: https://stackoverflow.com/questions/880530/can-modules-have-properties-the-same-way-that-objects-can
 
@@ -133,3 +133,22 @@ if POC_MODULE_PROEPRTY:
             return prop.fget()
         raise AttributeError(key)
     __all__ += ['sns', 'plt']
+
+elif POC_MODULE_PROEPRTY == 2:
+
+    # This seems to be a more stable way of handling module properties
+
+    __all__ += ['plt', 'sns']
+    def __getattr__(key):
+        # Make these special auto-backends top-level dynamic properties of kwplot
+        if key == 'plt':
+            import kwplot
+            return kwplot.autoplt()
+        if key == 'sns':
+            import kwplot
+            return kwplot.autosns()
+        raise AttributeError(key)
+
+
+def __dir__():
+    return __all__

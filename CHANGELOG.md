@@ -3,7 +3,25 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.4.13 - Unreleased
+## Version 0.4.14 - Unreleased
+
+### Added
+* Add `plot_points3d`
+* Experimental top-level lazy attributes `plt` and `sns`, which call autoplt
+  and autosns when invoked for the first time.
+* New Modal CLI
+
+
+### Fixed
+* Minor issue in `plot_surface3d`
+
+
+### Changed
+* Tweaks to phantom legend
+* Misc changes
+
+
+## Version 0.4.13 - Released 2022-12-16
 
 ### Added
 * Gifify script

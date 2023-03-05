@@ -1,20 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 DEPRECATED: Use seaborn instead
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import ubelt as ub
-import six
 import warnings
-from six.moves import zip_longest
+from itertools import zip_longest
 from . import mpl_core
 
 __all__ = ['multi_plot']
 
 
-# import xdev  # NOQA
-# @xdev.profile  # NOQA
 def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     r"""
     plots multiple lines, bars, etc...
@@ -229,7 +224,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     if isinstance(ydata, dict):
         # Case where ydata is a dictionary
-        if isinstance(xdata, six.string_types):
+        if isinstance(xdata, str):
             # Special-er case where xdata is specified in ydata
             xkey = xdata
             ykeys = set(ydata.keys()) - {xkey}
@@ -312,7 +307,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             kwargs['marker'] = 'distinct'
             # kwargs['marker'] = 'cycle'
 
-        if isinstance(kwargs['marker'], six.string_types):
+        if isinstance(kwargs['marker'], str):
             if kwargs['marker'] == 'distinct':
                 kwargs['marker'] = mpl_core.distinct_markers(num_lines)
             elif kwargs['marker'] == 'cycle':
@@ -329,7 +324,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
             kwargs['linestyle'] = mplrc['lines.linestyle']
             # kwargs['linestyle'] = 'cycle'
 
-        if isinstance(kwargs['linestyle'], six.string_types):
+        if isinstance(kwargs['linestyle'], str):
             if kwargs['linestyle'] == 'cycle':
                 # https://matplotlib.org/gallery/lines_bars_and_markers/line_styles_reference.html
                 linestyle_cycle = ['solid', 'dashed', 'dashdot', 'dotted']
@@ -340,7 +335,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         # kwargs['color'] = 'gist_rainbow'
         kwargs['color'] = 'distinct'
 
-    if isinstance(kwargs['color'], six.string_types):
+    if isinstance(kwargs['color'], str):
         if kwargs['color'] == 'distinct':
             kwargs['color'] = mpl_core.distinct_colors(num_lines, randomize=0)
         else:
@@ -601,11 +596,9 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     ymin = kwargs.get('ymin', ax.get_ylim()[0])
     ymax = kwargs.get('ymax', ax.get_ylim()[1])
 
-    text_type = six.text_type
-
-    if text_type(xmax) == 'data':
+    if str(xmax) == 'data':
         xmax = max([xd.max() for xd in xdata_list])
-    if text_type(xmin) == 'data':
+    if str(xmin) == 'data':
         xmin = min([xd.min() for xd in xdata_list])
 
     # Setup axes ticks

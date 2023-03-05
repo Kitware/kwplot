@@ -5,132 +5,103 @@ A gif-ify script
 Wrapper around imgmagik convert or ffmpeg
 
 TODO:
-    - [ ] Where does this belong? Kwimage? Kwcoco? Kwplot?
+    - [ ] Moving this to kwplot?
 """
 
 import ubelt as ub
 from os.path import isdir, join
+import scriptconfig as scfg
 
 
-def main():
-    import argparse
-    import glob
-    description = ub.codeblock(
+class Gifify(scfg.DataConfig):
+    """
+    Convert a sequence of images into a video or gif.
+    """
+    __command__ = 'gifify'
+    __alias__ = ['movie']
+
+    image_list = scfg.Value(None, required=True, help=ub.paragraph(
+            '''
+            list of images (or a text file containing a list of images)
+            '''), position=1, nargs='*', alias=['input'])
+    delay = scfg.Value(10, type=float, short_alias=['d'], help='delay between frames', nargs=1)
+    output = scfg.Value('auto', short_alias=['o'], help=ub.paragraph(
         '''
-        Convert a sequence of images into a gif
-        ''')
-    parser = argparse.ArgumentParser(prog='gifify', description=description)
+        Path to the output file. If "auto", then the name will be chosen
+        automatically.  If the input is a folder, it will be the folder name
+        .mp4 otherwise it will be out.mp4.
+        '''))
+    max_width = scfg.Value(None, type=int, help='resize to max width')
+    frames_per_second = scfg.Value(10, type=float, alias=['fps'], help=ub.paragraph(
+        '''
+        number of frames per second
+        '''))
 
-    parser.add_argument('image_list', nargs='*', help='list of images (or a text file containing a list of images)')
-    parser.add_argument('-i', '--input', nargs='*', help='alternate way to specify list of images')
-    parser.add_argument('-d', '--delay', nargs=1, type=float, default=10, help='delay between frames')
-    parser.add_argument('-o', '--output', default='out.gif', help='output file')
-    parser.add_argument('--max_width', default=None, type=int, help='resize to max width')
-    parser.add_argument('--frames_per_second', default=10, type=float, help='number of frames per second')
-    args, unknown = parser.parse_known_args()
-    # print('unknown = {!r}'.format(unknown))
-    # print('args = {!r}'.format(args))
-    ns = args.__dict__.copy()
+    @classmethod
+    def main(cls, cmdline=True, **kwargs):
+        import glob
+        config = cls.cli(cmdline=cmdline, data=kwargs)
+        print('config = {}'.format(ub.repr2(dict(config), nl=1)))
 
-    image_paths1 = ns['image_list']
-    image_paths2 = ns['input']
+        image_paths = config['image_list']
 
-    print('Converting:')
-    print('image_paths1 = ' + ub.repr2(image_paths1))
-    print('image_paths2 = ' + ub.repr2(image_paths2))
+        print('Converting:')
+        print('image_paths = ' + ub.repr2(image_paths))
 
-    if image_paths1:
-        image_paths = image_paths1
-        assert not image_paths2, 'can only specify inputs one way'
-    elif image_paths2:
-        image_paths = image_paths2
-        assert not image_paths1, 'can only specify inputs one way'
+        assert image_paths is not None
 
-    assert image_paths is not None
+        auto_outname = 'out.mp4'
 
-    frame_fpaths = []
-    for p in image_paths:
-        if isdir(p):
-            toadd = sorted(glob.glob(join(p, '*.png')))
-            toadd += sorted(glob.glob(join(p, '*.jpg')))
-            frame_fpaths.extend(toadd)
-        else:
-            if str(p).endswith('.txt'):
-                with open(p, 'r') as f:
-                    lines = list(f.read().split('\n'))
-                lines = [line.strip() for line in lines]
-                lines = [line for line in lines if line and not line.startswith('#')]
-                frame_fpaths.extend(lines)
+        frame_fpaths = []
+        for p in image_paths:
+            if isdir(p):
+                if len(image_paths) == 1:
+                    auto_outname = ub.Path(p) + '.mp4'
+                toadd = sorted(glob.glob(join(p, '*.png')))
+                toadd += sorted(glob.glob(join(p, '*.jpg')))
+                frame_fpaths.extend(toadd)
             else:
-                frame_fpaths.append(p)
+                if str(p).endswith('.txt'):
+                    with open(p, 'r') as f:
+                        lines = list(f.read().split('\n'))
+                    lines = [line.strip() for line in lines]
+                    lines = [line for line in lines if line and not line.startswith('#')]
+                    frame_fpaths.extend(lines)
+                else:
+                    frame_fpaths.append(p)
 
-    # frame_fpaths = frame_fpaths[::2]
+        if config['output'] == 'auto':
+            print(f'Resolved output to {auto_outname}')
+            config['output'] = auto_outname
 
-    print('frame_fpaths = {!r}'.format(frame_fpaths))
+        # frame_fpaths = frame_fpaths[::2]
 
-    backend = 'imagemagik'
-    backend = 'ffmpeg'
-    if backend == 'imagemagik':
-        escaped_gif_fpath = ns['output'].replace('%', '%%')
-        command = ['convert', '-delay', str(ns['delay']), '-loop', '0']
-        command += frame_fpaths
-        command += [escaped_gif_fpath]
-        # print('command = {!r}'.format(command))
-        print('Converting {} images to gif: {}'.format(len(frame_fpaths), escaped_gif_fpath))
-        info = ub.cmd(command, verbose=3)
-        print('finished')
-        if info['ret'] != 0:
-            print(info['out'])
-            print(info['err'])
-            raise RuntimeError(info['err'])
-        return info['err']
-    elif backend == 'ffmpeg':
-        output_fpath = ns['output']
-        ns['delay']
-        # ns['delay']
-        in_framerate = ns['frames_per_second']
-        frame_fpaths = frame_fpaths[0:16]
-        ffmpeg_animate_frames(frame_fpaths, output_fpath,
-                              in_framerate=in_framerate,
-                              max_width=ns['max_width'])
+        print('frame_fpaths = {!r}'.format(frame_fpaths))
 
-
-def ffmpeg_animate_images(images, output_fpath, in_framerate=1, verbose=3, max_width=None):
-    """
-    Args:
-        images (Iterable[ndarray]): an image iterator.
-        output_fpath (PathLike): where to save the result
-    """
-    import kwimage
-    import numpy as np
-    import ubelt as ub
-    cache_name = output_fpath.stem + '_' + ub.hash_data(output_fpath)[0:16]
-    cache_dpath = (ub.Path.appdir('kwplot/cache/gifify') / cache_name).ensuredir()
-    if verbose:
-        print(f'cache_dpath={cache_dpath}')
-    n_imgs = len(images)
-    n_digits = np.math.ceil(np.log10(n_imgs))
-    fname_template = 'frame_{:0' + str(n_digits) + 'd}.png'
-
-    frame_fpaths = []
-    jobs = ub.JobPool('thread', max_workers=8)
-    for i, im in enumerate(images):
-        fpath = cache_dpath / fname_template.format(i)
-        im = kwimage.ensure_uint255(im)
-        jobs.submit(kwimage.imwrite, fpath, im)
-        frame_fpaths.append(fpath)
-
-    for job in jobs.as_completed(desc='write frames'):
-        job.result()
-
-    kwargs = {
-        'in_framerate': in_framerate,
-        'verbose': verbose,
-        'max_width': max_width,
-    }
-    ffmpeg_animate_frames(frame_fpaths, output_fpath, **kwargs)
-
-    # cache_dpath.delete()
+        backend = 'imagemagik'
+        backend = 'ffmpeg'
+        if backend == 'imagemagik':
+            escaped_gif_fpath = config['output'].replace('%', '%%')
+            command = ['convert', '-delay', str(config['delay']), '-loop', '0']
+            command += frame_fpaths
+            command += [escaped_gif_fpath]
+            # print('command = {!r}'.format(command))
+            print('Converting {} images to gif: {}'.format(len(frame_fpaths), escaped_gif_fpath))
+            info = ub.cmd(command, verbose=3)
+            print('finished')
+            if info['ret'] != 0:
+                print(info['out'])
+                print(info['err'])
+                raise RuntimeError(info['err'])
+            return info['err']
+        elif backend == 'ffmpeg':
+            output_fpath = config['output']
+            config['delay']
+            # config['delay']
+            in_framerate = config['frames_per_second']
+            ffmpeg_animate_frames(frame_fpaths, output_fpath,
+                                  in_framerate=in_framerate,
+                                  max_width=config['max_width'])
 
 
 def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3, max_width=None):
@@ -152,6 +123,7 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
 
     Example:
         >>> # xdoctest: +REQUIRES(module:kwcoco)
+        >>> from kwplot.cli.gifify import *  # NOQA
         >>> import kwcoco
         >>> dset = kwcoco.CocoDataset.demo('shapes8')
         >>> ffmpeg_exe = ub.find_exe('ffmpeg')
@@ -159,7 +131,22 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         >>>     import pytest
         >>>     pytest.skip('test requires ffmpeg')
         >>> frame_fpaths = sorted(dset.images().gpath)
-        >>> test_dpath = ub.ensure_app_cache_dir('gifify', 'test')
+        >>> test_dpath = ub.Path.appdir('gifify', 'test').ensuredir()
+        >>> # Test output to MP4
+        >>> output_fpath = join(test_dpath, 'test.mp4')
+        >>> ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=0.5)
+
+    Example:
+        >>> # xdoctest: +REQUIRES(module:kwcoco)
+        >>> from kwplot.cli.gifify import *  # NOQA
+        >>> import kwcoco
+        >>> dset = kwcoco.CocoDataset.demo('shapes8')
+        >>> ffmpeg_exe = ub.find_exe('ffmpeg')
+        >>> if ffmpeg_exe is None:
+        >>>     import pytest
+        >>>     pytest.skip('test requires ffmpeg')
+        >>> frame_fpaths = sorted(dset.images().gpath)
+        >>> test_dpath = ub.Path.appdir('gifify', 'test').ensuredir()
         >>> # Test output to GIF
         >>> output_fpath = join(test_dpath, 'test.gif')
         >>> ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=0.5)
@@ -186,10 +173,26 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         raise Exception('cannot find ffmpeg')
 
     try:
-        temp_dpath = ub.ensure_app_cache_dir('gifify', 'temp')
+        temp_dpath = ub.Path.appdir('gifify', 'temp').ensuredir()
         temp_fpath = join(temp_dpath, 'temp_list_{}.txt'.format(str(uuid.uuid4())))
         if verbose:
             print('temp_fpath = {!r}'.format(temp_fpath))
+
+        NEED_INPUT_SIZES = True
+        if NEED_INPUT_SIZES:
+            # Determine the maximum size of the image
+            imgsize_jobs = ub.JobPool(max_workers=0)
+            import kwimage
+            for fpath in frame_fpaths:
+                imgsize_jobs.submit(kwimage.load_image_shape, fpath)
+            max_w = 0
+            max_h = 0
+            for result in imgsize_jobs.as_completed():
+                shape = result.result()
+                h, w, *_ = shape
+                max_h = max(max_h, h)
+                max_w = max(max_w, w)
+
         lines = ["file '{}'".format(abspath(fpath)) for fpath in frame_fpaths]
         text = '\n'.join(lines)
         with open(temp_fpath, 'w') as file:
@@ -230,16 +233,43 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
             # OUT_FRAMERATE=5,
         ))
 
-        if max_width is not None:
-            output_options += [
-                '-vf scale="{}:-1"'.format(max_width)
-            ]
+        filtergraph_parts = []
 
-        if output_fpath.endswith('.mp4'):
+        if max_width is not None:
+            filtergraph_parts.append(f'scale={max_width}:-1')
+
+        # scale_options.append(
+        #     'force_original_aspect_ratio=decrease'
+        # )
+        # output_options += [
+        #     '-vf scale="{}:-1"'.format(max_width)
+        # ]
+
+        import math
+        # Ensure width and height are even for mp4 outputs
+        max_w = int(2 * math.ceil(max_w / 2.))
+        max_h = int(2 * math.ceil(max_h / 2.))
+
+        # Ensure all padding happens to the bottom right by setting the
+        # frame size to something constant and putting the data at x,y=0,0
+        filtergraph_parts += [
+            f"pad=w={max_w}:h={max_h}:x=0:y=0:color=black",
+        ]
+
+        # if output_fpath.endswith('.mp4'):
+        #     # filtergraph_parts += [
+        #     #     'pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2:x=0:y=0',
+        #     # ]
+        #     # output_options += [
+        #     #     # MP4 needs even width
+        #     #     # https://stackoverflow.com/questions/20847674/ffmpeg-div2
+        #     #     '-filter:v "pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2"',
+        #     # ]
+
+        if filtergraph_parts:
+            filtergraph = ','.join(filtergraph_parts)
             output_options += [
-                # MP4 needs even width
-                # https://stackoverflow.com/questions/20847674/ffmpeg-div2
-                '-filter:v pad="width=ceil(iw/2)*2:height=ceil(ih/2)*2"',
+                f'-filter:v "{filtergraph}"'
             ]
 
         cmd_fmt = ' '.join(
@@ -265,6 +295,10 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
         pass
         # ub.delete(temp_dpath)
 
+    import sys
+    if sys.stdout.isatty():
+        ub.cmd('stty sane')
+
     if info['ret'] != 0:
         # if not verbose:
         # print(info['out'])
@@ -287,7 +321,6 @@ Video to GiF
 ffmpeg -ss 30 -t 3 -i input.mp4 -vf "fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 output.gif
 
 ffmpeg -i "$HOME/2022-06-29 18-36-30.mkv" -vf "fps=3,scale=1000:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 output.gif
-
 """
 
 if __name__ == '__main__':
@@ -295,4 +328,4 @@ if __name__ == '__main__':
     CommandLine:
         6 -i "$(ls -tr batch)"
     """
-    main()
+    Gifify.main()
