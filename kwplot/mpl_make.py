@@ -25,6 +25,9 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     CommandLine:
         xdoctest -m kwplot.mpl_make make_legend_img --show
 
+    SeeAlso:
+        * :func:`kwplot.phantom_legend`
+
     Example:
         >>> # xdoctest: +REQUIRES(module:kwplot)
         >>> import kwplot
@@ -36,7 +39,7 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
         >>>     'yellow': 'yellow',
         >>>     'orangered': 'orangered',
         >>> }
-        >>> img = make_legend_img(label_to_color, transparent=True)
+        >>> img = kwplot.make_legend_img(label_to_color, mode='star', transparent=True)
         >>> # xdoctest: +REQUIRES(--show)
         >>> kwplot.autompl()
         >>> kwplot.imshow(img)
