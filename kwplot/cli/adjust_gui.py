@@ -58,6 +58,7 @@ class _Indexer:
 class IndexedDict(dict):
     """
     Example:
+        >>> # xdoctest: +SKIP
         >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> self = IndexedDict({
@@ -199,6 +200,7 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         The value of children may be dependent on the value.
 
     Example:
+        >>> # xdoctest: +SKIP
         >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> config = {
@@ -499,6 +501,7 @@ class QConfigModel(QtCore.QAbstractItemModel):
         Convention states only items with column index 0 can have children
 
     Example:
+        >>> # xdoctest: +SKIP
         >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> config = {
