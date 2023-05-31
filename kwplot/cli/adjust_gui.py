@@ -203,7 +203,7 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         >>>     },
         >>>     'general_opt': 'abc',
         >>> }
-        >>> self = ConfigNode.from_indexable(config)
+        >>> self = QConfigNode.from_indexable(config)
         >>> print('self = {}'.format(ub.urepr(self, nl=1)))
         >>> print(self.to_indexable())
     """
