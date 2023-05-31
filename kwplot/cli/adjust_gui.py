@@ -164,6 +164,24 @@ class _Qt_ConfigNodeMixin:
     def qt_delegate_style(self):
         return self.delegate_style
 
+    def qt_set_persistant_index(self, index, observer):
+        """
+        """
+        observer = None
+        observer_id = id(observer)
+        self._qt_observer_id_to_observers[observer_id] = observer
+        self._qt_observer_id_to_persistent_index[observer_id] = index
+
+    def qt_get_persistant_index(self, observer):
+        """
+        """
+        observer = None
+        observer_id = id(observer)
+        return self._qt_observer_id_to_persistent_index[observer_id]
+
+    def qt_observers(self):
+        yield self._qt_observer_id_to_observers.values()
+
 
 class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
     """
@@ -213,6 +231,9 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         self.min_value = min_value
         self.max_value = max_value
         self.step_value = step_value
+
+        self._qt_observer_id_to_persistent_index = {}
+        self._qt_observer_id_to_observers = {}
 
     def __nice__(self):
         if self.children:
@@ -587,6 +608,32 @@ class ConfigValueDelegate(QtWidgets.QStyledItemDelegate):
 class QConfigModel(QtCore.QAbstractItemModel):
     """
     Convention states only items with column index 0 can have children
+
+    Ignore:
+        >>> from kwplot.cli.adjust_gui import *  # NOQA
+        >>> config = {
+        >>>     'algo1': {
+        >>>         'opt1': 1,
+        >>>         'opt2': 2,
+        >>>     },
+        >>>     'algo2': {
+        >>>         'opt1': 11,
+        >>>         'opt2': 22,
+        >>>     },
+        >>>     'general_opt': 'abc',
+        >>> }
+        >>> root_config = QConfigNode.from_indexable(config)
+        >>> self = QConfigModel(root_config)
+        >>> index1 = self.parent()
+        >>> index2 = self.index(0, 0)
+        >>> algo1 = index2.internalPointer()
+        >>> assert algo1 == root_config.children['algo1']
+        >>> opt1 = self.index(0, 1, parent=index2).internalPointer()
+        >>> assert opt1.key == 'opt1'
+        >>> pindex = root_config.children['algo1'].qt_get_persistant_index(self)
+        >>> index = QtCore.QModelIndex(pindex)
+        >>> self.setData(index, 'foo')
+        >>> self.data(index)
     """
     @report_thread_error
     def __init__(self, root_config, parent=None):
@@ -665,9 +712,18 @@ class QConfigModel(QtCore.QAbstractItemModel):
         parent_node = self.index_to_node(parent)
         child_node = parent_node.children.iloc[row]
         if child_node:
-            return self.createIndex(row, col, child_node)
+            new_index = self._new_index(row, col, child_node)
+            return new_index
         else:
             return QtCore.QModelIndex()
+
+    def _new_index(self, row, col, node):
+        # Not sure if this is the correct way to register persistent
+        # indexes of the model into the backend data structure.
+        new_index = self.createIndex(row, col, node)
+        new_pindex = QtCore.QPersistentModelIndex(new_index)
+        node.qt_set_persistant_index(new_pindex, self)
+        return new_index
 
     @report_thread_error
     def parent(self, index=None):
@@ -681,7 +737,8 @@ class QConfigModel(QtCore.QAbstractItemModel):
         parent_node = node.qt_get_parent()
         if parent_node == self.root_config:
             return QtCore.QModelIndex()
-        return self.createIndex(parent_node.qt_parents_index_of_me(), 0, parent_node)
+        new_index = self._new_index(parent_node.qt_parents_index_of_me(), 0, parent_node)
+        return new_index
 
     @report_thread_error
     def flags(self, index):
@@ -734,6 +791,23 @@ class QConfigWidget(QtWidgets.QWidget):
 
         self.config_model.dataChanged.connect(self._on_change)
 
+        import operator
+        from six.moves import reduce
+        edit_triggers = reduce(operator.__or__, [
+            QtWidgets.QAbstractItemView.CurrentChanged,
+            QtWidgets.QAbstractItemView.DoubleClicked,
+            QtWidgets.QAbstractItemView.SelectedClicked,
+            # QtWidgets.QAbstractItemView.EditKeyPressed,
+            # QtWidgets.QAbstractItemView.AnyKeyPressed,
+        ])
+        self.tree_view.setEditTriggers(edit_triggers)
+        self.tree_view.setModel(self.config_model)
+        view_header = self.tree_view.header()
+        self.tree_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tree_view.resizeColumnToContents(0)
+        self.tree_view.resizeColumnToContents(1)
+        view_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+
     def _on_change(self, top_left, bottom_right):
         if top_left is bottom_right:
             # we know what index changed
@@ -785,7 +859,7 @@ class MatplotlibWidget(QtWidgets.QWidget):
         #     self.pan_events = pan_factory(self.ax)
         #     self.zoon_events = zoom_factory(self.ax)
 
-        self.fig.canvas.mpl_connect('button_press_event', self._emit_button_press)
+        self.fig.canvas.mpl_connect('button_press_event', self._on_mpl_clicked)
         self.fig.canvas.mpl_connect('key_press_event', self.key_press_signal.emit)
         self.fig.canvas.mpl_connect('pick_event', self.pick_event_signal.emit)
 
@@ -807,10 +881,47 @@ class MatplotlibWidget(QtWidgets.QWidget):
         # self.zoon_events = zoom_factory(self.ax)
         return self.ax
 
-    def _emit_button_press(self, event):
+    def _on_mpl_clicked(self, event):
+        # TODO: the connection between mpl and the config should be handled by
+        # the adjust widget
         in_axis = event is not None and (event.inaxes is not None and event.xdata is not None)
         if in_axis:
+            # Let the user click to move the config
+            print('Click')
             self.click_inside_signal.emit(event, event.inaxes)
+            event.inaxes
+
+            # find the closet one to move (todo: cleanup)
+            parent = self.parentWidget().parentWidget()
+            a = parent.config.children['low']
+            b = parent.config.children['mid']
+            c = parent.config.children['high']
+
+            raw_data = parent.raw_img.ravel().copy()
+            raw_data.sort()
+
+            qarr = [a.value, b.value, c.value]
+            import numpy as np
+            varr = np.quantile(raw_data, qarr)
+
+            print(f'varr={varr}')
+            from scipy import stats
+            percentile = stats.percentileofscore(raw_data, event.xdata)
+            quantile = percentile / 100.
+
+            keys = ['low', 'mid', 'high']
+            print(f'qarr={qarr}')
+            idx = ((qarr - quantile) ** 2).argmin()
+            key = keys[idx]
+
+            # I'm not sure if this is the correct way to notify the data model
+            # that one of its items has changed, but it does seem to work.
+            node = parent.config.children[key]
+            for observer in node.qt_observers():
+                pindex = node.qt_get_persistant_index(observer)
+                index = QtCore.QModelIndex(pindex)
+                model = index.model()
+                model.setData(index, quantile)
 
 
 class AdjustWidget(QtWidgets.QWidget):
@@ -819,19 +930,32 @@ class AdjustWidget(QtWidgets.QWidget):
         super().__init__()
         self.raw_img = raw_img
         self.config = QConfigNode.coerce(config)
-        layout = QtWidgets.QVBoxLayout(self)
-        self.config_widget = QConfigWidget(self, self.config)
-        self.setLayout(layout)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        self.setLayout(main_layout)
+
+        splitter = QtWidgets.QSplitter(parent=self)
+        splitter.setOrientation(QtCore.Qt.Vertical)
+        splitter.sizePolicy().setVerticalStretch(1)
+        main_layout.addWidget(splitter)
+
+        self.main_layout = main_layout
+        self.splitter = splitter
+
         self.mpl_widget = MatplotlibWidget(parent=self)
-        layout.addWidget(self.mpl_widget)
-        layout.addWidget(self.config_widget)
+        self.config_widget = QConfigWidget(parent=self, config=self.config)
+
+        self.splitter.addWidget(self.mpl_widget)
+        self.splitter.addWidget(self.config_widget)
+
         self.config_widget.data_changed.connect(self.update_normalization)
         self.update_normalization()
 
     def update_normalization(self, key=None):
         import seaborn as sns
         config_dict = self.config.to_indexable()
-        params = config_dict['params']
+        # params = config_dict['params']
+        params = config_dict
         print('Update Norm')
         print('params = {}'.format(ub.urepr(params, nl=1)))
         import kwarray
@@ -894,51 +1018,6 @@ class AdjustWidget(QtWidgets.QWidget):
 
         fig.canvas.draw()
 
-    def _devcheck(self, raw_img):
-        import kwplot
-        kwplot.autompl()
-        sns = kwplot.autosns()
-
-        fig = kwplot.figure(fnum=1)
-        fig.clf()
-        ax1 = fig.add_subplot(1, 2, 1)
-        ax2 = fig.add_subplot(1, 2, 2)
-        ax1.imshow(raw_img)
-        ax1.grid(False)
-        ax2
-
-        import numpy as np
-        counts, bins = np.histogram(raw_img, bins=256)
-        centers = (bins[1:] + bins[0:-1]) / 2
-        from watch.cli.coco_spectra import _weighted_auto_bins
-        import pandas as pd
-        data = pd.DataFrame({'value': centers, 'weight': counts})
-        n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
-
-        hist_data_kw = dict(
-            x='value',
-            weights='weight',
-            bins=n_equal_bins,
-            # bins=config['bins'],
-            # stat=config['stat'],
-            # hue='channel',
-        )
-        hist_style_kw = dict(
-            # palette=palette,
-            # fill=config['fill'],
-            # element=config['element'],
-            # multiple=config['multiple'],
-            # kde=config['kde'],
-            # cumulative=config['cumulative'],
-        )
-
-        hist_data_kw_ = hist_data_kw.copy()
-        # if hist_data_kw_['bins'] == 'auto':
-        #     xvar = hist_data_kw['x']
-        #     weightvar = hist_data_kw['weights']
-        #     hist_data_kw_['bins'] = _weighted_auto_bins(sensor_df, xvar, weightvar)
-        sns.histplot(ax=ax2, data=data, **hist_data_kw_, **hist_style_kw)
-
 
 def main(cmdline=1, **kwargs):
     config = AdjustGuiConfig.cli(cmdline=cmdline, data=kwargs, strict=True)
@@ -951,19 +1030,21 @@ def main(cmdline=1, **kwargs):
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('GTK+')
 
+    # https://stackoverflow.com/questions/5160577/ctrl-c-doesnt-work-with-pyqt
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     if config.img_fpath is not None:
         raw_img = kwimage.imread(config.img_fpath)
     else:
         raw_img = kwimage.grab_test_image()
 
     config = {
-        'params': {
-            'scaling': QConfigNode('sigmoid', choices=['sigmoid', 'linear']),
-            'extrema': QConfigNode('quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
-            'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.05),
-            'mid': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.05),
-            'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.05),
-        },
+        'scaling': QConfigNode('sigmoid', choices=['sigmoid', 'linear']),
+        'extrema': QConfigNode('quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
+        'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.01),
+        'mid': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.01),
+        'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.01),
     }
 
     widget = AdjustWidget(config, raw_img)
@@ -971,7 +1052,6 @@ def main(cmdline=1, **kwargs):
     widget.resize(int(800), 600)
 
     # %gui qt
-
     # import IPython.lib.guisupport
     # IPython.lib.guisupport.start_event_loop_qt5(app)
     retcode = app.exec_()
