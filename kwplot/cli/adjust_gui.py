@@ -2,6 +2,10 @@
 """
 A rewrite an the utool preference GUI
 
+Notes:
+    This needs to be cleaned up, the QT widget components should be separate
+    from the Qt-aware configurable stuff.
+
 References:
     ~/code/guitool_ibeis/guitool_ibeis/PrefWidget2.py
     ~/code/guitool_ibeis/guitool_ibeis/PreferenceWidget.py
@@ -20,6 +24,9 @@ import scriptconfig as scfg
 
 
 class AdjustGuiConfig(scfg.DataConfig):
+    """
+    Helper to find good robust normalization parameters for input images.
+    """
     img_fpath = scfg.Value(None, help='input', position=1)
 
 
@@ -51,6 +58,7 @@ class _Indexer:
 class IndexedDict(dict):
     """
     Example:
+        >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> self = IndexedDict({
         >>>     'a': 1,
@@ -191,6 +199,7 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         The value of children may be dependent on the value.
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> config = {
         >>>     'algo1': {
@@ -480,136 +489,17 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
         return text
 
 
-class DelegateStyle(Enum):
-    NONE = 0
-    COMBO_BOX = 1
-    SPINNER = 2
-
-
-class ConfigValueDelegate(QtWidgets.QStyledItemDelegate):
-    """
-    A delegate that decides what the editor should be for each row in a
-    specific column
-
-    References:
-        http://stackoverflow.com/questions/28037126/how-to-use-qcombobox-as-delegate-with-qtableview
-        http://www.qtcentre.org/threads/41409-PyQt-QTableView-with-comboBox
-        http://stackoverflow.com/questions/28680150/qtableview-data-in-background--cell-is-edited
-        https://forum.qt.io/topic/46628/qtreeview-with-qitemdelegate-and-qcombobox-inside-not-work-propertly/5
-        http://stackoverflow.com/questions/33990029/what-are-the-mechanics-of-the-default-delegate-for-item-views-in-qt
-        http://www.qtcentre.org/archive/index.php/t-64165.html
-        http://doc.qt.io/qt-4.8/style-reference.html
-
-    """
-    def paint(self, painter, option, index):
-        leaf_node = index.internalPointer()
-        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
-        if delegate_style == DelegateStyle.COMBO_BOX:
-            curent_value = str(index.model().data(index))
-            style = QtWidgets.QApplication.style()
-            opt = QtWidgets.QStyleOptionComboBox()
-
-            opt.currentText = curent_value
-            opt.rect = option.rect
-            opt.editable = False
-            opt.frame = True
-
-            if leaf_node.qt_is_editable():
-                opt.state |= style.State_On
-                opt.state |= style.State_Enabled
-                opt.state = style.State_Enabled | style.State_Active
-
-            element = QtWidgets.QStyle.CE_ComboBoxLabel
-            control = QtWidgets.QStyle.CC_ComboBox
-
-            style.drawComplexControl(control, opt, painter)
-            style.drawControl(element, opt, painter)
-        else:
-            return super().paint(painter, option, index)
-
-    def createEditor(self, parent, option, index):
-        """
-        Creates different editors for different types of data
-        """
-        leaf_node = index.internalPointer()
-        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
-        if delegate_style == DelegateStyle.COMBO_BOX:
-            options = leaf_node.choices
-            curent_value = index.model().data(index)
-            editor = CustomComboBox(parent=parent, options=options,
-                                    default=curent_value)
-            editor.currentIndexChanged['int'].connect(self.currentIndexChanged)
-            editor.setAutoFillBackground(True)
-        elif delegate_style == DelegateStyle.SPINNER:
-            editor = NullableSpinBox(parent, type=leaf_node.type, nullable=leaf_node.nullable)
-
-            if leaf_node.min_value is not None:
-                editor.setMinimum(leaf_node.min_value)
-            if leaf_node.max_value is not None:
-                editor.setMaximum(leaf_node.max_value)
-
-            step_value = leaf_node.step_value
-            if step_value is None:
-                # Autoset the step value
-                if leaf_node.min_value is not None and leaf_node.max_value is not None:
-                    step_value = (leaf_node.max_value - leaf_node.min_value) / 20
-
-            if step_value is not None:
-                editor.setSingleStep(step_value)
-
-            editor.setAutoFillBackground(True)
-            editor.setHidden(False)
-            curent_value = index.model().data(index)
-            editor.setValue(curent_value)
-        else:
-            editor = super().createEditor(parent, option, index)
-            editor.setAutoFillBackground(True)
-            # editor.keyPressEvent
-        return editor
-
-    def setEditorData(self, editor, index):
-        leaf_node = index.internalPointer()
-        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
-        if delegate_style == DelegateStyle.COMBO_BOX:
-            editor.blockSignals(True)
-            current_data = index.model().data(index)
-            editor.setCurrentValue(current_data)
-            editor.blockSignals(False)
-        else:
-            return super().setEditorData(editor, index)
-
-    def setModelData(self, editor, model, index):
-        leaf_node = index.internalPointer()
-        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
-        if delegate_style == DelegateStyle.COMBO_BOX:
-            current_value = editor.currentValue()
-            model.setData(index, current_value)
-        elif delegate_style == DelegateStyle.SPINNER:
-            current_value = editor.value()
-            model.setData(index, current_value)
-        else:
-            return super().setModelData(editor, model, index)
-
-    def currentIndexChanged(self, combo_idx):
-        sender = self.sender()
-        self.commitData.emit(sender)
-
-    def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)
-
-    def editorEvent(self, event, model, option, index):
-        return super().editorEvent(event, model, option, index)
-
-    def eventFilter(self, editor, event):
-        handled =  super().eventFilter(editor, event)
-        return handled
-
-
 class QConfigModel(QtCore.QAbstractItemModel):
     """
-    Convention states only items with column index 0 can have children
+    The abstract data model that interfaces between the QConfigNode backend
+    data structure and some frontend QTreeView used to interact with the data
+    in a QWidget.
 
-    Ignore:
+    Note:
+        Convention states only items with column index 0 can have children
+
+    Example:
+        >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> from kwplot.cli.adjust_gui import *  # NOQA
         >>> config = {
         >>>     'algo1': {
@@ -767,11 +657,143 @@ class QConfigModel(QtCore.QAbstractItemModel):
         return None
 
 
+class DelegateStyle(Enum):
+    # TODO: does Qt have enums for this?
+    NONE = 0
+    COMBO_BOX = 1
+    SPINNER = 2
+
+
+class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
+    """
+    Determines what editor style is used for a widget displaying a QConfigNode
+
+    References:
+        http://stackoverflow.com/questions/28037126/how-to-use-qcombobox-as-delegate-with-qtableview
+        http://www.qtcentre.org/threads/41409-PyQt-QTableView-with-comboBox
+        http://stackoverflow.com/questions/28680150/qtableview-data-in-background--cell-is-edited
+        https://forum.qt.io/topic/46628/qtreeview-with-qitemdelegate-and-qcombobox-inside-not-work-propertly/5
+        http://stackoverflow.com/questions/33990029/what-are-the-mechanics-of-the-default-delegate-for-item-views-in-qt
+        http://www.qtcentre.org/archive/index.php/t-64165.html
+        http://doc.qt.io/qt-4.8/style-reference.html
+
+    """
+    def paint(self, painter, option, index):
+        leaf_node = index.internalPointer()
+        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
+        if delegate_style == DelegateStyle.COMBO_BOX:
+            curent_value = str(index.model().data(index))
+            style = QtWidgets.QApplication.style()
+            opt = QtWidgets.QStyleOptionComboBox()
+
+            opt.currentText = curent_value
+            opt.rect = option.rect
+            opt.editable = False
+            opt.frame = True
+
+            if leaf_node.qt_is_editable():
+                opt.state |= style.State_On
+                opt.state |= style.State_Enabled
+                opt.state = style.State_Enabled | style.State_Active
+
+            element = QtWidgets.QStyle.CE_ComboBoxLabel
+            control = QtWidgets.QStyle.CC_ComboBox
+
+            style.drawComplexControl(control, opt, painter)
+            style.drawControl(element, opt, painter)
+        else:
+            return super().paint(painter, option, index)
+
+    def createEditor(self, parent, option, index):
+        """
+        Creates different editors for different types of data
+        """
+        leaf_node = index.internalPointer()
+        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
+        if delegate_style == DelegateStyle.COMBO_BOX:
+            options = leaf_node.choices
+            curent_value = index.model().data(index)
+            editor = CustomComboBox(parent=parent, options=options,
+                                    default=curent_value)
+            editor.currentIndexChanged['int'].connect(self.currentIndexChanged)
+            editor.setAutoFillBackground(True)
+        elif delegate_style == DelegateStyle.SPINNER:
+            editor = NullableSpinBox(parent, type=leaf_node.type, nullable=leaf_node.nullable)
+
+            if leaf_node.min_value is not None:
+                editor.setMinimum(leaf_node.min_value)
+            if leaf_node.max_value is not None:
+                editor.setMaximum(leaf_node.max_value)
+
+            step_value = leaf_node.step_value
+            if step_value is None:
+                # Autoset the step value
+                if leaf_node.min_value is not None and leaf_node.max_value is not None:
+                    step_value = (leaf_node.max_value - leaf_node.min_value) / 20
+
+            if step_value is not None:
+                editor.setSingleStep(step_value)
+
+            editor.setAutoFillBackground(True)
+            editor.setHidden(False)
+            curent_value = index.model().data(index)
+            editor.setValue(curent_value)
+        else:
+            editor = super().createEditor(parent, option, index)
+            editor.setAutoFillBackground(True)
+            # editor.keyPressEvent
+        return editor
+
+    def setEditorData(self, editor, index):
+        leaf_node = index.internalPointer()
+        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
+        if delegate_style == DelegateStyle.COMBO_BOX:
+            editor.blockSignals(True)
+            current_data = index.model().data(index)
+            editor.setCurrentValue(current_data)
+            editor.blockSignals(False)
+        else:
+            return super().setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        leaf_node = index.internalPointer()
+        delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
+        if delegate_style == DelegateStyle.COMBO_BOX:
+            current_value = editor.currentValue()
+            model.setData(index, current_value)
+        elif delegate_style == DelegateStyle.SPINNER:
+            current_value = editor.value()
+            model.setData(index, current_value)
+        else:
+            return super().setModelData(editor, model, index)
+
+    def currentIndexChanged(self, combo_idx):
+        sender = self.sender()
+        self.commitData.emit(sender)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+    def editorEvent(self, event, model, option, index):
+        return super().editorEvent(event, model, option, index)
+
+    def eventFilter(self, editor, event):
+        handled =  super().eventFilter(editor, event)
+        return handled
+
+
 class QConfigWidget(QtWidgets.QWidget):
+    """
+    A widget that displays an editable configuration tree.
+
+    Shows the QConfigNode in a QTreeView using a QConfigModel
+    """
 
     data_changed = QtCore.pyqtSignal(str)
 
     def __init__(self, parent, config=None):
+        import operator
+        from functools import reduce
         super().__init__(parent=parent)
         self.config_model = QConfigModel(config)
 
@@ -779,7 +801,7 @@ class QConfigWidget(QtWidgets.QWidget):
         self.tree_view = QtWidgets.QTreeView(self)
         self.tree_view.setObjectName('tree_view')
 
-        self.delegate = ConfigValueDelegate(self.tree_view)
+        self.delegate = QConfigValueDelegate(self.tree_view)
         self.tree_view.setItemDelegateForColumn(1, self.delegate)
 
         self.tree_view.setModel(self.config_model)
@@ -791,8 +813,6 @@ class QConfigWidget(QtWidgets.QWidget):
 
         self.config_model.dataChanged.connect(self._on_change)
 
-        import operator
-        from six.moves import reduce
         edit_triggers = reduce(operator.__or__, [
             QtWidgets.QAbstractItemView.CurrentChanged,
             QtWidgets.QAbstractItemView.DoubleClicked,
@@ -828,9 +848,9 @@ class MatplotlibWidget(QtWidgets.QWidget):
     References:
         http://matplotlib.org/examples/user_interfaces/embedding_in_qt4.html
     """
-    click_inside_signal = QtCore.pyqtSignal(MouseEvent, object)
-    key_press_signal = QtCore.pyqtSignal(KeyEvent)
-    pick_event_signal = QtCore.pyqtSignal(PickEvent)
+    button_pressed = QtCore.pyqtSignal(MouseEvent)
+    key_pressed = QtCore.pyqtSignal(KeyEvent)
+    picked = QtCore.pyqtSignal(PickEvent)
 
     def __init__(self, *args, **kwargs):
         # from plottool_ibeis.interactions import zoom_factory, pan_factory
@@ -851,17 +871,14 @@ class MatplotlibWidget(QtWidgets.QWidget):
         # References: https://github.com/matplotlib/matplotlib/issues/707
         self.canvas.setFocusPolicy(Qt.ClickFocus)
 
-        self.reset_ax()
-
         # self.ax = self.fig.add_subplot(1, 1, 1)
         # pt.adjust_subplots(left=0, right=1, top=1, bottom=0, fig=self.fig)
         # if pan_and_zoom or True:
         #     self.pan_events = pan_factory(self.ax)
         #     self.zoon_events = zoom_factory(self.ax)
-
-        self.fig.canvas.mpl_connect('button_press_event', self._on_mpl_clicked)
-        self.fig.canvas.mpl_connect('key_press_event', self.key_press_signal.emit)
-        self.fig.canvas.mpl_connect('pick_event', self.pick_event_signal.emit)
+        self.fig.canvas.mpl_connect('button_press_event', self.button_pressed.emit)
+        self.fig.canvas.mpl_connect('key_press_event', self.key_pressed.emit)
+        self.fig.canvas.mpl_connect('pick_event', self.picked.emit)
 
         # self.MOUSE_BUTTONS = abstract_interaction.AbstractInteraction.MOUSE_BUTTONS
         self.setMinimumHeight(20)
@@ -869,62 +886,12 @@ class MatplotlibWidget(QtWidgets.QWidget):
 
         self.installEventFilter(self.parent())
 
-    def clf(self):
-        self.fig.clf()
-        self.reset_ax()
-
-    def reset_ax(self):
-        # from plottool_ibeis.interactions import zoom_factory, pan_factory
-        self.ax = self.fig.add_subplot(1, 1, 1)
-        # pt.adjust_subplots(left=0, right=1, top=1, bottom=0, fig=self.fig)
-        # self.pan_events = pan_factory(self.ax)
-        # self.zoon_events = zoom_factory(self.ax)
-        return self.ax
-
-    def _on_mpl_clicked(self, event):
-        # TODO: the connection between mpl and the config should be handled by
-        # the adjust widget
-        in_axis = event is not None and (event.inaxes is not None and event.xdata is not None)
-        if in_axis:
-            # Let the user click to move the config
-            print('Click')
-            self.click_inside_signal.emit(event, event.inaxes)
-            event.inaxes
-
-            # find the closet one to move (todo: cleanup)
-            parent = self.parentWidget().parentWidget()
-            a = parent.config.children['low']
-            b = parent.config.children['mid']
-            c = parent.config.children['high']
-
-            raw_data = parent.raw_img.ravel().copy()
-            raw_data.sort()
-
-            qarr = [a.value, b.value, c.value]
-            import numpy as np
-            varr = np.quantile(raw_data, qarr)
-
-            print(f'varr={varr}')
-            from scipy import stats
-            percentile = stats.percentileofscore(raw_data, event.xdata)
-            quantile = percentile / 100.
-
-            keys = ['low', 'mid', 'high']
-            print(f'qarr={qarr}')
-            idx = ((qarr - quantile) ** 2).argmin()
-            key = keys[idx]
-
-            # I'm not sure if this is the correct way to notify the data model
-            # that one of its items has changed, but it does seem to work.
-            node = parent.config.children[key]
-            for observer in node.qt_observers():
-                pindex = node.qt_get_persistant_index(observer)
-                index = QtCore.QModelIndex(pindex)
-                model = index.model()
-                model.setData(index, quantile)
-
 
 class AdjustWidget(QtWidgets.QWidget):
+    """
+    A custom widget containing a QConfigWidget for robust normalization
+    parameters and a Matplotlib Widget to view those parameters are doing.
+    """
 
     def __init__(self, config=None, raw_img=None):
         super().__init__()
@@ -949,16 +916,19 @@ class AdjustWidget(QtWidgets.QWidget):
         self.splitter.addWidget(self.config_widget)
 
         self.config_widget.data_changed.connect(self.update_normalization)
+        self.mpl_widget.button_pressed.connect(self.on_mpl_widget_click)
         self.update_normalization()
 
     def update_normalization(self, key=None):
         import seaborn as sns
-        config_dict = self.config.to_indexable()
-        # params = config_dict['params']
-        params = config_dict
+        import kwarray
+        import numpy as np
+        from watch.cli.coco_spectra import _weighted_auto_bins
+        import pandas as pd
+
+        params = self.config.to_indexable()
         print('Update Norm')
         print('params = {}'.format(ub.urepr(params, nl=1)))
-        import kwarray
         norm_img, norm_info = kwarray.robust_normalize(self.raw_img, params=params, return_info=True)
 
         self.norm_img = norm_img
@@ -975,11 +945,8 @@ class AdjustWidget(QtWidgets.QWidget):
         ax1.imshow(self.norm_img)
         ax1.grid(False)
 
-        import numpy as np
         counts, bins = np.histogram(self.raw_img, bins=256)
         centers = (bins[1:] + bins[0:-1]) / 2
-        from watch.cli.coco_spectra import _weighted_auto_bins
-        import pandas as pd
         data = pd.DataFrame({'value': centers, 'weight': counts})
         n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
 
@@ -1001,10 +968,6 @@ class AdjustWidget(QtWidgets.QWidget):
         )
 
         hist_data_kw_ = hist_data_kw.copy()
-        # if hist_data_kw_['bins'] == 'auto':
-        #     xvar = hist_data_kw['x']
-        #     weightvar = hist_data_kw['weights']
-        #     hist_data_kw_['bins'] = _weighted_auto_bins(sensor_df, xvar, weightvar)
         sns.histplot(ax=ax2, data=data, **hist_data_kw_, **hist_style_kw)
 
         mid_val = self.norm_info['mid_val']
@@ -1017,6 +980,34 @@ class AdjustWidget(QtWidgets.QWidget):
         ax2.plot([max_val, max_val], [ymin, ymax], '-', color='blue')
 
         fig.canvas.draw()
+
+    def on_mpl_widget_click(self, event):
+        from scipy import stats
+        # Let the user click to move the config
+        in_axis = event is not None and (event.inaxes is not None and event.xdata is not None)
+        if not in_axis:
+            return
+        # find the closet one to move (todo: cleanup)
+        config = self.config
+        keys = ['low', 'mid', 'high']
+        qarr = [config.children[k].value for k in keys]
+
+        raw_data = self.raw_img.ravel().copy()
+        raw_data.sort()
+
+        clicked_percentile = stats.percentileofscore(raw_data, event.xdata)
+        clicked_quantile = clicked_percentile / 100.
+        idx = ((qarr - clicked_quantile) ** 2).argmin()
+        key = keys[idx]
+
+        # I'm not sure if this is the correct way to notify the data model
+        # that one of its items has changed, but it does seem to work.
+        node = config.children[key]
+        for observer in node.qt_observers():
+            pindex = node.qt_get_persistant_index(observer)
+            index = QtCore.QModelIndex(pindex)
+            model = index.model()
+            model.setData(index, clicked_quantile)
 
 
 def main(cmdline=1, **kwargs):
