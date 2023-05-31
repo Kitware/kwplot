@@ -382,7 +382,6 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
         self._hack_max = max_value
 
     def stepBy(self, steps):
-        #print('step by %r' % (steps,))
         current_value = self.value()
         if current_value is None:
             self.setValue(self.post_nan_value)
@@ -538,7 +537,7 @@ class ConfigValueDelegate(QtWidgets.QStyledItemDelegate):
         else:
             editor = super().createEditor(parent, option, index)
             editor.setAutoFillBackground(True)
-            editor.keyPressEvent
+            # editor.keyPressEvent
         return editor
 
     def setEditorData(self, editor, index):
@@ -803,8 +802,8 @@ class MatplotlibWidget(QtWidgets.QWidget):
         return self.ax
 
     def _emit_button_press(self, event):
-        from plottool_ibeis import interact_helpers as ih
-        if ih.clicked_inside_axis(event):
+        in_axis = event is not None and (event.inaxes is not None and event.xdata is not None)
+        if in_axis:
             self.click_inside_signal.emit(event, event.inaxes)
 
 
@@ -834,6 +833,51 @@ class AdjustWidget(QtWidgets.QWidget):
         self.mpl_widget.fig.gca().imshow(self.norm_img)
         self.mpl_widget.fig.canvas.draw()
 
+    def _devcheck(self, raw_img):
+        import kwplot
+        kwplot.autompl()
+        sns = kwplot.autosns()
+
+        fig = kwplot.figure(fnum=1)
+        fig.clf()
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+        ax1.imshow(raw_img)
+        ax1.grid(False)
+        ax2
+
+        import numpy as np
+        counts, bins = np.histogram(raw_img, bins=256)
+        centers = (bins[1:] + bins[0:-1]) / 2
+        from watch.cli.coco_spectra import _weighted_auto_bins
+        import pandas as pd
+        data = pd.DataFrame({'value': centers, 'weight': counts})
+        n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
+
+        hist_data_kw = dict(
+            x='value',
+            weights='weight',
+            bins=n_equal_bins,
+            # bins=config['bins'],
+            # stat=config['stat'],
+            # hue='channel',
+        )
+        hist_style_kw = dict(
+            # palette=palette,
+            # fill=config['fill'],
+            # element=config['element'],
+            # multiple=config['multiple'],
+            # kde=config['kde'],
+            # cumulative=config['cumulative'],
+        )
+
+        hist_data_kw_ = hist_data_kw.copy()
+        # if hist_data_kw_['bins'] == 'auto':
+        #     xvar = hist_data_kw['x']
+        #     weightvar = hist_data_kw['weights']
+        #     hist_data_kw_['bins'] = _weighted_auto_bins(sensor_df, xvar, weightvar)
+        sns.histplot(ax=ax2, data=data, **hist_data_kw_, **hist_style_kw)
+
 
 def main():
     import sys
@@ -848,10 +892,10 @@ def main():
     config = {
         'params': {
             'scaling': QConfigNode('sigmoid', choices=['sigmoid', 'linear']),
-            'extrema': QConfigNode('custom-quantile', choices=['quantile', 'custom-quantile', 'iqr']),
-            'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.1),
-            'center': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.1),
-            'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.1),
+            'extrema': QConfigNode('custom-quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
+            'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.05),
+            'mid': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.05),
+            'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.05),
         },
     }
 
