@@ -829,15 +829,70 @@ class AdjustWidget(QtWidgets.QWidget):
         self.update_normalization()
 
     def update_normalization(self, key=None):
-        import kwimage
+        import seaborn as sns
         config_dict = self.config.to_indexable()
         params = config_dict['params']
         print('Update Norm')
         print('params = {}'.format(ub.urepr(params, nl=1)))
-        self.norm_img = kwimage.normalize_intensity(self.raw_img, params=params)
+        import kwarray
+        norm_img, norm_info = kwarray.robust_normalize(self.raw_img, params=params, return_info=True)
+
+        self.norm_img = norm_img
+        self.norm_info = norm_info
+        print('norm_info = {}'.format(ub.urepr(norm_info, nl=1)))
         print(self.norm_img.sum())
-        self.mpl_widget.fig.gca().imshow(self.norm_img)
-        self.mpl_widget.fig.canvas.draw()
+
+        fig = self.mpl_widget.fig
+
+        fig.clf()
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+
+        ax1.imshow(self.norm_img)
+        ax1.grid(False)
+
+        import numpy as np
+        counts, bins = np.histogram(self.raw_img, bins=256)
+        centers = (bins[1:] + bins[0:-1]) / 2
+        from watch.cli.coco_spectra import _weighted_auto_bins
+        import pandas as pd
+        data = pd.DataFrame({'value': centers, 'weight': counts})
+        n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
+
+        hist_data_kw = dict(
+            x='value',
+            weights='weight',
+            bins=n_equal_bins,
+            # bins=config['bins'],
+            # stat=config['stat'],
+            # hue='channel',
+        )
+        hist_style_kw = dict(
+            # palette=palette,
+            # fill=config['fill'],
+            # element=config['element'],
+            # multiple=config['multiple'],
+            # kde=config['kde'],
+            # cumulative=config['cumulative'],
+        )
+
+        hist_data_kw_ = hist_data_kw.copy()
+        # if hist_data_kw_['bins'] == 'auto':
+        #     xvar = hist_data_kw['x']
+        #     weightvar = hist_data_kw['weights']
+        #     hist_data_kw_['bins'] = _weighted_auto_bins(sensor_df, xvar, weightvar)
+        sns.histplot(ax=ax2, data=data, **hist_data_kw_, **hist_style_kw)
+
+        mid_val = self.norm_info['mid_val']
+        max_val = self.norm_info['max_val']
+        min_val = self.norm_info['min_val']
+        ymin, ymax = ax2.get_ylim()
+
+        ax2.plot([min_val, min_val], [ymin, ymax], '-', color='blue')
+        ax2.plot([mid_val, mid_val], [ymin, ymax], '-', color='blue')
+        ax2.plot([max_val, max_val], [ymin, ymax], '-', color='blue')
+
+        fig.canvas.draw()
 
     def _devcheck(self, raw_img):
         import kwplot
@@ -891,6 +946,8 @@ def main(cmdline=1, **kwargs):
 
     import sys
     import kwimage
+    import seaborn as sns
+    sns.set()
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('GTK+')
 
@@ -902,7 +959,7 @@ def main(cmdline=1, **kwargs):
     config = {
         'params': {
             'scaling': QConfigNode('sigmoid', choices=['sigmoid', 'linear']),
-            'extrema': QConfigNode('custom-quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
+            'extrema': QConfigNode('quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
             'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.05),
             'mid': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.05),
             'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.05),
