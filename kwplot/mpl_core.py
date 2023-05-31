@@ -735,6 +735,25 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
         elif row_type == 'circle':
             row['fc'] = row.pop('color')
             phantom_actor = plt.Circle((0, 0), 1, **row)
+        elif row_type == 'star':
+            row['mfc'] = row.pop('color')
+            row['mec'] = row['mfc']
+            # https://stackoverflow.com/questions/68120813/how-to-have-a-poligon-in-the-legend
+            phantom_actor = plt.Line2D([0], [0], linestyle='none', marker='*', **row)
+            # label='blue square'),
+            # # not sure why this isn't working
+            # star_xy = np.array([[-3.63271264e-01, -1.18033989e-01],
+            #                     [-9.51056516e-01,  3.09016994e-01],
+            #                     [-2.24513988e-01,  3.09016994e-01],
+            #                     [ 6.12323400e-17,  1.00000000e+00],
+            #                     [ 2.24513988e-01,  3.09016994e-01],
+            #                     [ 9.51056516e-01,  3.09016994e-01],
+            #                     [ 3.63271264e-01, -1.18033989e-01],
+            #                     [ 5.87785252e-01, -8.09016994e-01],
+            #                     [-3.03598782e-17, -3.81966011e-01],
+            #                     [-5.87785252e-01, -8.09016994e-01],
+            #                     [-3.63271264e-01, -1.18033989e-01]])
+            # phantom_actor = plt.Polygon(xy=star_xy, **row)
         else:
             raise KeyError
         handles.append(phantom_actor)
