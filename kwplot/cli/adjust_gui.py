@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 A rewrite an the utool preference GUI
 
@@ -15,6 +16,11 @@ from matplotlib.backend_bases import MouseEvent, KeyEvent, PickEvent
 import matplotlib.backends.backend_qt5agg as backend_qt
 from scriptconfig import smartcast as smartcast_mod
 from enum import Enum
+import scriptconfig as scfg
+
+
+class AdjustGuiConfig(scfg.DataConfig):
+    img_fpath = scfg.Value(None, help='input', position=1)
 
 
 def report_thread_error(fn):
@@ -879,15 +885,19 @@ class AdjustWidget(QtWidgets.QWidget):
         sns.histplot(ax=ax2, data=data, **hist_data_kw_, **hist_style_kw)
 
 
-def main():
+def main(cmdline=1, **kwargs):
+    config = AdjustGuiConfig.cli(cmdline=cmdline, data=kwargs, strict=True)
+    print('config = ' + ub.urepr(dict(config), nl=1))
+
     import sys
+    import kwimage
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('GTK+')
 
-    import kwimage
-    raw_img = kwimage.grab_test_image()
-
-    # fpath =
+    if config.img_fpath is not None:
+        raw_img = kwimage.imread(config.img_fpath)
+    else:
+        raw_img = kwimage.grab_test_image()
 
     config = {
         'params': {
@@ -916,5 +926,6 @@ if __name__ == '__main__':
     """
     CommandLine:
         python ~/code/kwplot/kwplot/cli/adjust_gui.py
+        python -m kwplot.cli.adjust_gui
     """
     main()
