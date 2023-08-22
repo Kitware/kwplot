@@ -2,6 +2,14 @@
 KWPlot - The Kitware Plot Module
 ================================
 
++---------------+------------------------------------------------------+
+| Github        | https://gitlab.kitware.com/computer-vision/kwplot    |
++---------------+------------------------------------------------------+
+| Pypi          | https://pypi.org/project/kwplot                      |
++---------------+------------------------------------------------------+
+| ReadTheDocs   | https://kwplot.readthedocs.io/en/latest/             |
++---------------+------------------------------------------------------+
+
 This module is a small wrapper around matplotlib and seaborn that simplifies
 develoepr workflow when working with code that might be run in IPython or in a
 script. This is primarilly handled by the :mod:`kwplot.auto_backends` module,
