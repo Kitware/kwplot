@@ -5,3 +5,4 @@ kwplot.auto\_backends module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

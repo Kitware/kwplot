@@ -5,3 +5,4 @@ kwplot.mpl\_multiplot module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

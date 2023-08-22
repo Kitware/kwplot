@@ -5,3 +5,4 @@ kwplot.mpl\_plotnums module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

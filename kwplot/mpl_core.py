@@ -176,8 +176,9 @@ def legend(loc='best', fontproperties=None, size=None, fc='w', alpha=1,
         size (None): (default = None)
 
     Ignore:
-        >>> # ENABLE_DOCTEST
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> loc = 'best'
         >>> xdata = np.linspace(-6, 6)
         >>> ydata = np.sin(xdata)
@@ -470,8 +471,9 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         python -m kwplot.mpl_core set_figtitle --show
 
     Example:
-        >>> # DISABLE_DOCTEST
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> fig = figure(fnum=1, doclf=True)
         >>> result = set_figtitle(figtitle='figtitle', fig=fig)
         >>> # xdoc: +REQUIRES(--show)
@@ -580,8 +582,9 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         python -m .color_funcs --exec-distinct_colors --show --cmap_seed=foobar
 
     Ignore:
-        >>> # build test data
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> N = ub.smartcast(ub.get_argval('--N', default=2), int)  # FIXME
         >>> randomize = not ub.argflag('--no-randomize')
         >>> brightness = 0.878

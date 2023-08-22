@@ -5,3 +5,4 @@ kwplot.draw\_conv module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

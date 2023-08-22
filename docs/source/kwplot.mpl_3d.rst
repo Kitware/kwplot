@@ -5,3 +5,4 @@ kwplot.mpl\_3d module
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

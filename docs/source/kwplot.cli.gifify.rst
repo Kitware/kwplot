@@ -1,7 +1,7 @@
-kwplot.mpl\_color module
+kwplot.cli.gifify module
 ========================
 
-.. automodule:: kwplot.mpl_color
+.. automodule:: kwplot.cli.gifify
    :members:
    :undoc-members:
    :show-inheritance:

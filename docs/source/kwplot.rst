@@ -1,12 +1,21 @@
 kwplot package
 ==============
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   kwplot.cli
+
 Submodules
 ----------
 
 .. toctree::
    :maxdepth: 4
 
+   kwplot.__main__
    kwplot.auto_backends
    kwplot.draw_conv
    kwplot.mpl_3d
@@ -24,3 +33,4 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
