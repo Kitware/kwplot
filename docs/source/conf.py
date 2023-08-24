@@ -43,16 +43,18 @@ Notes:
 
         Click import project: (for github you can select, but gitlab you need to import manually)
             Set the Repository NAME: kwplot
-            Set the Repository URL: https://gitlab.kitware.com/computer-vision/kwplot
+            Set the Repository URL: gitlab.kitware.com/computer-vision/kwplot
 
-        For gitlab you also need to setup an integrations and add gitlab
-        incoming webhook
+        For gitlab you also need to setup an integrations. Navigate to:
 
             https://readthedocs.org/dashboard/kwplot/integrations/create/
 
+        Then add gitlab incoming webhook and copy the URL (make sure
+        you copy the real url and not the text so https is included).
+
         Then go to
 
-            https://gitlab.kitware.com/computer-vision/kwplot/hooks
+            gitlab.kitware.com/computer-vision/kwplot/hooks
 
         and add the URL
 
