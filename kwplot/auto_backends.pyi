@@ -2,13 +2,13 @@ from types import ModuleType
 from _typeshed import Incomplete
 
 
-def set_mpl_backend(backend: str, verbose: Incomplete | None = ...) -> None:
+def set_mpl_backend(backend: str, verbose: int = 0) -> None:
     ...
 
 
 def autompl(verbose: int = 0,
             recheck: bool = False,
-            force: str = None) -> None:
+            force: str | int | None = None) -> None:
     ...
 
 

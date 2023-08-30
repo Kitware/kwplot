@@ -1,19 +1,20 @@
 import kwimage
 from typing import List
+from typing import Any
+import matplotlib
 from numpy import ndarray
-from typing import Union
 import pandas as pd
 from _typeshed import Incomplete
 from kwimage import draw_boxes_on_image as draw_boxes_on_image, draw_clf_on_image as draw_clf_on_image, draw_text_on_image as draw_text_on_image
 
 
 def draw_boxes(boxes: kwimage.Boxes,
-               alpha: List[float] = None,
-               color: str = ...,
-               labels: List[str] = None,
+               alpha: float | List[float] | None = None,
+               color: str | Any | List[Any] = 'blue',
+               labels: List[str] | None = None,
                centers: bool = False,
                fill: bool = ...,
-               ax: Incomplete | None = ...,
+               ax: matplotlib.axes.Axes | None = None,
                lw: float = 2) -> None:
     ...
 
@@ -25,7 +26,7 @@ def draw_line_segments(pts1: ndarray,
     ...
 
 
-def plot_matrix(matrix: Union[ndarray, pd.DataFrame],
+def plot_matrix(matrix: ndarray | pd.DataFrame,
                 index: Incomplete | None = ...,
                 columns: Incomplete | None = ...,
                 rot: int = ...,

@@ -687,7 +687,7 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
         label_to_color (Dict[str, kwimage.Color]):
             mapping from string label to the color.
 
-        label_to_attrs (Dict[str, Dict[str, Any]):
+        label_to_attrs (Dict[str, Dict[str, Any]]):
             mapping from a string label to attributes corresponding to
             plt.Line2D or plt.Circle
 

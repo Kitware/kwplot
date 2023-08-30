@@ -22,6 +22,10 @@ from scriptconfig import smartcast as smartcast_mod
 from enum import Enum
 import scriptconfig as scfg
 
+__docstubs__ = """
+from ubelt.util_const import NoParamType
+"""
+
 
 class AdjustGuiConfig(scfg.DataConfig):
     """
@@ -72,7 +76,8 @@ class IndexedDict(dict):
         >>> self.index[2]
     """
 
-    def __init__(self, data=None, /, **kwargs):
+    # def __init__(self, data=None, /, **kwargs):  # python 3.8+
+    def __init__(self, data=None, **kwargs):
         super().__init__()
         self._index_to_key = []
         self._key_to_index = {}
@@ -94,8 +99,16 @@ class IndexedDict(dict):
         else:
             super().__setitem__(key, value)
 
-    def update(self, data):
-        for key, value in data.items():
+    def update(self, *args, **kwargs):
+        if len(args) == 1:
+            data = args[0]
+        else:
+            assert len(args) == 0
+            data = None
+        if data is not None:
+            for key, value in data.items():
+                self[key] = value
+        for key, value in kwargs.items():
             self[key] = value
 
     @property
@@ -117,7 +130,6 @@ class IndexedDict(dict):
         key = self._index_to_key[index]
         value = self[key]
         return value
-
 
 try:
     NoValue  # pragma: no cover

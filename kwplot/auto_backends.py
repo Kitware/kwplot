@@ -65,7 +65,7 @@ def _aggensure():
             set_mpl_backend('agg')
 
 
-def set_mpl_backend(backend, verbose=None):
+def set_mpl_backend(backend, verbose=0):
     """
     Args:
         backend (str): name of backend as string that :func:`matplotlib.use`

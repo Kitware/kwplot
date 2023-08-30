@@ -21,3 +21,21 @@ def plot_surface3d(xgrid,
                    *args,
                    **kwargs):
     ...
+
+
+def plot_points3d(xgrid,
+                  ygrid,
+                  zdata,
+                  xlabel: Incomplete | None = ...,
+                  ylabel: Incomplete | None = ...,
+                  zlabel: Incomplete | None = ...,
+                  mode: Incomplete | None = ...,
+                  pnum: Incomplete | None = ...,
+                  labelkw: Incomplete | None = ...,
+                  xlabelkw: Incomplete | None = ...,
+                  ylabelkw: Incomplete | None = ...,
+                  zlabelkw: Incomplete | None = ...,
+                  titlekw: Incomplete | None = ...,
+                  *args,
+                  **kwargs):
+    ...
