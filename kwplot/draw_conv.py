@@ -40,6 +40,7 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
     Example:
         >>> # xdoctest: +REQUIRES(module:torch)
         >>> from kwplot.draw_conv import *  # NOQA
+        >>> import torch
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
         >>> weights_flat = make_conv_images(conv, norm_per_feat=False)
         >>> # xdoctest: +REQUIRES(--show)

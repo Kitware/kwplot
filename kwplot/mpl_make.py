@@ -22,8 +22,29 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
             Mapping from string label to the color.
             Or a list of dictionaries that contain the keys label and color.
 
+        dpi (int):
+            dots per inch passed to the underlying matplotlib figure used to
+            draw the legend. See [WikiDPI]_ for standard values. (e.g. 72, 96,
+            150, 203, 300).
+
+        shape (Tuple[int, int]):
+            Suggestion for the width / height of the canvas to be used.
+            This interacts with DPI.
+
+        mode (str): type of legend marker ot use.
+            See :func:`kwplot.phantom_legend` for options.
+
+        transparent (bool):
+            if True returns an image with alpha values.
+
+    Returns:
+        ndarray: a numpy image canvas
+
     CommandLine:
         xdoctest -m kwplot.mpl_make make_legend_img --show
+
+    References:
+        ... [WikiDPI] https://en.wikipedia.org/wiki/Dots_per_inch
 
     SeeAlso:
         * :func:`kwplot.phantom_legend`
