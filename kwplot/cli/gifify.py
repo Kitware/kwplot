@@ -18,7 +18,7 @@ class Gifify(scfg.DataConfig):
     Convert a sequence of images into a video or gif.
     """
     __command__ = 'gifify'
-    __alias__ = ['movie']
+    __alias__ = ['movie', 'animate']
 
     image_list = scfg.Value(None, required=True, help=ub.paragraph(
             '''
