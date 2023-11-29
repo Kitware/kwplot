@@ -5,7 +5,8 @@ A gif-ify script
 Wrapper around imgmagik convert or ffmpeg
 
 TODO:
-    - [ ] Moving this to kwplot?
+    - [x] Moving this to kwplot?
+    - [ ] Use kwplot.video_writer
 """
 
 import ubelt as ub
@@ -297,6 +298,7 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3,
 
     import sys
     if sys.stdout.isatty():
+        # ffmpeg seems prone to breaking tty output, this seems to fix it.
         ub.cmd('stty sane')
 
     if info['ret'] != 0:

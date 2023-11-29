@@ -160,9 +160,13 @@ def autompl(verbose=0, recheck=False, force=None):
             # IF IN A NOTEBOOK, BE SURE TO SET INLINE BEHAVIOR
             # THIS EFFECTIVELY REPRODUCES THE %matplotlib inline behavior
             # BUT USING AN ACTUAL PYTHON FUNCTION
-            shell = _current_ipython_session()
-            if shell:
-                shell.enable_matplotlib('inline')
+            ipy = _current_ipython_session()
+            if ipy:
+                if 'colab' in str(ipy.config['IPKernelApp']['kernel_class']):
+                    ipy.run_line_magic('matplotlib', 'inline')
+            # shell = _current_ipython_session()
+            # if shell:
+            #     shell.enable_matplotlib('inline')
 
         _AUTOMPL_WAS_RUN = True
     else:
