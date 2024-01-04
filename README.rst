@@ -3,13 +3,15 @@ The Kitware Plot Module
 
 |GitlabCIPipeline| |GitlabCICoverage| |Appveyor| |Pypi| |Downloads| |ReadTheDocs|
 
-+---------------+------------------------------------------------------+
-| Github        | https://gitlab.kitware.com/computer-vision/kwplot    |
-+---------------+------------------------------------------------------+
-| Pypi          | https://pypi.org/project/kwplot                      |
-+---------------+------------------------------------------------------+
-| ReadTheDocs   | https://kwplot.readthedocs.io/en/latest/             |
-+---------------+------------------------------------------------------+
++------------------+------------------------------------------------------+
+| ReadTheDocs      | https://kwplot.readthedocs.io/en/latest/             |
++------------------+------------------------------------------------------+
+| Gitlab (main)    | https://gitlab.kitware.com/computer-vision/kwplot    |
++------------------+------------------------------------------------------+
+| Github (mirror)  | https://github.com/Kitware/kwplot                    |
++------------------+------------------------------------------------------+
+| Pypi             | https://pypi.org/project/kwplot                      |
++------------------+------------------------------------------------------+
 
 The ``kwplot`` module is a wrapper around ``matplotlib`` and can be used for
 visualizing algorithm results.
@@ -61,11 +63,11 @@ reordering them.
     :target: http://kwplot.readthedocs.io/en/main/
 
 .. # See: https://ci.appveyor.com/project/jon.crall/kwplot/settings/badges
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/py3s2d6tyfjc8lm3/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/jon.crall/kwplot/branch/master
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/py3s2d6tyfjc8lm3/branch/main?svg=true
+   :target: https://ci.appveyor.com/project/jon.crall/kwplot/branch/main
 
-.. |GitlabCIPipeline| image:: https://gitlab.kitware.com/computer-vision/kwplot/badges/master/pipeline.svg
+.. |GitlabCIPipeline| image:: https://gitlab.kitware.com/computer-vision/kwplot/badges/main/pipeline.svg
    :target: https://gitlab.kitware.com/computer-vision/kwplot/-/jobs
 
-.. |GitlabCICoverage| image:: https://gitlab.kitware.com/computer-vision/kwplot/badges/master/coverage.svg?job=coverage
-    :target: https://gitlab.kitware.com/computer-vision/kwplot/commits/master
+.. |GitlabCICoverage| image:: https://gitlab.kitware.com/computer-vision/kwplot/badges/main/coverage.svg
+    :target: https://gitlab.kitware.com/computer-vision/kwplot/commits/main
