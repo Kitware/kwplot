@@ -9,6 +9,7 @@ Submodules
 
    kwplot.cli.__main__
    kwplot.cli.adjust_gui
+   kwplot.cli.box_annotator
    kwplot.cli.gifify
    kwplot.cli.main
 

@@ -25,6 +25,7 @@ Submodules
    kwplot.mpl_make
    kwplot.mpl_multiplot
    kwplot.mpl_plotnums
+   kwplot.video_writer
 
 Module contents
 ---------------
