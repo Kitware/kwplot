@@ -65,7 +65,7 @@ def _aggensure():
             set_mpl_backend('agg')
 
 
-def set_mpl_backend(backend, verbose=None):
+def set_mpl_backend(backend, verbose=0):
     """
     Args:
         backend (str): name of backend as string that :func:`matplotlib.use`
@@ -160,9 +160,13 @@ def autompl(verbose=0, recheck=False, force=None):
             # IF IN A NOTEBOOK, BE SURE TO SET INLINE BEHAVIOR
             # THIS EFFECTIVELY REPRODUCES THE %matplotlib inline behavior
             # BUT USING AN ACTUAL PYTHON FUNCTION
-            shell = _current_ipython_session()
-            if shell:
-                shell.enable_matplotlib('inline')
+            ipy = _current_ipython_session()
+            if ipy:
+                if 'colab' in str(ipy.config['IPKernelApp']['kernel_class']):
+                    ipy.run_line_magic('matplotlib', 'inline')
+            # shell = _current_ipython_session()
+            # if shell:
+            #     shell.enable_matplotlib('inline')
 
         _AUTOMPL_WAS_RUN = True
     else:
@@ -419,3 +423,29 @@ class BackendContext(object):
                     # Only propogate the error if we had explicitly used pyplot
                     # beforehand. Note sure if this is the right thing to do.
                     raise
+
+
+def _check_for_cv2_qt_incompat():
+    import cv2
+    import ubelt as ub
+    from PyQt5 import QtCore  # NOQA
+
+    cv2_mod_dpath = ub.Path(cv2.__file__).parent
+    cv2_lib_dpath = ub.Path(cv2_mod_dpath) / 'qt/plugins/platforms'
+    cv2_qxcb_fpath = ub.Path(cv2_lib_dpath) / 'libqxcb.so'
+
+    qt_mod_dpath = ub.Path(QtCore.__file__).parent
+    qt_lib_dpath1 = qt_mod_dpath / 'Qt/plugins/platforms'
+    qt_lib_dpath2 = (qt_mod_dpath / 'Qt5/plugins/platforms')
+    if qt_lib_dpath1.exists():
+        qt_lib_dpath = qt_lib_dpath1
+    elif qt_lib_dpath2.exists():
+        qt_lib_dpath = qt_lib_dpath2
+    else:
+        raise OSError('cannot find qt library directory')
+    qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
+
+    cv2_qxb_exist = cv2_qxcb_fpath.exists()
+    qt_qxb_exist = qt_qxcb_fpath.exists()
+    print(f'cv2_qxb_exist={cv2_qxb_exist}')
+    print(f'qt_qxb_exist={qt_qxb_exist}')

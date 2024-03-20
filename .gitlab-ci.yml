@@ -2,6 +2,7 @@
 
 stages:
 # TEMPLATES
+- lint
 - build
 - test
 - gpgsign
@@ -12,8 +13,8 @@ stages:
   - docker
   - linux-x86_64
   - build
-  - kitware-python-stack
 
+  - kitware-python-stack
   variables:
     # Change pip's cache directory to be inside the project directory
     # since we can only cache local items.
@@ -30,19 +31,20 @@ stages:
   stage: build
   before_script:
   - 'python -V  # Print out python version for debugging'
+  - df -h
   script:
-  - python -m pip install pip -U
-  - python -m pip install setuptools>=0.8 wheel build
-  - python -m build --wheel --outdir wheelhouse
+  - python -m pip install setuptools>=0.8 wheel build twine
+  - python -m build --wheel --outdir dist
+  - python -m twine check ./dist/kwplot*.whl
   artifacts:
     paths:
-    - wheelhouse/*.whl
-.test_template: &test_template
+    - ./dist/kwplot*.whl
+.common_test_template: &common_test_template
   <<: *common_template
   stage: test
   coverage: /TOTAL.+ ([0-9]{1,3}%)/
 .test_minimal-loose_template: &test_minimal-loose_template
-  <<: *test_template
+  <<: *common_test_template
   before_script:
   - |-
     # Setup the correct version of python (which should be the same as this instance)
@@ -56,21 +58,41 @@ stages:
     pip install pygments
     python --version  # Print out python version for debugging
   script:
-  - ls wheelhouse || echo "wheelhouse does not exist"
-  - pip install tomli ubelt pkginfo
-  - MOD_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['tool']['xcookie']['mod_name'])")
-  - WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('$MOD_NAME*.whl'))[-1]).replace(chr(92),
+  - export INSTALL_EXTRAS="tests,headless"
+  - echo "Finding the path to the wheel"
+  - ls dist || echo "dist does not exist"
+  - echo "Installing helpers"
+  - pip install setuptools>=0.8 setuptools_scm wheel build -U
+  - pip install tomli pkginfo
+  - export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('dist').glob('kwplot*.whl'))[-1]).replace(chr(92),
     chr(47)))")
-  - MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-  - INSTALL_EXTRAS=tests,headless
-  - echo "MOD_NAME=$MOD_NAME"
-  - echo "WHEEL_FPATH=$WHEEL_FPATH"
-  - echo "MOD_VERSION=$MOD_VERSION"
-  - pip install "$MOD_NAME[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+  - export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
+  - pip install --prefer-binary "kwplot[$INSTALL_EXTRAS]==$MOD_VERSION" -f dist
+  - echo "Install finished."
+  - echo "Creating test sandbox directory"
+  - export WORKSPACE_DNAME="sandbox"
+  - echo "WORKSPACE_DNAME=$WORKSPACE_DNAME"
+  - mkdir -p $WORKSPACE_DNAME
+  - echo "cd-ing into the workspace"
+  - cd $WORKSPACE_DNAME
+  - pwd
+  - ls -altr
+  - '# Get the path to the installed package and run the tests'
+  - export MOD_DPATH=$(python -c "import kwplot, os; print(os.path.dirname(kwplot.__file__))")
+  - export MOD_NAME=kwplot
   - |-
-    mkdir -p sandbox && cd sandbox && pytest -s --xdoctest --xdoctest-verbose=3 --cov-config ../pyproject.toml --cov-report html --cov-report term --cov="$MOD_NAME" "$(python -c "import ubelt; print(ubelt.modname_to_modpath('${MOD_NAME}'))")" ../tests && cd ..
+    echo "
+    ---
+    MOD_DPATH = $MOD_DPATH
+    ---
+    running the pytest command inside the workspace
+    ---
+    "
+  - |-
+    python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --durations=100 --cov="$MOD_NAME" "$MOD_DPATH" ../tests
+  - echo "pytest command finished, moving the coverage file to the repo root"
 .test_full-loose_template: &test_full-loose_template
-  <<: *test_template
+  <<: *common_test_template
   before_script:
   - |-
     # Setup the correct version of python (which should be the same as this instance)
@@ -84,21 +106,41 @@ stages:
     pip install pygments
     python --version  # Print out python version for debugging
   script:
-  - ls wheelhouse || echo "wheelhouse does not exist"
-  - pip install tomli ubelt pkginfo
-  - MOD_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['tool']['xcookie']['mod_name'])")
-  - WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('$MOD_NAME*.whl'))[-1]).replace(chr(92),
+  - export INSTALL_EXTRAS="tests,optional,headless"
+  - echo "Finding the path to the wheel"
+  - ls dist || echo "dist does not exist"
+  - echo "Installing helpers"
+  - pip install setuptools>=0.8 setuptools_scm wheel build -U
+  - pip install tomli pkginfo
+  - export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('dist').glob('kwplot*.whl'))[-1]).replace(chr(92),
     chr(47)))")
-  - MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-  - INSTALL_EXTRAS=tests,optional,headless
-  - echo "MOD_NAME=$MOD_NAME"
-  - echo "WHEEL_FPATH=$WHEEL_FPATH"
-  - echo "MOD_VERSION=$MOD_VERSION"
-  - pip install "$MOD_NAME[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+  - export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
+  - pip install --prefer-binary "kwplot[$INSTALL_EXTRAS]==$MOD_VERSION" -f dist
+  - echo "Install finished."
+  - echo "Creating test sandbox directory"
+  - export WORKSPACE_DNAME="sandbox"
+  - echo "WORKSPACE_DNAME=$WORKSPACE_DNAME"
+  - mkdir -p $WORKSPACE_DNAME
+  - echo "cd-ing into the workspace"
+  - cd $WORKSPACE_DNAME
+  - pwd
+  - ls -altr
+  - '# Get the path to the installed package and run the tests'
+  - export MOD_DPATH=$(python -c "import kwplot, os; print(os.path.dirname(kwplot.__file__))")
+  - export MOD_NAME=kwplot
   - |-
-    mkdir -p sandbox && cd sandbox && pytest -s --xdoctest --xdoctest-verbose=3 --cov-config ../pyproject.toml --cov-report html --cov-report term --cov="$MOD_NAME" "$(python -c "import ubelt; print(ubelt.modname_to_modpath('${MOD_NAME}'))")" ../tests && cd ..
+    echo "
+    ---
+    MOD_DPATH = $MOD_DPATH
+    ---
+    running the pytest command inside the workspace
+    ---
+    "
+  - |-
+    python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --durations=100 --cov="$MOD_NAME" "$MOD_DPATH" ../tests
+  - echo "pytest command finished, moving the coverage file to the repo root"
 .test_minimal-strict_template: &test_minimal-strict_template
-  <<: *test_template
+  <<: *common_test_template
   before_script:
   - |-
     # Setup the correct version of python (which should be the same as this instance)
@@ -112,21 +154,41 @@ stages:
     pip install pygments
     python --version  # Print out python version for debugging
   script:
-  - ls wheelhouse || echo "wheelhouse does not exist"
-  - pip install tomli ubelt pkginfo
-  - MOD_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['tool']['xcookie']['mod_name'])")
-  - WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('$MOD_NAME*.whl'))[-1]).replace(chr(92),
+  - export INSTALL_EXTRAS="tests-strict,runtime-strict,headless-strict"
+  - echo "Finding the path to the wheel"
+  - ls dist || echo "dist does not exist"
+  - echo "Installing helpers"
+  - pip install setuptools>=0.8 setuptools_scm wheel build -U
+  - pip install tomli pkginfo
+  - export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('dist').glob('kwplot*.whl'))[-1]).replace(chr(92),
     chr(47)))")
-  - MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-  - INSTALL_EXTRAS=tests-strict,runtime-strict,headless-strict
-  - echo "MOD_NAME=$MOD_NAME"
-  - echo "WHEEL_FPATH=$WHEEL_FPATH"
-  - echo "MOD_VERSION=$MOD_VERSION"
-  - pip install "$MOD_NAME[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+  - export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
+  - pip install --prefer-binary "kwplot[$INSTALL_EXTRAS]==$MOD_VERSION" -f dist
+  - echo "Install finished."
+  - echo "Creating test sandbox directory"
+  - export WORKSPACE_DNAME="sandbox"
+  - echo "WORKSPACE_DNAME=$WORKSPACE_DNAME"
+  - mkdir -p $WORKSPACE_DNAME
+  - echo "cd-ing into the workspace"
+  - cd $WORKSPACE_DNAME
+  - pwd
+  - ls -altr
+  - '# Get the path to the installed package and run the tests'
+  - export MOD_DPATH=$(python -c "import kwplot, os; print(os.path.dirname(kwplot.__file__))")
+  - export MOD_NAME=kwplot
   - |-
-    mkdir -p sandbox && cd sandbox && pytest -s --xdoctest --xdoctest-verbose=3 --cov-config ../pyproject.toml --cov-report html --cov-report term --cov="$MOD_NAME" "$(python -c "import ubelt; print(ubelt.modname_to_modpath('${MOD_NAME}'))")" ../tests && cd ..
+    echo "
+    ---
+    MOD_DPATH = $MOD_DPATH
+    ---
+    running the pytest command inside the workspace
+    ---
+    "
+  - |-
+    python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --durations=100 --cov="$MOD_NAME" "$MOD_DPATH" ../tests
+  - echo "pytest command finished, moving the coverage file to the repo root"
 .test_full-strict_template: &test_full-strict_template
-  <<: *test_template
+  <<: *common_test_template
   before_script:
   - |-
     # Setup the correct version of python (which should be the same as this instance)
@@ -140,19 +202,39 @@ stages:
     pip install pygments
     python --version  # Print out python version for debugging
   script:
-  - ls wheelhouse || echo "wheelhouse does not exist"
-  - pip install tomli ubelt pkginfo
-  - MOD_NAME=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['tool']['xcookie']['mod_name'])")
-  - WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('$MOD_NAME*.whl'))[-1]).replace(chr(92),
+  - export INSTALL_EXTRAS="tests-strict,runtime-strict,optional-strict,headless-strict"
+  - echo "Finding the path to the wheel"
+  - ls dist || echo "dist does not exist"
+  - echo "Installing helpers"
+  - pip install setuptools>=0.8 setuptools_scm wheel build -U
+  - pip install tomli pkginfo
+  - export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('dist').glob('kwplot*.whl'))[-1]).replace(chr(92),
     chr(47)))")
-  - MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-  - INSTALL_EXTRAS=tests-strict,runtime-strict,optional-strict,headless-strict
-  - echo "MOD_NAME=$MOD_NAME"
-  - echo "WHEEL_FPATH=$WHEEL_FPATH"
-  - echo "MOD_VERSION=$MOD_VERSION"
-  - pip install "$MOD_NAME[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+  - export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
+  - pip install --prefer-binary "kwplot[$INSTALL_EXTRAS]==$MOD_VERSION" -f dist
+  - echo "Install finished."
+  - echo "Creating test sandbox directory"
+  - export WORKSPACE_DNAME="sandbox"
+  - echo "WORKSPACE_DNAME=$WORKSPACE_DNAME"
+  - mkdir -p $WORKSPACE_DNAME
+  - echo "cd-ing into the workspace"
+  - cd $WORKSPACE_DNAME
+  - pwd
+  - ls -altr
+  - '# Get the path to the installed package and run the tests'
+  - export MOD_DPATH=$(python -c "import kwplot, os; print(os.path.dirname(kwplot.__file__))")
+  - export MOD_NAME=kwplot
   - |-
-    mkdir -p sandbox && cd sandbox && pytest -s --xdoctest --xdoctest-verbose=3 --cov-config ../pyproject.toml --cov-report html --cov-report term --cov="$MOD_NAME" "$(python -c "import ubelt; print(ubelt.modname_to_modpath('${MOD_NAME}'))")" ../tests && cd ..
+    echo "
+    ---
+    MOD_DPATH = $MOD_DPATH
+    ---
+    running the pytest command inside the workspace
+    ---
+    "
+  - |-
+    python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --durations=100 --cov="$MOD_NAME" "$MOD_DPATH" ../tests
+  - echo "pytest command finished, moving the coverage file to the repo root"
 build/cp37-linux-x86_64:
   <<: *build_template
   image: python:3.7
@@ -268,14 +350,48 @@ test/full-strict/cp311-linux-x86_64:
   image: python:3.11
   needs:
   - build/cp311-linux-x86_64
+build/cp312-linux-x86_64:
+  <<: *build_template
+  image: python:3.12
+test/minimal-loose/cp312-linux-x86_64:
+  <<: *test_minimal-loose_template
+  image: python:3.12
+  needs:
+  - build/cp312-linux-x86_64
+test/full-loose/cp312-linux-x86_64:
+  <<: *test_full-loose_template
+  image: python:3.12
+  needs:
+  - build/cp312-linux-x86_64
+test/minimal-strict/cp312-linux-x86_64:
+  <<: *test_minimal-strict_template
+  image: python:3.12
+  needs:
+  - build/cp312-linux-x86_64
+test/full-strict/cp312-linux-x86_64:
+  <<: *test_full-strict_template
+  image: python:3.12
+  needs:
+  - build/cp312-linux-x86_64
+lint:
+  <<: *common_template
+  image: python:3.11
+  stage: lint
+  before_script:
+  - df -h
+  script:
+  - pip install -r requirements/linting.txt
+  - ./run_linter.sh
+  allow_failure: true
 gpgsign/wheels:
   <<: *common_template
-  image: python:3.8
+  image: python:3.11
   stage: gpgsign
   artifacts:
     paths:
-    - wheelhouse/*.asc
-
+    - dist/*.asc
+    - dist/*.whl
+    - dist/*.ots
   only:
     refs:
         # Gitlab will only expose protected variables on protected branches
@@ -295,8 +411,10 @@ gpgsign/wheels:
     artifacts: true
   - job: build/cp311-linux-x86_64
     artifacts: true
+  - job: build/cp312-linux-x86_64
+    artifacts: true
   script:
-  - ls wheelhouse
+  - ls dist
   - export GPG_EXECUTABLE=gpg
   - export GPG_KEYID=$(cat dev/public_gpg_key)
   - echo "GPG_KEYID = $GPG_KEYID"
@@ -317,7 +435,7 @@ gpgsign/wheels:
   - GPG_SIGN_CMD="$GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user
     $GPG_KEYID"
   - |-
-    WHEEL_PATHS=(wheelhouse/*.whl)
+    WHEEL_PATHS=(dist/*.whl)
     WHEEL_PATHS_STR=$(printf '"%s" ' "${WHEEL_PATHS[@]}")
     echo "$WHEEL_PATHS_STR"
     for WHEEL_PATH in "${WHEEL_PATHS[@]}"
@@ -328,19 +446,21 @@ gpgsign/wheels:
         $GPG_EXECUTABLE --verify $WHEEL_PATH.asc $WHEEL_PATH  || echo "hack, the first run of gpg very fails"
         $GPG_EXECUTABLE --verify $WHEEL_PATH.asc $WHEEL_PATH
     done
-  - ls wheelhouse
+  - ls dist
+  - python -m pip install opentimestamps-client
+  - ots stamp dist/*.whl dist/*.asc
 deploy/wheels:
   <<: *common_template
-  image: python:3.8
+  image: python:3.11
   stage: deploy
   only:
     refs:
     - release
   script:
   - pip install pyopenssl ndg-httpsclient pyasn1 requests[security] twine -U
-  - ls wheelhouse
+  - ls dist
   - |-
-    WHEEL_PATHS=(wheelhouse/*.whl)
+    WHEEL_PATHS=(dist/*.whl)
     WHEEL_PATHS_STR=$(printf '"%s" ' "${WHEEL_PATHS[@]}")
     source dev/secrets_configuration.sh
     TWINE_PASSWORD=${!VARNAME_TWINE_PASSWORD}
@@ -376,6 +496,26 @@ deploy/wheels:
         git tag $TAG_NAME -m "tarball tag $VERSION"
         git push --tags "https://git-push-token:${PUSH_TOKEN}@${URL_HOST}"
     fi
+  - |-
+    # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    echo "CI_PROJECT_URL=$CI_PROJECT_URL"
+    echo "CI_PROJECT_ID=$CI_PROJECT_ID"
+    echo "CI_PROJECT_NAME=$CI_PROJECT_NAME"
+    echo "CI_PROJECT_NAMESPACE=$CI_PROJECT_NAMESPACE"
+    echo "CI_API_V4_URL=$CI_API_V4_URL"
+
+    export PROJECT_VERSION=$(python -c "import setup; print(setup.VERSION)")
+    echo "PROJECT_VERSION=$PROJECT_VERSION"
+
+    # --header "PRIVATE-TOKEN: $PRIVATE_GITLAB_TOKEN" \
+    for FPATH in "dist"/*; do
+        FNAME=$(basename $FPATH)
+        echo $FNAME
+        curl \
+            --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+            --upload-file $FPATH \
+            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/$CI_PROJECT_NAME/$PROJECT_VERSION/$FNAME"
+    done
 
 
 # end

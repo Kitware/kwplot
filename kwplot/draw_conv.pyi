@@ -2,12 +2,11 @@ import torch
 import torch.nn
 from numpy import ndarray
 import matplotlib
-import torch
 from _typeshed import Incomplete
 
 
-def make_conv_images(conv: torch.nn.Conv2d,
-                     color: bool = None,
+def make_conv_images(conv: torch.nn.Conv2d | ndarray,
+                     color: bool | None = None,
                      norm_per_feat: bool = True) -> ndarray:
     ...
 

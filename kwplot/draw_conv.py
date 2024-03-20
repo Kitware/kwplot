@@ -5,11 +5,6 @@ This may be removed in the future.
 """
 import numpy as np
 import ubelt as ub
-try:
-    import torch  # NOQA
-except ImportError:
-    print('warning: torch not available')
-    torch = None
 
 
 def make_conv_images(conv, color=None, norm_per_feat=True):
@@ -17,8 +12,11 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
     Convert convolutional weights to a list of visualize-able images
 
     Args:
-        conv (torch.nn.Conv2d): a torch convolutional layer
+        conv (torch.nn.Conv2d | ndarray):
+            a torch convolutional layer or its weights
+
         color (bool): if True output images are colorized
+
         norm_per_feat (bool): if True normalizes over each feature separately,
             otherwise normalizes all features together.
 
@@ -29,9 +27,21 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         - [ ] better normalization options
 
     Example:
+        >>> from kwplot.draw_conv import *  # NOQA
+        >>> weights_tohack = np.random.randn(7, 3, 5, 7)
+        >>> weights_flat = make_conv_images(weights_tohack, norm_per_feat=False)
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> import kwimage
+        >>> import kwplot
+        >>> stacked = kwimage.stack_images_grid(weights_flat, chunksize=5, overlap=-1)
+        >>> kwplot.imshow(stacked)
+        >>> kwplot.show_if_requested()
+
+    Example:
         >>> # xdoctest: +REQUIRES(module:torch)
+        >>> from kwplot.draw_conv import *  # NOQA
+        >>> import torch
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
-        >>> weights_tohack = conv.weight[0:7].data.numpy()
         >>> weights_flat = make_conv_images(conv, norm_per_feat=False)
         >>> # xdoctest: +REQUIRES(--show)
         >>> import kwimage
@@ -42,6 +52,7 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
 
     Ignore:
         >>> # xdoctest: +REQUIRES(module:torch)
+        >>> from kwplot.draw_conv import *  # NOQA
         >>> import torchvision
         >>> conv = torchvision.models.resnet50(pretrained=True).conv1
         >>> #conv = torchvision.models.vgg11(pretrained=True).features[0]
@@ -49,16 +60,23 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
         >>> # xdoctest: +REQUIRES(--show)
         >>> import kwplot
         >>> import kwimage
-        >>> stacked = kwplot.stack_images_grid(weights_flat, chunksize=8, overlap=-1)
+        >>> stacked = kwimage.stack_images_grid(weights_flat, chunksize=8, overlap=-1)
         >>> kwplot.autompl()
         >>> kwplot.imshow(stacked)
-        >>> kwplotwil.show_if_requested()
+        >>> kwplot.show_if_requested()
     """
     # get relavent data out of pytorch module
-    weights = conv.weight.data.cpu().numpy()
-    in_channels = conv.in_channels
-    # out_channels = conv.out_channels
-    spatial_dims = list(conv.kernel_size)
+    if isinstance(conv, np.ndarray):
+        weights = conv
+        in_channels = weights.shape[1]
+        # out_channels = weights.shape[0]
+        spatial_dims = list(weights.shape[2:])
+    else:
+        weights = conv.weight.data.cpu().numpy()
+        in_channels = conv.in_channels
+        # out_channels = conv.out_channels
+        spatial_dims = list(conv.kernel_size)
+
     n_space_dims = len(spatial_dims)
 
     if color is None:
@@ -135,6 +153,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
 
     Example:
         >>> # xdoctest: +REQUIRES(module:torch)
+        >>> import torch
         >>> conv = torch.nn.Conv2d(3, 9, (5, 7))
         >>> plot_convolutional_features(conv, colorspace=None, fnum=None, limit=2)
 
@@ -142,6 +161,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
         >>> # xdoctest: +REQUIRES(--comprehensive)
         >>> # xdoctest: +REQUIRES(module:torch)
         >>> import torchvision
+        >>> import torch
         >>> # 2d uncolored gray-images
         >>> conv = torch.nn.Conv3d(1, 2, (3, 4, 5))
         >>> plot_convolutional_features(conv, colorspace=None, fnum=1, limit=2)
@@ -183,6 +203,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
     Example:
         >>> # xdoctest: +REQUIRES(--network)
         >>> # xdoctest: +REQUIRES(module:torch)
+        >>> import torch
         >>> import torchvision
         >>> model = torchvision.models.resnet50(pretrained=True)
         >>> conv = model.conv1

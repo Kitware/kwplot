@@ -176,8 +176,9 @@ def legend(loc='best', fontproperties=None, size=None, fc='w', alpha=1,
         size (None): (default = None)
 
     Ignore:
-        >>> # ENABLE_DOCTEST
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> loc = 'best'
         >>> xdata = np.linspace(-6, 6)
         >>> ydata = np.sin(xdata)
@@ -470,8 +471,9 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         python -m kwplot.mpl_core set_figtitle --show
 
     Example:
-        >>> # DISABLE_DOCTEST
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> fig = figure(fnum=1, doclf=True)
         >>> result = set_figtitle(figtitle='figtitle', fig=fig)
         >>> # xdoc: +REQUIRES(--show)
@@ -580,8 +582,9 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         python -m .color_funcs --exec-distinct_colors --show --cmap_seed=foobar
 
     Ignore:
-        >>> # build test data
-        >>> autompl()
+        >>> # xdoctest: +SKIP
+        >>> import kwplot
+        >>> kwplot.autompl()
         >>> N = ub.smartcast(ub.get_argval('--N', default=2), int)  # FIXME
         >>> randomize = not ub.argflag('--no-randomize')
         >>> brightness = 0.878
@@ -684,7 +687,7 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
         label_to_color (Dict[str, kwimage.Color]):
             mapping from string label to the color.
 
-        label_to_attrs (Dict[str, Dict[str, Any]):
+        label_to_attrs (Dict[str, Dict[str, Any]]):
             mapping from a string label to attributes corresponding to
             plt.Line2D or plt.Circle
 

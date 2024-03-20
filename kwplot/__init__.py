@@ -2,6 +2,16 @@
 KWPlot - The Kitware Plot Module
 ================================
 
++------------------+------------------------------------------------------+
+| ReadTheDocs      | https://kwplot.readthedocs.io/en/latest/             |
++------------------+------------------------------------------------------+
+| Gitlab (main)    | https://gitlab.kitware.com/computer-vision/kwplot    |
++------------------+------------------------------------------------------+
+| Github (mirror)  | https://github.com/Kitware/kwplot                    |
++------------------+------------------------------------------------------+
+| Pypi             | https://pypi.org/project/kwplot                      |
++------------------+------------------------------------------------------+
+
 This module is a small wrapper around matplotlib and seaborn that simplifies
 develoepr workflow when working with code that might be run in IPython or in a
 script. This is primarilly handled by the :mod:`kwplot.auto_backends` module,
@@ -59,7 +69,7 @@ There is also a small CLI that can be used to view multispectral or uint16
 images.
 """
 
-__version__ = '0.4.15'
+__version__ = '0.4.16'
 __author__ = 'Kitware Inc., Jon Crall'
 __author_email__ = 'kitware@kitware.com, jon.crall@kitware.com'
 __url__ = 'https://gitlab.kitware.com/computer-vision/kwplot'
@@ -70,10 +80,11 @@ mkinit -m kwplot --diff --relative --nomods
 """
 
 # Backwards compat
-try:
-    from kwimage import Color  # noqa
-except ImportError:
-    Color = None
+# try:
+from kwimage import Color  # noqa
+# except ImportError:
+#     raise
+#     Color = None
 
 from .auto_backends import (BackendContext, autompl, autoplt, autosns,
                             set_mpl_backend,)

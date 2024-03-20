@@ -1,7 +1,8 @@
-kwplot.mpl\_color module
+kwplot.draw\_conv module
 ========================
 
-.. automodule:: kwplot.mpl_color
+.. automodule:: kwplot.draw_conv
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

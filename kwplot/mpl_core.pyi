@@ -1,10 +1,10 @@
 import matplotlib as mpl
 from numpy import ndarray
-from typing import Union
 from typing import List
 from typing import Tuple
 from typing import Dict
 import kwimage
+from typing import Any
 from _typeshed import Incomplete
 
 
@@ -16,9 +16,9 @@ def ensure_fnum(fnum):
     ...
 
 
-def figure(fnum: int = None,
+def figure(fnum: int | None = None,
            pnum=...,
-           title: str = None,
+           title: str | None = None,
            figtitle: None = None,
            doclf: bool = False,
            docla: bool = False,
@@ -42,14 +42,14 @@ def show_if_requested(N: int = ...) -> None:
 
 
 def imshow(img: ndarray,
-           fnum: Union[int, None] = None,
-           pnum: Union[tuple, None] = None,
-           xlabel: Union[str, None] = None,
-           title: Union[str, None] = None,
-           figtitle: Union[str, None] = None,
-           ax: Union[mpl.axes.Axes, None] = None,
-           norm: bool = None,
-           cmap: Union[mpl.colors.Colormap, None] = None,
+           fnum: int | None = None,
+           pnum: tuple | None = None,
+           xlabel: str | None = None,
+           title: str | None = None,
+           figtitle: str | None = None,
+           ax: mpl.axes.Axes | None = None,
+           norm: bool | None = None,
+           cmap: mpl.colors.Colormap | None = None,
            data_colorbar: bool = False,
            colorspace: str = 'rgb',
            interpolation: str = 'nearest',
@@ -72,7 +72,7 @@ def set_figtitle(figtitle: str,
 
 def distinct_markers(num: int,
                      style: str = 'astrisk',
-                     total: int = None,
+                     total: int | None = None,
                      offset: float = 0) -> List[Tuple]:
     ...
 
@@ -85,7 +85,8 @@ def distinct_colors(N: int,
     ...
 
 
-def phantom_legend(label_to_color: Dict[str, kwimage.Color],
+def phantom_legend(label_to_color: Dict[str, kwimage.Color] | None = None,
+                   label_to_attrs: Dict[str, Dict[str, Any]] | None = None,
                    mode: str = ...,
                    ax: Incomplete | None = ...,
                    legend_id: Incomplete | None = ...,
@@ -93,7 +94,7 @@ def phantom_legend(label_to_color: Dict[str, kwimage.Color],
     ...
 
 
-def close_figures(figures: List[mpl.figure.Figure] = None) -> None:
+def close_figures(figures: List[mpl.figure.Figure] | None = None) -> None:
     ...
 
 
