@@ -24,8 +24,8 @@ class ImshowCLI(DataConfig):
     Example:
         FPATH=$(python -c "import kwimage; print(kwimage.grab_test_image_fpath('amazon'))")
         echo $FPATH
-        kwplot imshow --fpath=$HOME/.cache/kwimage/demodata/amazon.jpg
-        kwplot imshow --fpath=$HOME/.cache/kwimage/demodata/amazon.jpg --no-stats --no-robust
+        kwplot imshow --fpath="$FPATH"
+        kwplot imshow --fpath="$FPATH" --no-stats --no-robust
         kwplot $HOME/.cache/kwimage/demodata/amazon.jpg
     """
     __command__ = 'imshow'
