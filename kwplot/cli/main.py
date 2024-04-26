@@ -11,8 +11,6 @@ from scriptconfig import DataConfig, Value
 modal = ModalCLI(description=ub.codeblock(
     '''
     The Kitware Plot CLI
-
-    A collection of excellent developer tools for excellent developers.
     '''))
 
 
