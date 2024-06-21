@@ -260,7 +260,11 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     else:
         norm = None
 
-    cmap = copy.copy(mpl.cm.get_cmap(cmap))  # copy the default cmap
+    try:
+        cmap_ = mpl.colormaps[cmap]
+    except Exception:
+        cmap_ = mpl.cm.get_cmap(cmap)
+    cmap = copy.copy(cmap_)
     cmap.set_bad((0, 0, 0))
 
     if not showzero and not logscale:
