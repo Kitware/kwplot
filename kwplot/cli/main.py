@@ -42,7 +42,7 @@ class ImshowCLI(DataConfig):
         plt = kwplot.autoplt()
         fpath = config.fpath
         print('read fpath = {!r}'.format(fpath))
-        imdata = kwimage.imread(fpath, nodata='float')
+        imdata = kwimage.imread(fpath, nodata_method='float')
 
         print('imdata.dtype = {!r}'.format(imdata.dtype))
         print('imdata.shape = {!r}'.format(imdata.shape))
