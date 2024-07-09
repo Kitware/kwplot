@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.5.0 - Unreleased
 
+### Added
+* Added `pixels_are` argument to imshow
+
+### Changed
+* imshow now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
+
 ### Removed
 * Drop 3.6 and 3.7 support
 
