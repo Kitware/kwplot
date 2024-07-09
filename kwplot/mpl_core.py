@@ -307,12 +307,12 @@ def imshow(img,
         show_ticks (bool):
             if False, then remove axis coordinate ticks
 
-        pixels_are (str): either "points" or "areas".
-            Points means that the center of the top left pixel will be 0,0 and
-            the corner of that pixel will be at -0.5, -0.5.
+        pixels_are (str): either "areas" or "points".
             Areas means the center of the top left pixel will be 0.5, 0.5, and
             the corner of that pixel will be at 0, 0.
-            Defaults to points.
+            Points means that the center of the top left pixel will be 0,0 and
+            the corner of that pixel will be at -0.5, -0.5.
+            Defaults to "areas".
 
         ax (mpl.axes.Axes | None):
             axes to draw on (alternative to fnum and pnum)
@@ -433,6 +433,10 @@ def imshow(img,
         # https://stackoverflow.com/questions/49714222/can-matplotlib-imshow-coordinates-start-at-0-instead-of-0-5
         numrows, numcols = img.shape[0:2]
         plt_imshow_kwargs['extent'] = (0, numcols, numrows, 0)
+    elif pixels_are == 'areas':
+        ...  # default case
+    else:
+        raise KeyError(f'pixels_are={pixels_are}')
 
     try:
         if len(img.shape) == 3 and (img.shape[2] == 3 or img.shape[2] == 4):
