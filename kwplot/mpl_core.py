@@ -12,6 +12,7 @@ Extensions of pyplot functionality. Main improvements are
 import numpy as np
 import ubelt as ub
 import matplotlib as mpl
+import matplotlib.figure  # NOQA
 
 
 try:
