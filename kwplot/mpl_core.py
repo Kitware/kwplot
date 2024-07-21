@@ -315,6 +315,9 @@ def imshow(img,
             the corner of that pixel will be at -0.5, -0.5.
             Defaults to "areas".
 
+            TODO: the areas and points names are confusing, can we do better?
+            Can we give a good intuition?
+
         ax (mpl.axes.Axes | None):
             axes to draw on (alternative to fnum and pnum)
 
