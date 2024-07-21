@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 """
-Extensions of pyplot functionality. Main improvements are
+Extensions of pyplot functionality. Main differences / modifications are
 
 * :func:`kwplot.mpl_core.figure` can be called with a specific figure number, plot number, and other attributes like if it needs to be cleared or not.
 
 * :func:`kwplot.mpl_core.imshow` uses simpler defaults for showing image data. Extra normalization is only added if requested.
 
 * :func:`kwplot.mpl_core.close_figures` This function closes all open figures, which can be helpful in interactive sessions.
+
 
 """
 import numpy as np
@@ -318,10 +318,11 @@ def imshow(img,
         ax (mpl.axes.Axes | None):
             axes to draw on (alternative to fnum and pnum)
 
-        **kwargs: docla, doclf, projection
+        **kwargs: docla, doclf, projection, and other arguments passed to
+            :func:`figure`.
 
     Returns:
-        Tuple[: a tuple containing the figure and axes that was plotted to.
+        FigureAxes: a tuple containing the figure and axes that was plotted to.
 
     Note:
         Calling this function will import pyplot if you have not done so
@@ -624,6 +625,8 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
 
 def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cmap_seed=None):
     r"""
+    DEPRECATED in favor of :func:`kwimage.Color.distinct`
+
     Args:
         N (int):
         brightness (float):
@@ -633,6 +636,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
 
     TODO:
         - [ ] This is VERY old code that needs massive cleanup.
+        - [ ] Favor :func:`kwimage.Color.distinct` instead.
 
     CommandLine:
         python -m color_funcs --test-distinct_colors --N 2 --show --hue-range=0.05,.95
