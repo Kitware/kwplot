@@ -7,9 +7,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 * Added `pixels_are` argument to imshow
+* New submodule `managers` with code ported from `geowatch.utils.util_kwplot`
+* New submodule `tables` with code ported from `geowatch.utils.util_kwplot`
+* Add other functions from `geowatch.utils.util_kwplot` to existing modules
 
 ### Changed
 * imshow now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
+* Enabled colab autompl workaround (needs a test)
 
 ### Removed
 * Drop 3.6 and 3.7 support

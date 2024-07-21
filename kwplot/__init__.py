@@ -75,91 +75,224 @@ __author_email__ = 'kitware@kitware.com, jon.crall@kitware.com'
 __url__ = 'https://gitlab.kitware.com/computer-vision/kwplot'
 
 __mkinit__ = """
-mkinit -m kwplot -w --relative --nomods
-mkinit -m kwplot --diff --relative --nomods
+mkinit kwplot -w --relative --nomods --lazy
+mkinit kwplot --diff --relative --nomods --lazy
 """
 
-# Backwards compat
-# try:
-from kwimage import Color  # noqa
-# except ImportError:
-#     raise
-#     Color = None
-
-from .auto_backends import (BackendContext, autompl, autoplt, autosns,
-                            set_mpl_backend,)
-from .draw_conv import (make_conv_images, plot_convolutional_features,)
-from .mpl_3d import (plot_surface3d,)
-from .mpl_core import (all_figures, close_figures, distinct_colors,
-                       distinct_markers, ensure_fnum, figure, imshow, legend,
-                       next_fnum, phantom_legend, set_figtitle,
-                       show_if_requested,)
-from .mpl_draw import (draw_boxes, draw_boxes_on_image, draw_clf_on_image,
-                       draw_line_segments, draw_points, draw_text_on_image,
-                       plot_matrix,)
-from .mpl_make import (make_heatmask, make_legend_img, make_orimask,
-                       make_vector_field, render_figure_to_image,)
-from .mpl_multiplot import (multi_plot,)
-from .mpl_plotnums import (PlotNums,)
+__private__ = ['video_writer']
 
 
-__all__ = ['BackendContext', 'Color', 'PlotNums', 'all_figures', 'autompl',
-           'autoplt', 'autosns', 'close_figures', 'distinct_colors',
-           'distinct_markers', 'draw_boxes', 'draw_boxes_on_image',
-           'draw_clf_on_image', 'draw_line_segments', 'draw_points',
-           'draw_text_on_image', 'ensure_fnum', 'figure', 'imshow', 'legend',
-           'make_conv_images', 'make_heatmask', 'make_legend_img',
-           'make_orimask', 'make_vector_field', 'multi_plot', 'next_fnum',
-           'phantom_legend', 'plot_convolutional_features', 'plot_matrix',
-           'plot_surface3d', 'render_figure_to_image', 'set_figtitle',
-           'set_mpl_backend', 'show_if_requested']
+class __module_properties__:
+    """
+    experimental mkinit feature for handling module level properties.
+    """
 
-POC_MODULE_PROEPRTY = 2
-
-if POC_MODULE_PROEPRTY == 1:
-    # Python 3.7+ only, experimental auto function support via properties
-    # See Also: https://stackoverflow.com/questions/880530/can-modules-have-properties-the-same-way-that-objects-can
-
-    __module_properties__ = {}
-
-    def module_property(func):
-        __module_properties__[func.__name__] = property(func)
-
-    @module_property
-    def plt():
+    @property
+    def plt(self):
         import kwplot
         return kwplot.autoplt()
-    del plt
 
-    @module_property
-    def sns():
+    @property
+    def sns(self):
         import kwplot
         return kwplot.autosns()
-    del sns
 
-    def __getattr__(key):
-        print(f'getattr key={key}')
-        if key in __module_properties__:
-            prop = __module_properties__[key]
-            return prop.fget()
-        raise AttributeError(key)
-    __all__ += ['sns', 'plt']
+    @property
+    def Color(self):
+        # Backwards compat
+        from kwimage import Color
+        return Color
 
-elif POC_MODULE_PROEPRTY == 2:
+# TODO: figure out better way to handle module properties
+# POC_MODULE_PROEPRTY = 2
+# if POC_MODULE_PROEPRTY == 1:
+#     # Python 3.7+ only, experimental auto function support via properties
+#     # See Also: https://stackoverflow.com/questions/880530/can-modules-have-properties-the-same-way-that-objects-can
 
-    # This seems to be a more stable way of handling module properties
+#     __module_properties__ = {}
 
-    __all__ += ['plt', 'sns']
-    def __getattr__(key):
-        # Make these special auto-backends top-level dynamic properties of kwplot
-        if key == 'plt':
-            import kwplot
-            return kwplot.autoplt()
-        if key == 'sns':
-            import kwplot
-            return kwplot.autosns()
-        raise AttributeError(key)
+#     def module_property(func):
+#         __module_properties__[func.__name__] = property(func)
+
+#     @module_property
+#     def plt():
+#         import kwplot
+#         return kwplot.autoplt()
+#     del plt
+
+#     @module_property
+#     def sns():
+#         import kwplot
+#         return kwplot.autosns()
+#     del sns
+
+#     def __getattr__(key):
+#         print(f'getattr key={key}')
+#         if key in __module_properties__:
+#             prop = __module_properties__[key]
+#             return prop.fget()
+#         raise AttributeError(key)
+#     __all__ += ['sns', 'plt']
+# elif POC_MODULE_PROEPRTY == 2:
+#     # This seems to be a more stable way of handling module properties
+#     __all__ += ['plt', 'sns']
+#     def __getattr__(key):
+#         # Make these special auto-backends top-level dynamic properties of kwplot
+#         if key == 'plt':
+#             import kwplot
+#             return kwplot.autoplt()
+#         if key == 'sns':
+#             import kwplot
+#             return kwplot.autosns()
+#         raise AttributeError(key)
+
+
+def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
+    import importlib
+    import os
+    name_to_submod = {
+        func: mod for mod, funcs in submod_attrs.items()
+        for func in funcs
+    }
+    module_property_names = {'Color', 'plt', 'sns'}
+    modprops = __module_properties__()
+    def __getattr__(name):
+        if name in module_property_names:
+            return getattr(modprops, name)
+        if name in submodules:
+            attr = importlib.import_module(
+                '{module_name}.{name}'.format(
+                    module_name=module_name, name=name)
+            )
+        elif name in name_to_submod:
+            submodname = name_to_submod[name]
+            module = importlib.import_module(
+                '{module_name}.{submodname}'.format(
+                    module_name=module_name, submodname=submodname)
+            )
+            attr = getattr(module, name)
+        else:
+            raise AttributeError(
+                'No {module_name} attribute {name}'.format(
+                    module_name=module_name, name=name))
+        globals()[name] = attr
+        return attr
+    eager_import_flag = False
+    if eager == 'auto':
+        eager_import_text = os.environ.get('EAGER_IMPORT', '')
+        if eager_import_text:
+            eager_import_text_ = eager_import_text.lower()
+            if eager_import_text_ in {'true', '1', 'on', 'yes'}:
+                eager_import_flag = True
+
+        eager_import_module_text = os.environ.get('EAGER_IMPORT_MODULES', '')
+        if eager_import_module_text:
+            if eager_import_module_text.lower() in __name__.lower():
+                eager_import_flag = True
+    else:
+        eager_import_flag = eager
+    if eager_import_flag:
+        for name in submodules:
+            __getattr__(name)
+
+        for attrs in submod_attrs.values():
+            for attr in attrs:
+                __getattr__(attr)
+    return __getattr__
+
+__getattr__ = lazy_import(
+    __name__,
+    submodules={},
+    submod_attrs={
+        'auto_backends': [
+            'BackendContext',
+            'autompl',
+            'autoplt',
+            'autosns',
+            'set_mpl_backend',
+        ],
+        'draw_conv': [
+            'make_conv_images',
+            'plot_convolutional_features',
+        ],
+        'managers': [
+            'ArtistManager',
+            'FigureFinalizer',
+            'FigureManager',
+            'LabelManager',
+            'Palette',
+            'PaletteManager',
+            'cropwhite_ondisk',
+            'extract_legend',
+            'fix_matplotlib_dates',
+            'fix_matplotlib_timedeltas',
+        ],
+        'mpl_3d': [
+            'plot_points3d',
+            'plot_surface3d',
+        ],
+        'mpl_color': [
+            'Color',
+        ],
+        'mpl_core': [
+            'FigureAxes',
+            'all_figures',
+            'close_figures',
+            'distinct_colors',
+            'distinct_markers',
+            'ensure_fnum',
+            'figure',
+            'imshow',
+            'legend',
+            'next_fnum',
+            'phantom_legend',
+            'set_figtitle',
+            'show_if_requested',
+        ],
+        'mpl_draw': [
+            'draw_boxes',
+            'draw_boxes_on_image',
+            'draw_clf_on_image',
+            'draw_line_segments',
+            'draw_points',
+            'draw_text_on_image',
+            'plot_matrix',
+        ],
+        'mpl_make': [
+            'make_heatmask',
+            'make_legend_img',
+            'make_orimask',
+            'make_vector_field',
+            'render_figure_to_image',
+        ],
+        'mpl_multiplot': [
+            'multi_plot',
+        ],
+        'mpl_plotnums': [
+            'PlotNums',
+        ],
+        'tables': [
+            'dataframe_table',
+            'humanize_dataframe',
+        ],
+    },
+)
 
 
 def __dir__():
     return __all__
+
+__all__ = ['ArtistManager', 'BackendContext', 'Color', 'FigureAxes',
+           'FigureFinalizer', 'FigureManager', 'LabelManager', 'Palette',
+           'PaletteManager', 'PlotNums', 'all_figures', 'autompl', 'autoplt',
+           'autosns', 'close_figures', 'cropwhite_ondisk', 'dataframe_table',
+           'distinct_colors', 'distinct_markers', 'draw_boxes',
+           'draw_boxes_on_image', 'draw_clf_on_image', 'draw_line_segments',
+           'draw_points', 'draw_text_on_image', 'ensure_fnum',
+           'extract_legend', 'figure', 'fix_matplotlib_dates',
+           'fix_matplotlib_timedeltas', 'humanize_dataframe', 'imshow',
+           'legend', 'make_conv_images', 'make_heatmask', 'make_legend_img',
+           'make_orimask', 'make_vector_field', 'multi_plot', 'next_fnum',
+           'phantom_legend', 'plot_convolutional_features', 'plot_matrix',
+           'plot_points3d', 'plot_surface3d', 'plt', 'render_figure_to_image',
+           'set_figtitle', 'set_mpl_backend', 'show_if_requested', 'sns']

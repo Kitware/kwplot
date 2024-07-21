@@ -385,7 +385,7 @@ class VideoWriter:
 
     Example:
         >>> # xdoctest: +REQUIRES(module:kwcoco)
-        >>> from kwplot.cli.gifify import *  # NOQA
+        >>> from kwplot.video_writer import *  # NOQA
         >>> if ub.find_exe('ffmpeg') is None:
         >>>     import pytest
         >>>     pytest.skip('test requires ffmpeg')

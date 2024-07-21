@@ -415,6 +415,41 @@ def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
     return collections
 
 
+def scatterplot_highlight(data, x, y, highlight, size=10, color='orange',
+                          marker='*', val_to_color=None, ax=None, linewidths=None):
+    if ax is None:
+        import kwplot
+        plt = kwplot.autoplt()
+        ax = plt.gca()
+    _starkw = {
+        's': size,
+        # 'edgecolor': color,
+        'facecolor': 'none',
+    }
+    flags = data[highlight].apply(bool)
+    star_data = data[flags]
+    star_x = star_data[x]
+    star_y = star_data[y]
+
+    if linewidths is not None:
+        _starkw['linewidths'] = linewidths
+
+    if color != 'group':
+        _starkw['edgecolor'] = color
+        ax.scatter(star_x, star_y, marker=marker, **_starkw)
+    else:
+        val_to_group = dict(list(star_data.groupby(highlight)))
+        if val_to_color is None:
+            import kwimage
+            val_to_color = ub.dzip(val_to_group, kwimage.Color.distinct(len(val_to_group)))
+        for val, group in val_to_group.items():
+            star_x = group[x]
+            star_y = group[y]
+            edgecolor = val_to_color[val]
+            ax.scatter(star_x, star_y, marker=marker, edgecolor=edgecolor,
+                       **_starkw)
+
+
 # DEPRECATED FUNCTIONS. STILL EXISTS FOR BACKWARDS COMPAT
 # backwards compat
 from kwimage import draw_boxes_on_image, draw_clf_on_image, draw_text_on_image  # NOQA
