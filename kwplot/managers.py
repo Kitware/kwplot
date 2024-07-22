@@ -39,6 +39,7 @@ class LabelManager:
         xdoctest -m kwplot.managers LabelManager --show
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
         >>> from kwplot.managers import *  # NOQA
         >>> import pandas as pd
         >>> import kwarray
@@ -291,6 +292,7 @@ class ArtistManager:
         https://stackoverflow.com/questions/32444037/how-can-i-plot-many-thousands-of-circles-quickly
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:seaborn)
         >>> from kwplot.managers import *  # NOQA
         >>> import kwplot
         >>> sns = kwplot.autosns()
@@ -307,6 +309,7 @@ class ArtistManager:
         >>> kwplot.show_if_requested()
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:seaborn)
         >>> from kwplot.managers import *  # NOQA
         >>> import numpy as np
         >>> import kwplot
