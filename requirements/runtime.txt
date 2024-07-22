@@ -1,6 +1,5 @@
 # xdev availpkg matplotlib
 # xdev availpkg opencv-python-headless
-# xdev availpkg matplotlib
 # xdev availpkg ubelt
 
 ubelt>=1.3.6     ;                            python_version >= '3.6'    # Python 3.6+
@@ -8,10 +7,8 @@ ubelt>=1.3.6     ;                            python_version >= '3.6'    # Pytho
 matplotlib>=3.7.3     ; python_version < '4.0'  and python_version >= '3.12'    # Python 3.12+
 matplotlib>=3.6.2     ; python_version < '3.12' and python_version >= '3.11'    # Python 3.11+
 matplotlib>=3.5.0     ; python_version < '3.11' and python_version >= '3.10'    # Python 3.10
-matplotlib>=3.4.0     ; python_version < '3.10' and python_version >= '3.9'    # Python 3.9
-matplotlib>=3.4.0     ; python_version < '3.9' and python_version >= '3.8'    # Python 3.8
-matplotlib>=3.4.0     ; python_version < '3.8' and python_version >= '3.7'    # Python 3.7
-matplotlib>=3.1.0     ; python_version < '3.7' and python_version >= '3.6'    # Python 3.6
+matplotlib>=3.5.0     ; python_version < '3.10' and python_version >= '3.9'    # Python 3.9
+matplotlib>=3.5.0     ; python_version < '3.9' and python_version >= '3.8'    # Python 3.8
 
 kwarray>=0.6.19
 kwimage>=0.10.0
