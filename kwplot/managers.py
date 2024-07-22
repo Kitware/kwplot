@@ -51,6 +51,7 @@ class LabelManager:
         >>>         'node.metrics.f1': rng.rand(),
         >>>         'node.param.model': rng.choice(models),
         >>>     } for _ in range(100)])
+        >>> # xdoctest +REQUIRES(module:seaborn)
         >>> import kwplot
         >>> sns = kwplot.autosns()
         >>> fig = kwplot.figure(fnum=1, pnum=(1, 2, 1), doclf=1)
