@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.5.0 - Unreleased
 
 ### Added
-* Added `pixels_are` argument to imshow
+* Added `corner_convention` argument to imshow
 * New submodule `managers` with code ported from `geowatch.utils.util_kwplot`
 * New submodule `tables` with code ported from `geowatch.utils.util_kwplot`
 * Add other functions from `geowatch.utils.util_kwplot` to existing modules

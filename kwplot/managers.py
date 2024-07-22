@@ -383,9 +383,13 @@ class ArtistManager:
 
     def add_linestring(self, points, **attrs):
         """
+        Prepares points to be added in a LineCollection
+
         Args:
             points (List[Tuple[float, float]] | ndarray):
                 an Nx2 set of ordered points
+
+            **attrs: color,
 
         NOTE:
             perhaps allow adding markers based on ax.scatter?

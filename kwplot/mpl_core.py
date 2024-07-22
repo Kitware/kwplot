@@ -268,7 +268,7 @@ def imshow(img,
            norm=None, cmap=None, data_colorbar=False,
            colorspace='rgb',
            interpolation='nearest', alpha=None,
-           pixels_are="areas",
+           origin_convention="center",
            show_ticks=False, **kwargs):
     r"""
     A wrapper around pyplot.imshow with extra options and slightly modified
@@ -308,7 +308,7 @@ def imshow(img,
         show_ticks (bool):
             if False, then remove axis coordinate ticks
 
-        pixels_are (str): either "areas" or "points".
+        origin_convention (str): either "areas" or "points".
             Areas means the center of the top left pixel will be 0.5, 0.5, and
             the corner of that pixel will be at 0, 0.
             Points means that the center of the top left pixel will be 0,0 and
@@ -347,16 +347,16 @@ def imshow(img,
         >>> import kwplot
         >>> import kwimage
         >>> kwplot.autompl()
-        >>> # The pixels_are argument gives control of the coordinates
+        >>> # The origin_convention argument gives control of the coordinates
         >>> # assigned to pixel centers / corners.
-        >>> img = kwimage.checkerboard(dsize=(5, 5), num_squares=5)
+        >>> img = kwimage.checkerboard(dsize=(4, 4), num_squares=4)
         >>> img[-1, :] = 0.5  # mark the bottom of the image
         >>> ax1 = kwplot.imshow(img, show_ticks=True,
-        >>>                     title='pixels_are="areas" (default).\nCorner pixel center is 0.5, 0.5',
-        >>>                     fnum=1, pnum=(1, 2, 1), pixels_are='areas').ax
+        >>>                     title='origin_convention="center" (default).\nTL pixel center is 0.0, 0.0',
+        >>>                     fnum=1, pnum=(1, 2, 1), origin_convention='center').ax
         >>> ax2 = kwplot.imshow(img, show_ticks=True,
-        >>>                     title='pixels_are="points" (customized).\nCorner pixel center is 0, 0',
-        >>>                     fnum=1, pnum=(1, 2, 2), pixels_are='points').ax
+        >>>                     title='origin_convention="corner" (customized).\nTL pixel center is 0.5, 0.5',
+        >>>                     fnum=1, pnum=(1, 2, 2), origin_convention='corner').ax
         >>> # Future vectors respect this coordinate system
         >>> ax1.plot([0, 1], [0, 1], '-o')
         >>> ax2.plot([0, 1], [0, 1], '-o')
@@ -433,15 +433,15 @@ def imshow(img,
                 # probably in chw format
                 img = img.transpose(1, 2, 0)
 
-    if pixels_are == 'points':
+    if origin_convention == 'corner':
         # References:
         # https://stackoverflow.com/questions/49714222/can-matplotlib-imshow-coordinates-start-at-0-instead-of-0-5
         numrows, numcols = img.shape[0:2]
         plt_imshow_kwargs['extent'] = (0, numcols, numrows, 0)
-    elif pixels_are == 'areas':
+    elif origin_convention == 'center':
         ...  # default case
     else:
-        raise KeyError(f'pixels_are={pixels_are}')
+        raise KeyError(f'origin_convention={origin_convention}')
 
     try:
         if len(img.shape) == 3 and (img.shape[2] == 3 or img.shape[2] == 4):
