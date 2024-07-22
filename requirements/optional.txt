@@ -13,3 +13,5 @@ pandas>=1.4.0  ; python_version < '3.10' and python_version >= '3.9'   # Python 
 pandas>=1.4.0  ; python_version < '3.9'  and python_version >= '3.8'   # Python 3.8
 pandas>=1.2.0  ; python_version < '3.8'  and python_version >= '3.7'   # Python 3.7.1
 pandas>=1.1.4  ; python_version < '3.7'  and python_version >= '3.6'   # Python 3.6.1
+
+kwutil>=0.3.0

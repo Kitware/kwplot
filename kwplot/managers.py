@@ -717,6 +717,7 @@ def fix_matplotlib_dates(dates, format='mdate'):
             add regular matplotlib test for a real demo of where this is useful
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:kwutil)
         >>> from kwplot.managers import *  # NOQA
         >>> from kwutil.util_time import coerce_datetime
         >>> from kwutil.util_time import coerce_timedelta
