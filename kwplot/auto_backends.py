@@ -148,30 +148,32 @@ def autompl(verbose=0, recheck=False, force=None):
         recheck = True
         force = None
     elif force is not None:
+        _run_inline_magic_in_colab(verbose)
         set_mpl_backend(force, verbose=verbose)
         _AUTOMPL_WAS_RUN = True
 
     if recheck or not _AUTOMPL_WAS_RUN:
+        _run_inline_magic_in_colab(verbose)
         backend = _determine_best_backend(verbose=verbose)
         if backend is not None:
             set_mpl_backend(backend, verbose=verbose)
-        if 0:
-            # TODO:
-            # IF IN A NOTEBOOK, BE SURE TO SET INLINE BEHAVIOR
-            # THIS EFFECTIVELY REPRODUCES THE %matplotlib inline behavior
-            # BUT USING AN ACTUAL PYTHON FUNCTION
-            ipy = _current_ipython_session()
-            if ipy:
-                if 'colab' in str(ipy.config['IPKernelApp']['kernel_class']):
-                    ipy.run_line_magic('matplotlib', 'inline')
-            # shell = _current_ipython_session()
-            # if shell:
-            #     shell.enable_matplotlib('inline')
 
         _AUTOMPL_WAS_RUN = True
     else:
         if verbose > 2:
             print('[kwplot.autompl] Check already ran and recheck=False. Skipping')
+
+
+def _run_inline_magic_in_colab(verbose):
+    # If in a colab notebook, be sure to set inline behavior this
+    # effectively reproduces the %matplotlib inline behavior but using
+    # an actual python function.
+    ipy = _current_ipython_session()
+    if ipy:
+        if 'colab' in str(ipy.config['IPKernelApp']['kernel_class']):
+            if verbose:
+                print('Detected colab, running inline ipython magic')
+            ipy.run_line_magic('matplotlib', 'inline')
 
 
 def _determine_best_backend(verbose):

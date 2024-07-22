@@ -385,11 +385,13 @@ class VideoWriter:
 
     Example:
         >>> # xdoctest: +REQUIRES(module:kwcoco)
-        >>> from kwplot.cli.gifify import *  # NOQA
+        >>> from kwplot.video_writer import *  # NOQA
         >>> if ub.find_exe('ffmpeg') is None:
         >>>     import pytest
         >>>     pytest.skip('test requires ffmpeg')
         >>> # Get a list of images to turn into an animation
+        >>> import kwcoco
+        >>> dset = kwcoco.CocoDataset.demo('shapes8')
         >>> frame_fpaths = sorted(dset.images().gpath)
         >>> test_dpath = ub.Path.appdir('kwplot', 'video_maker', 'test').ensuredir()
         >>> # Test output to MP4

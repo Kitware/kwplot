@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-Extensions of pyplot functionality. Main improvements are
+Extensions of pyplot functionality. Main differences / modifications are
 
 * :func:`kwplot.mpl_core.figure` can be called with a specific figure number, plot number, and other attributes like if it needs to be cleared or not.
 
@@ -8,10 +7,30 @@ Extensions of pyplot functionality. Main improvements are
 
 * :func:`kwplot.mpl_core.close_figures` This function closes all open figures, which can be helpful in interactive sessions.
 
+
 """
 import numpy as np
 import ubelt as ub
+import matplotlib as mpl
+import matplotlib.figure  # NOQA
 
+
+try:
+    from typing import NamedTuple
+
+    class FigureAxes(NamedTuple):
+        """
+        Backwards compatible helper for functions that returned a tuple of a
+        figure and axes. This lets new code avoid magic numbers when accessing
+        one or the other.
+        """
+        fig : mpl.figure.Figure
+        ax : mpl.axes.Axes
+
+except ImportError:
+    # Is this needed in 3.8?
+    from collections import namedtuple
+    FigureAxes = namedtuple('FigureAxes', ['fig', 'ax'])
 
 _BASE_FNUM = 9001
 
@@ -249,8 +268,12 @@ def imshow(img,
            norm=None, cmap=None, data_colorbar=False,
            colorspace='rgb',
            interpolation='nearest', alpha=None,
+           origin_convention="center",
            show_ticks=False, **kwargs):
     r"""
+    A wrapper around pyplot.imshow with extra options and slightly modified
+    defaults.
+
     Args:
         img (ndarray): image data. Height, Width, and Channel dimensions
             can either be in standard (H, W, C) format or in (C, H, W) format.
@@ -282,25 +305,65 @@ def imshow(img,
 
         figtitle (str | None): set figure title (if ax is not given)
 
+        show_ticks (bool):
+            if False, then remove axis coordinate ticks
+
+        origin_convention (str): either "areas" or "points".
+            Areas means the center of the top left pixel will be 0.5, 0.5, and
+            the corner of that pixel will be at 0, 0.
+            Points means that the center of the top left pixel will be 0,0 and
+            the corner of that pixel will be at -0.5, -0.5.
+            Defaults to "areas".
+
+            TODO: the areas and points names are confusing, can we do better?
+            Can we give a good intuition?
+
         ax (mpl.axes.Axes | None):
             axes to draw on (alternative to fnum and pnum)
 
-        **kwargs: docla, doclf, projection
+        **kwargs: docla, doclf, projection, and other arguments passed to
+            :func:`figure`.
 
     Returns:
-        tuple: (fig, ax)
+        FigureAxes: a tuple containing the figure and axes that was plotted to.
 
-    Ignore:
+    Note:
+        Calling this function will import pyplot if you have not done so
+        already. Be sure to setup the backend correctly (e.g. with
+        ``kwplot.autompl()``) before calling this function.
+
+    Example:
+        >>> # Simple case of showing an image
         >>> import kwplot
-        >>> kwplot.autompl()
         >>> import kwimage
+        >>> kwplot.autompl()
         >>> img = kwimage.grab_test_image('carl')
-        >>> (fig, ax) = imshow(img)
-        >>> result = ('(fig, ax) = %s' % (str((fig, ax)),))
-        >>> print(result)
+        >>> fig_ax = kwplot.imshow(img)
+        >>> print(f'fig_ax={fig_ax}')
+        >>> kwplot.show_if_requested()
+
+    Example:
+        >>> # High level control over axes coordinates
+        >>> import kwplot
+        >>> import kwimage
+        >>> kwplot.autompl()
+        >>> # The origin_convention argument gives control of the coordinates
+        >>> # assigned to pixel centers / corners.
+        >>> img = kwimage.checkerboard(dsize=(4, 4), num_squares=4)
+        >>> img[-1, :] = 0.5  # mark the bottom of the image
+        >>> ax1 = kwplot.imshow(img, show_ticks=True,
+        >>>                     title='origin_convention="center" (default).\nTL pixel center is 0.0, 0.0',
+        >>>                     fnum=1, pnum=(1, 2, 1), origin_convention='center').ax
+        >>> ax2 = kwplot.imshow(img, show_ticks=True,
+        >>>                     title='origin_convention="corner" (customized).\nTL pixel center is 0.5, 0.5',
+        >>>                     fnum=1, pnum=(1, 2, 2), origin_convention='corner').ax
+        >>> # Future vectors respect this coordinate system
+        >>> ax1.plot([0, 1], [0, 1], '-o')
+        >>> ax2.plot([0, 1], [0, 1], '-o')
+        >>> # xdoctest: +REQUIRES(--show)
         >>> kwplot.show_if_requested()
     """
-    import matplotlib as mpl
+    #import matplotlib as mpl
     import matplotlib.pyplot as plt
 
     if ax is not None:
@@ -369,6 +432,17 @@ def imshow(img,
             if img.shape[2] > 4:
                 # probably in chw format
                 img = img.transpose(1, 2, 0)
+
+    if origin_convention == 'corner':
+        # References:
+        # https://stackoverflow.com/questions/49714222/can-matplotlib-imshow-coordinates-start-at-0-instead-of-0-5
+        numrows, numcols = img.shape[0:2]
+        plt_imshow_kwargs['extent'] = (0, numcols, numrows, 0)
+    elif origin_convention == 'center':
+        ...  # default case
+    else:
+        raise KeyError(f'origin_convention={origin_convention}')
+
     try:
         if len(img.shape) == 3 and (img.shape[2] == 3 or img.shape[2] == 4):
             # img is in a color format
@@ -447,7 +521,7 @@ def imshow(img,
 
     if figtitle is not None:
         set_figtitle(figtitle)
-    return fig, ax
+    return FigureAxes(fig, ax)
 
 
 def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
@@ -476,7 +550,7 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         >>> kwplot.autompl()
         >>> fig = figure(fnum=1, doclf=True)
         >>> result = set_figtitle(figtitle='figtitle', fig=fig)
-        >>> # xdoc: +REQUIRES(--show)
+        >>> # xdoctest: +REQUIRES(--show)
         >>> show_if_requested()
     """
     from matplotlib import pyplot as plt
@@ -554,6 +628,8 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
 
 def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cmap_seed=None):
     r"""
+    DEPRECATED in favor of :func:`kwimage.Color.distinct`
+
     Args:
         N (int):
         brightness (float):
@@ -563,6 +639,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
 
     TODO:
         - [ ] This is VERY old code that needs massive cleanup.
+        - [ ] Favor :func:`kwimage.Color.distinct` instead.
 
     CommandLine:
         python -m color_funcs --test-distinct_colors --N 2 --show --hue-range=0.05,.95
@@ -803,7 +880,7 @@ def all_figures():
     Returns:
         List[mpl.figure.Figure]: list of all figures
     """
-    import matplotlib as mpl
+    #import matplotlib as mpl
     manager_list = mpl._pylab_helpers.Gcf.get_all_fig_managers()
     all_figures = []
     # Make sure you dont show figures that this module closed

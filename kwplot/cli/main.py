@@ -11,8 +11,6 @@ from scriptconfig import DataConfig, Value
 modal = ModalCLI(description=ub.codeblock(
     '''
     The Kitware Plot CLI
-
-    A collection of excellent developer tools for excellent developers.
     '''))
 
 
@@ -24,8 +22,8 @@ class ImshowCLI(DataConfig):
     Example:
         FPATH=$(python -c "import kwimage; print(kwimage.grab_test_image_fpath('amazon'))")
         echo $FPATH
-        kwplot imshow --fpath=$HOME/.cache/kwimage/demodata/amazon.jpg
-        kwplot imshow --fpath=$HOME/.cache/kwimage/demodata/amazon.jpg --no-stats --no-robust
+        kwplot imshow --fpath="$FPATH"
+        kwplot imshow --fpath="$FPATH" --no-stats --no-robust
         kwplot $HOME/.cache/kwimage/demodata/amazon.jpg
     """
     __command__ = 'imshow'
@@ -44,7 +42,7 @@ class ImshowCLI(DataConfig):
         plt = kwplot.autoplt()
         fpath = config.fpath
         print('read fpath = {!r}'.format(fpath))
-        imdata = kwimage.imread(fpath, nodata='float')
+        imdata = kwimage.imread(fpath, nodata_method='float')
 
         print('imdata.dtype = {!r}'.format(imdata.dtype))
         print('imdata.shape = {!r}'.format(imdata.shape))
