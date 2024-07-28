@@ -13,7 +13,7 @@ KWPlot - The Kitware Plot Module
 +------------------+------------------------------------------------------+
 
 This module is a small wrapper around matplotlib and seaborn that simplifies
-develoepr workflow when working with code that might be run in IPython or in a
+developer workflow when working with code that might be run in IPython or in a
 script. This is primarilly handled by the :mod:`kwplot.auto_backends` module,
 which exposes the functions: :func:`kwplot.autompl`, :func:`kwplot.autoplt`,
 and :func:`kwplot.autosns` for auto-initialization of matplotlib, pyplot, and
@@ -25,13 +25,12 @@ because importing pyplot has side-effects which can cause problems if
 executed at a module level (i.e. they happen at import time! Anyone using
 your library will have to deal with these consequences )
 
-
 To mitigate this we recommend only using pyplot inside of the scope of the
 functions that need it.
 
 Importing :mod:`kwplot` itself has no import-time side effects, so it is safe
 to put it as a module level import, however, plotting is often an optional
-feature of any library, so we still recomend putting that code inside the
+feature of any library, so we still recommend putting that code inside the
 functions that need it.
 
 The general code flow looks like this, inside your function run:
