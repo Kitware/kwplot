@@ -9,14 +9,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.5.0 - Released 2024-07-22
 
 ### Added
-* Added `corner_convention` argument to imshow
-* New submodule `managers` with code ported from `geowatch.utils.util_kwplot`
-* New submodule `tables` with code ported from `geowatch.utils.util_kwplot`
+* Added `corner_convention` argument to `kwplot.imshow`
+* New submodule `kwplot.managers` with code ported from `geowatch.utils.util_kwplot`
+* New submodule `kwplot.tables` with code ported from `geowatch.utils.util_kwplot`
 * Add other functions from `geowatch.utils.util_kwplot` to existing modules
+* Add `kwplot.LabelManager.force_integer_ticks()` 
 
 ### Changed
-* imshow now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
-* Enabled colab autompl workaround (needs a test)
+* `kwplot.imshow` now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
+* Enabled colab `kwplot.autompl` workaround (needs a test)
 
 ### Removed
 * Drop 3.6 and 3.7 support
