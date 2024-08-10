@@ -252,6 +252,7 @@ class LabelManager:
         Example:
             >>> import kwplot
             >>> from kwplot.managers import *  # NOQA
+            >>> import numpy as np
             >>> fig = kwplot.figure()
             >>> ax = fig.gca()
             >>> ax.set_xlim(0, 22.2)

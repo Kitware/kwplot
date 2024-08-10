@@ -477,3 +477,15 @@ def benchmark_video_maker():
     _ = ub.cmd(f'ffmpeg -i {output_fpath}', verbose=3)
 
     self = self.backend_writer
+
+
+def pil_write_animated_gif(fpath, image_list):
+    from PIL import Image
+    pil_images = []
+    for image in image_list:
+        pil_img = Image.fromarray(image)
+        pil_images.append(pil_img)
+    pil_img.save(fpath)
+    first_pil_img = pil_images[0]
+    rest_pil_imgs = pil_images[1:]
+    first_pil_img.save(fpath, save_all=True, append_images=rest_pil_imgs, optimize=False, duration=40, loop=0)
