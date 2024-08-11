@@ -97,6 +97,16 @@ class __module_properties__:
         return kwplot.autosns()
 
     @property
+    def pyplot(self):
+        import kwplot
+        return kwplot.autoplt()
+
+    @property
+    def seaborn(self):
+        import kwplot
+        return kwplot.autosns()
+
+    @property
     def Color(self):
         # Backwards compat
         from kwimage import Color
@@ -153,7 +163,7 @@ def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
         func: mod for mod, funcs in submod_attrs.items()
         for func in funcs
     }
-    module_property_names = {'Color', 'plt', 'sns'}
+    module_property_names = {'Color', 'plt', 'sns', 'seaborn', 'pyplot'}
     modprops = __module_properties__()
     def __getattr__(name):
         if name in module_property_names:
@@ -294,4 +304,5 @@ __all__ = ['ArtistManager', 'BackendContext', 'Color', 'FigureAxes',
            'make_orimask', 'make_vector_field', 'multi_plot', 'next_fnum',
            'phantom_legend', 'plot_convolutional_features', 'plot_matrix',
            'plot_points3d', 'plot_surface3d', 'plt', 'render_figure_to_image',
-           'set_figtitle', 'set_mpl_backend', 'show_if_requested', 'sns']
+           'set_figtitle', 'set_mpl_backend', 'show_if_requested', 'sns',
+           'pyplot', 'seaborn']

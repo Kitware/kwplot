@@ -6,7 +6,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.5.1 - Unreleased
 
 ### Changed
-* Experimental support for PyQt5 in autompl
+* Experimental support for PyQt6 in autompl
+
+
+### Fixed:
+* Added `kwplot.pyplot` and `kwplot.seaborn` as referenced in the documentation.
 
 
 ## Version 0.5.0 - Released 2024-07-22

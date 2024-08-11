@@ -141,6 +141,7 @@ def autompl(verbose=0, recheck=False, force=None):
 
     References:
         https://stackoverflow.com/questions/637005/check-if-x-server-is-running
+        https://matplotlib.org/stable/users/explain/figure/backends.html
     """
     global _AUTOMPL_WAS_RUN
     if verbose > 2:
@@ -375,6 +376,32 @@ def _check_for_linux_opencv_qt_conflicts(QtCore):
     return False
 
 
+def _check_for_cv2_qt_incompat():
+    import cv2
+    import ubelt as ub
+    from PyQt5 import QtCore  # NOQA
+
+    cv2_mod_dpath = ub.Path(cv2.__file__).parent
+    cv2_lib_dpath = ub.Path(cv2_mod_dpath) / 'qt/plugins/platforms'
+    cv2_qxcb_fpath = ub.Path(cv2_lib_dpath) / 'libqxcb.so'
+
+    qt_mod_dpath = ub.Path(QtCore.__file__).parent
+    qt_lib_dpath1 = qt_mod_dpath / 'Qt/plugins/platforms'
+    qt_lib_dpath2 = (qt_mod_dpath / 'Qt5/plugins/platforms')
+    if qt_lib_dpath1.exists():
+        qt_lib_dpath = qt_lib_dpath1
+    elif qt_lib_dpath2.exists():
+        qt_lib_dpath = qt_lib_dpath2
+    else:
+        raise OSError('cannot find qt library directory')
+    qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
+
+    cv2_qxb_exist = cv2_qxcb_fpath.exists()
+    qt_qxb_exist = qt_qxcb_fpath.exists()
+    print(f'cv2_qxb_exist={cv2_qxb_exist}')
+    print(f'qt_qxb_exist={qt_qxb_exist}')
+
+
 def autoplt(verbose=0, recheck=False, force=None):
     """
     Like :func:`kwplot.autompl`, but also returns the
@@ -402,7 +429,8 @@ def autosns(verbose=0, recheck=False, force=None):
     See :func:`kwplot.auto_backends.autompl` for argument details
 
     Note:
-        In Python 3.7 accessing ``kwplot.sns`` or ``kwplot.seaborn`` lazily calls this function.
+        In Python 3.7 accessing ``kwplot.sns`` or ``kwplot.seaborn`` lazily
+        calls this function.
 
     Returns:
         ModuleType
@@ -493,29 +521,3 @@ class BackendContext(object):
                     # Only propogate the error if we had explicitly used pyplot
                     # beforehand. Note sure if this is the right thing to do.
                     raise
-
-
-def _check_for_cv2_qt_incompat():
-    import cv2
-    import ubelt as ub
-    from PyQt5 import QtCore  # NOQA
-
-    cv2_mod_dpath = ub.Path(cv2.__file__).parent
-    cv2_lib_dpath = ub.Path(cv2_mod_dpath) / 'qt/plugins/platforms'
-    cv2_qxcb_fpath = ub.Path(cv2_lib_dpath) / 'libqxcb.so'
-
-    qt_mod_dpath = ub.Path(QtCore.__file__).parent
-    qt_lib_dpath1 = qt_mod_dpath / 'Qt/plugins/platforms'
-    qt_lib_dpath2 = (qt_mod_dpath / 'Qt5/plugins/platforms')
-    if qt_lib_dpath1.exists():
-        qt_lib_dpath = qt_lib_dpath1
-    elif qt_lib_dpath2.exists():
-        qt_lib_dpath = qt_lib_dpath2
-    else:
-        raise OSError('cannot find qt library directory')
-    qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
-
-    cv2_qxb_exist = cv2_qxcb_fpath.exists()
-    qt_qxb_exist = qt_qxcb_fpath.exists()
-    print(f'cv2_qxb_exist={cv2_qxb_exist}')
-    print(f'qt_qxb_exist={qt_qxb_exist}')
