@@ -82,6 +82,8 @@ def set_mpl_backend(backend, verbose=0):
         _qtensure()
     current_backend = mpl.get_backend()
     if verbose:
+        mpl_config_fpath = mpl.matplotlib_fname()
+        print('[kwplot.set_mpl_backend] mpl config file={}'.format(mpl_config_fpath))
         print('[kwplot.set_mpl_backend] current_backend = {!r}'.format(current_backend))
     if backend != current_backend:
         # If we have already imported pyplot, then we need to use experimental
@@ -99,7 +101,7 @@ def set_mpl_backend(backend, verbose=0):
         if verbose:
             print('[kwplot.set_mpl_backend] not changing backends')
     if verbose:
-        print('[kwplot.set_mpl_backend]  new_backend = {!r}'.format(mpl.get_backend()))
+        print('[kwplot.set_mpl_backend] new_backend = {!r}'.format(mpl.get_backend()))
 
 
 _AUTOMPL_WAS_RUN = False
@@ -245,66 +247,133 @@ def _determine_best_backend(verbose):
 
                 # This seems to work correctly
                 conda install -c anaconda pyqt
+
+        UPDATE 2024-08-11:
+
+             For PyQt6, I got the error message:
+                 "From 6.5.0, xcb-cursor0 or libxcb-cursor0 is needed to load
+                 the Qt xcb platform plugin."
+
+             And was able to resolve it by installing a system library:
+
+                 sudo apt-get install -y libxcb-cursor-dev
         """
-        if ub.modname_to_modpath('PyQt5'):
+        backend_infos = {}
+
+        # Enumerate backends and candidate module paths that might exist
+        backend_infos['pyqt6'] = {'usable': None}
+        backend_infos['pyqt6']['modpath'] = ub.modname_to_modpath('PyQt6')
+
+        backend_infos['pyqt5'] = {'usable': None}
+        backend_infos['pyqt5']['modpath'] = ub.modname_to_modpath('PyQt5')
+
+        backend_infos['pyqt4'] = {'usable': None}
+        backend_infos['pyqt4']['modpath'] = ub.modname_to_modpath('PyQt4')
+
+        for k, info in backend_infos.items():
+            if info['modpath'] is None:
+                info['usable'] = False
+
+        if backend_infos['pyqt6']['modpath']:
+            try:
+                import PyQt6  # NOQA
+                from PyQt6 import QtCore  # NOQA
+            except ImportError as ex:
+                if verbose:
+                    print('[kwplot.autompl] No PyQt6, agg is probably best')
+                backend_infos['pyqt6']['usable'] = False
+                backend_infos['pyqt6']['importable'] = False
+                backend_infos['pyqt6']['import_error'] = repr(ex)
+            else:
+                backend_infos['pyqt6']['usable'] = True
+                backend_infos['pyqt6']['importable'] = True
+                KWPLOT_UNSAFE = os.environ.get('KWPLOT_UNSAFE', '')
+                TRY_AVOID_CRASH = KWPLOT_UNSAFE.lower() not in ['1', 'true', 'yes']
+                if TRY_AVOID_CRASH and ub.LINUX:
+                    # HOLD UP. Lets try to avoid a crash.
+                    if _check_for_linux_opencv_qt_conflicts(QtCore):
+                        backend_infos['pyqt6']['usable'] = False
+        elif backend_infos['pyqt5']['modpath']:
             try:
                 import PyQt5  # NOQA
                 from PyQt5 import QtCore  # NOQA
-            except ImportError:
+            except ImportError as ex:
                 if verbose:
                     print('[kwplot.autompl] No PyQt5, agg is probably best')
-                backend = 'agg'
+                backend_infos['pyqt5']['usable'] = False
+                backend_infos['pyqt5']['importable'] = False
+                backend_infos['pyqt5']['import_error'] = repr(ex)
             else:
-                backend = 'Qt5Agg'
-
+                backend_infos['pyqt5']['usable'] = True
+                backend_infos['pyqt5']['importable'] = True
                 KWPLOT_UNSAFE = os.environ.get('KWPLOT_UNSAFE', '')
                 TRY_AVOID_CRASH = KWPLOT_UNSAFE.lower() not in ['1', 'true', 'yes']
-
                 if TRY_AVOID_CRASH and ub.LINUX:
                     # HOLD UP. Lets try to avoid a crash.
-                    if 'cv2' in sys.modules:
-                        from os.path import dirname, join, exists
-                        cv2 = sys.modules['cv2']
-                        cv2_mod_dpath = dirname(cv2.__file__)
-                        cv2_lib_dpath = join(cv2_mod_dpath, 'qt/plugins/platforms')
-                        cv2_qxcb_fpath = join(cv2_lib_dpath, 'libqxcb.so')
-
-                        qt_mod_dpath = dirname(QtCore.__file__)
-                        qt_lib_dpath = join(qt_mod_dpath, 'Qt/plugins/platforms')
-                        qt_qxcb_fpath = join(qt_lib_dpath, 'libqxcb.so')
-
-                        if exists(cv2_qxcb_fpath) and exists(qt_qxcb_fpath):
-                            # Can we use ldd to make the test better?
-                            import warnings
-                            warnings.warn(ub.paragraph(
-                                '''
-                                Autompl has detected libqxcb in PyQt
-                                and cv2.  Falling back to agg to avoid
-                                a potential crash. This can be worked
-                                around by installing
-                                opencv-python-headless instead of
-                                opencv-python.
-
-                                Disable this check by setting the
-                                environ KWPLOT_UNSAFE=1
-                                '''
-                            ))
-                            backend = 'agg'
-
-        elif ub.modname_to_modpath('PyQt4'):
+                    if _check_for_linux_opencv_qt_conflicts(QtCore):
+                        backend_infos['pyqt5']['usable'] = False
+        elif backend_infos['pyqt4']['modpath']:
             try:
                 import Qt4Agg  # NOQA
                 from PyQt4 import QtCore  # NOQA
-            except ImportError:
-                backend = 'agg'
+            except ImportError as ex:
+                backend_infos['pyqt4']['usable'] = False
+                backend_infos['pyqt4']['importable'] = False
+                backend_infos['pyqt4']['import_error'] = repr(ex)
             else:
-                backend = 'Qt4Agg'
-        else:
-            backend = 'agg'
+                backend_infos['pyqt4']['importable'] = True
+                backend_infos['pyqt4']['usable'] = True
+
+    if backend_infos['pyqt6']['usable']:
+        backend = 'QtAgg'
+    elif backend_infos['pyqt5']['usable']:
+        backend = 'Qt5Agg'
+    elif backend_infos['pyqt4']['usable']:
+        backend = 'Qt4Agg'
+    else:
+        backend = 'agg'
 
     if verbose:
+        if verbose > 1:
+            print(f'backend_infos = {ub.urepr(backend_infos, nl=1)}')
         print('[kwplot.autompl] Determined best backend is probably backend={}'.format(backend))
     return backend
+
+
+def _check_for_linux_opencv_qt_conflicts(QtCore):
+    """
+    See if there are conflicting shared object files for qt
+    """
+    if 'cv2' in sys.modules:
+        cv2 = sys.modules['cv2']
+        cv2_mod_fpath = ub.Path(cv2.__file__)
+        cv2_mod_dpath = cv2_mod_fpath.parent
+        cv2_lib_dpath = cv2_mod_dpath / 'qt/plugins/platforms'
+        cv2_qxcb_fpath = cv2_lib_dpath / 'libqxcb.so'
+
+        qt_mod_fpath = ub.Path(QtCore.__file__)
+        qt_mod_dpath = qt_mod_fpath.parent
+        qt_lib_dpath = qt_mod_dpath / 'Qt/plugins/platforms'
+        qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
+
+        if cv2_qxcb_fpath.exists() and qt_qxcb_fpath.exists():
+            # Can we use ldd to make the test better?
+            import warnings
+            warnings.warn(ub.paragraph(
+                '''
+                Autompl has detected libqxcb in PyQt
+                and cv2.  Falling back to agg to avoid
+                a potential crash. This can be worked
+                around by installing
+                opencv-python-headless instead of
+                opencv-python.
+
+                Disable this check by setting the
+                environ KWPLOT_UNSAFE=1
+                '''
+            ))
+            return True
+    return False
 
 
 def autoplt(verbose=0, recheck=False, force=None):
