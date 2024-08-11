@@ -191,6 +191,11 @@ def _determine_best_backend(verbose):
             print('[kwplot.autompl] No heuristics implemented on windows')
         return None
 
+    backend_infos = {}
+    backend_infos['pyqt6'] = {'usable': None}
+    backend_infos['pyqt5'] = {'usable': None}
+    backend_infos['pyqt4'] = {'usable': None}
+
     DISPLAY = os.environ.get('DISPLAY', '')
     if DISPLAY:
         if sys.platform.startswith('linux') and ub.find_exe('xdpyinfo'):
@@ -258,16 +263,10 @@ def _determine_best_backend(verbose):
 
                  sudo apt-get install -y libxcb-cursor-dev
         """
-        backend_infos = {}
 
         # Enumerate backends and candidate module paths that might exist
-        backend_infos['pyqt6'] = {'usable': None}
         backend_infos['pyqt6']['modpath'] = ub.modname_to_modpath('PyQt6')
-
-        backend_infos['pyqt5'] = {'usable': None}
         backend_infos['pyqt5']['modpath'] = ub.modname_to_modpath('PyQt5')
-
-        backend_infos['pyqt4'] = {'usable': None}
         backend_infos['pyqt4']['modpath'] = ub.modname_to_modpath('PyQt4')
 
         for k, info in backend_infos.items():
