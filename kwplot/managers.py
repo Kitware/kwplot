@@ -271,7 +271,12 @@ class LabelManager:
         elif method == 'ticker':
             import matplotlib.ticker as tck
             offset = 0.0
-            axis.set_major_locator(tck.MultipleLocator(offset=offset))
+            try:
+                axis.set_major_locator(tck.MultipleLocator(offset=offset))
+            except TypeError:
+                if offset != 0.0:
+                    raise RuntimeError('update matplotlib to use a nonzero offset')
+                axis.set_major_locator(tck.MultipleLocator())
             # axis.set_major_locator(tck.MultipleLocator())
         else:
             raise KeyError(method)
