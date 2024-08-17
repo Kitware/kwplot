@@ -84,6 +84,9 @@ __private__ = ['video_writer']
 class __module_properties__:
     """
     experimental mkinit feature for handling module level properties.
+
+    References:
+        https://github.com/scientific-python/lazy-loader/issues/127
     """
 
     @property
