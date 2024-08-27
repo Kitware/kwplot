@@ -441,7 +441,7 @@ def autosns(verbose=0, recheck=False, force=None):
     return sns
 
 
-class BackendContext(object):
+class BackendContext:
     """
     Context manager that ensures a specific backend, but then reverts after the
     context has ended.
@@ -470,16 +470,27 @@ class BackendContext(object):
         >>> print(mpl.get_backend())
     """
 
-    def __init__(self, backend):
+    def __init__(self, backend, strict=False):
+        """
+        Args:
+            backend (str):
+                the name of the backend to use in this context
+                (e.g. Agg).
+
+            strict (bool):
+                if True, does not supress any error if attempting to return to
+                the previous backend fails. Defaults to False.
+        """
         self.backend = backend
         self.prev = None
         self._prev_backend_was_loaded = 'matplotlib.pyplot' in sys.modules
+        self.strict = strict
 
     def __enter__(self):
         import matplotlib as mpl
         self.prev = mpl.get_backend()
 
-        if self.prev == 'Qt5Agg':
+        if self.prev in {'Qt5Agg', 'QtAgg'}:
             # Hack for the case where our default matplotlib backend is Qt5Agg
             # but we don't have Qt bindings available. (I think this may be a
             # configuration error on my part). Either way, its easy to test for
@@ -512,11 +523,31 @@ class BackendContext(object):
                 loaded. We switched to agg just fine, but when we switched back
                 it tried to load Qt5Agg, which was not available and thus it
                 failed.
+
+            Note: 2024-08-27
+                Got this error again when running in a slurm context via srun
+                on a remote machine.
+
+            References:
+                https://stackoverflow.com/questions/56129786/cannot-load-backend-qt5agg-which-requires-the-qt5-interactive-framework-as
+                https://github.com/ultralytics/ultralytics/issues/6939
             """
             try:
                 # Note
                 set_mpl_backend(self.prev)
+            except ImportError as ex:
+                if self.strict:
+                    raise
+                print(f'warning: kwplot.BackendContext was unable to switch back to: {self.prev} after switching to {self.backend}')
+                if self._prev_backend_was_loaded:
+                    # Just try to supress this if we cant switch back.
+                    if "which requires the 'qt' interactive framework, as 'headless' is currently running" in str(ex):
+                        ...
+                    else:
+                        raise
             except Exception:
+                if self.strict:
+                    raise
                 if self._prev_backend_was_loaded:
                     # Only propogate the error if we had explicitly used pyplot
                     # beforehand. Note sure if this is the right thing to do.

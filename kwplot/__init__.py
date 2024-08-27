@@ -185,8 +185,7 @@ def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
             attr = getattr(module, name)
         else:
             raise AttributeError(
-                'No {module_name} attribute {name}'.format(
-                    module_name=module_name, name=name))
+                f'Module {module_name!r} has no attribute {name!r}')
         globals()[name] = attr
         return attr
     eager_import_flag = False
