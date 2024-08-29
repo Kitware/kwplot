@@ -10,7 +10,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 * Experimental support for PyQt6 in autompl
-* Suppress headless error on BackendContext by default. The strict argument allows the user to get old behavior.
+* Suppress headless error on BackendContext by default. The strict argument
+  allows the user to get old behavior.
 
 
 ### Fixed:
