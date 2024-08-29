@@ -9,9 +9,30 @@ import matplotlib.text  # NOQA
 class FigureManager:
     """
     Combines a figure finalizer, and label manager.
+
+    SeeAlso:
+        :class:`LabelManager`.
+        :class:`FigureFinalizer`.
     """
 
     def __init__(figman, **kwargs):
+        """
+        Args:
+            **kwargs: See :class:`FigureFinalizer`.
+                dpi : float
+                format : str
+                metadata : dict
+                bbox_inches : str
+                pad_inches : float
+                facecolor : color
+                edgecolor : color
+                backend : str
+                orientation :
+                papertype :
+                transparent :
+                bbox_extra_artists :
+                pil_kwargs :
+        """
         figman.finalizer = FigureFinalizer(**kwargs)
         figman.labels = LabelManager()
         figman.fig = None
@@ -22,8 +43,10 @@ class FigureManager:
         figman.fig = fig
         return fig
 
-    def finalize(self, fpath, **kwargs):
-        final_fpath = self.finalizer.finalize(self.fig, fpath, **kwargs)
+    def finalize(self, fpath, fig=None, **kwargs):
+        if fig is None:
+            fig = self.fig
+        final_fpath = self.finalizer.finalize(fig, fpath, **kwargs)
         return final_fpath
 
     def set_figtitle(self, *args, **kwargs):
@@ -155,6 +178,36 @@ class LabelManager:
         ax.set_xticks(ax.get_xticks())
         ax.set_xticklabels(new_xticklabels)
 
+    def _coerce_axes(self, ax=None):
+        if ax is None:
+            import kwplot
+            ax = kwplot.plt.gca()
+        return ax
+
+    def _coerce_axis(self, axis, ax=None):
+        """
+        Get x or y axis
+        """
+        if isinstance(axis, str):
+            ax = self._coerce_axes(ax)
+            if axis == 'x':
+                return ax.xaxis
+            elif axis == 'y':
+                return ax.yaxis
+            else:
+                raise KeyError(axis)
+        return axis
+
+    # def _get_axis_attr(self, axis, attr, ax=None):
+    #     """
+    #     Get x or y axis
+    #     """
+    #     if isinstance(axis, str):
+    #         ax = self._coerce_axes(ax)
+    #         assert axis in 'xy'
+    #         func = getattr(ax, 'get_{axis}{attr}')
+    #     return axis
+
     def relabel_axes_labels(self, ax=None):
         old_xlabel = ax.get_xlabel()
         old_ylabel = ax.get_ylabel()
@@ -180,6 +233,67 @@ class LabelManager:
             self.relabel_yticks(ax)
         if legend:
             self.relabel_legend(ax)
+
+    def force_integer_xticks(self, ax=None):
+        ax = self._coerce_axes(ax)
+        axis = ax.xaxis
+        self.force_integer_ticks(axis)
+
+    def force_integer_yticks(self, ax=None):
+        ax = self._coerce_axes(ax)
+        axis = ax.xaxis
+        self.force_integer_ticks(axis)
+
+    def force_integer_ticks(self, axis, ax=None, method='ticker', hack_labels=False):
+        """
+        References:
+            https://stackoverflow.com/questions/30914462/how-to-force-integer-tick-labels
+
+        Example:
+            >>> import kwplot
+            >>> from kwplot.managers import *  # NOQA
+            >>> import numpy as np
+            >>> fig = kwplot.figure()
+            >>> ax = fig.gca()
+            >>> ax.set_xlim(0, 22.2)
+            >>> ax.set_ylim(0, 21.1)
+            >>> self = LabelManager()
+            >>> xticks = ax.get_xticks()
+            >>> assert not np.all(xticks.round() == xticks), 'ticks are not integers by default'
+            >>> self.force_integer_ticks('x')
+            >>> xticks = ax.get_xticks()
+            >>> assert np.all(xticks.round() == xticks), 'ticks should be integers now'
+        """
+        axis = self._coerce_axis(axis)
+        if method == 'maxn':
+            from matplotlib.ticker import MaxNLocator
+            axis.set_major_locator(MaxNLocator(integer=True))
+        elif method == 'ticker':
+            import matplotlib.ticker as tck
+            offset = 0.0
+            try:
+                axis.set_major_locator(tck.MultipleLocator(offset=offset))
+            except TypeError:
+                if offset != 0.0:
+                    raise RuntimeError('update matplotlib to use a nonzero offset')
+                axis.set_major_locator(tck.MultipleLocator())
+            # axis.set_major_locator(tck.MultipleLocator())
+        else:
+            raise KeyError(method)
+
+        if hack_labels:
+            new_labels = []
+            needs_fix = 0
+            for label in axis.get_ticklabels():
+                print(f'label={label}')
+                text = label.get_text()
+                if '.' in text:
+                    text = str(int(float(text)))
+                    label.set_text(text)
+                    needs_fix = 1
+                new_labels.append(label)
+            if needs_fix:
+                axis.set_ticklabels(new_labels)
 
     def __call__(self, ax=None):
         self.relabel(ax)
@@ -259,7 +373,8 @@ class FigureFinalizer(ub.NiceRepr):
         dpath = ub.Path(config['dpath']).ensuredir()
         final_fpath = dpath / fpath
         if self.verbose:
-            print(f'Write: {final_fpath}')
+            from kwutil.util_rich import rich_print
+            rich_print(f'Write: {final_fpath}')
         savekw = {}
         if config.get('dpi', None) is not None:
             savekw['dpi'] = config['dpi']

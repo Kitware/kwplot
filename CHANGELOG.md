@@ -3,17 +3,29 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.5.0 - Unreleased
-
-### Added
-* Added `corner_convention` argument to imshow
-* New submodule `managers` with code ported from `geowatch.utils.util_kwplot`
-* New submodule `tables` with code ported from `geowatch.utils.util_kwplot`
-* Add other functions from `geowatch.utils.util_kwplot` to existing modules
+## Version 0.5.1 - Unreleased
 
 ### Changed
-* imshow now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
-* Enabled colab autompl workaround (needs a test)
+* Experimental support for PyQt6 in autompl
+* Suppress headless error on BackendContext by default. The strict argument allows the user to get old behavior.
+
+
+### Fixed:
+* Added `kwplot.pyplot` and `kwplot.seaborn` as referenced in the documentation.
+
+
+## Version 0.5.0 - Released 2024-07-22
+
+### Added
+* Added `corner_convention` argument to `kwplot.imshow`
+* New submodule `kwplot.managers` with code ported from `geowatch.utils.util_kwplot`
+* New submodule `kwplot.tables` with code ported from `geowatch.utils.util_kwplot`
+* Add other functions from `geowatch.utils.util_kwplot` to existing modules
+* Add `kwplot.LabelManager.force_integer_ticks()` 
+
+### Changed
+* `kwplot.imshow` now returns a NamedTuple with fig and ax as named alternatives to tuple indexes.
+* Enabled colab `kwplot.autompl` workaround (needs a test)
 
 ### Removed
 * Drop 3.6 and 3.7 support
