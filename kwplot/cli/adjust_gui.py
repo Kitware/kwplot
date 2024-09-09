@@ -938,7 +938,7 @@ class AdjustWidget(QtWidgets.QWidget):
         import seaborn as sns
         import kwarray
         import numpy as np
-        from watch.cli.coco_spectra import _weighted_auto_bins
+        from geowatch.cli.coco_spectra import _weighted_auto_bins
         import pandas as pd
 
         params = self.config.to_indexable()
