@@ -166,7 +166,7 @@ def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
         func: mod for mod, funcs in submod_attrs.items()
         for func in funcs
     }
-    module_property_names = {'Color', 'plt', 'sns', 'seaborn', 'pyplot'}
+    module_property_names = {'Color', 'plt', 'pyplot', 'seaborn', 'sns'}
     modprops = __module_properties__()
     def __getattr__(name):
         if name in module_property_names:
@@ -179,9 +179,7 @@ def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
         elif name in name_to_submod:
             submodname = name_to_submod[name]
             module = importlib.import_module(
-                '{module_name}.{submodname}'.format(
-                    module_name=module_name, submodname=submodname)
-            )
+                f'{module_name}.{submodname}')
             attr = getattr(module, name)
         else:
             raise AttributeError(
@@ -286,6 +284,9 @@ __getattr__ = lazy_import(
             'dataframe_table',
             'humanize_dataframe',
         ],
+        'util_seaborn': [
+            'MonkeyPatchPyPlotFigureContext',
+        ],
     },
 )
 
@@ -294,9 +295,10 @@ def __dir__():
     return __all__
 
 __all__ = ['ArtistManager', 'BackendContext', 'Color', 'FigureAxes',
-           'FigureFinalizer', 'FigureManager', 'LabelManager', 'Palette',
-           'PaletteManager', 'PlotNums', 'all_figures', 'autompl', 'autoplt',
-           'autosns', 'close_figures', 'cropwhite_ondisk', 'dataframe_table',
+           'FigureFinalizer', 'FigureManager', 'LabelManager',
+           'MonkeyPatchPyPlotFigureContext', 'Palette', 'PaletteManager',
+           'PlotNums', 'all_figures', 'autompl', 'autoplt', 'autosns',
+           'close_figures', 'cropwhite_ondisk', 'dataframe_table',
            'distinct_colors', 'distinct_markers', 'draw_boxes',
            'draw_boxes_on_image', 'draw_clf_on_image', 'draw_line_segments',
            'draw_points', 'draw_text_on_image', 'ensure_fnum',
@@ -305,6 +307,6 @@ __all__ = ['ArtistManager', 'BackendContext', 'Color', 'FigureAxes',
            'legend', 'make_conv_images', 'make_heatmask', 'make_legend_img',
            'make_orimask', 'make_vector_field', 'multi_plot', 'next_fnum',
            'phantom_legend', 'plot_convolutional_features', 'plot_matrix',
-           'plot_points3d', 'plot_surface3d', 'plt', 'render_figure_to_image',
-           'set_figtitle', 'set_mpl_backend', 'show_if_requested', 'sns',
-           'pyplot', 'seaborn']
+           'plot_points3d', 'plot_surface3d', 'plt', 'pyplot',
+           'render_figure_to_image', 'seaborn', 'set_figtitle',
+           'set_mpl_backend', 'show_if_requested', 'sns']

@@ -370,8 +370,12 @@ class FigureFinalizer(ub.NiceRepr):
         """
         config = ub.udict(self.__dict__) | kwargs
 
-        dpath = ub.Path(config['dpath']).ensuredir()
-        final_fpath = dpath / fpath
+        if config['dpath'] is None:
+            final_fpath = fpath
+        else:
+            dpath = ub.Path(config['dpath']).ensuredir()
+            final_fpath = dpath / fpath
+
         if self.verbose:
             from kwutil.util_rich import rich_print
             rich_print(f'Write: {final_fpath}')
@@ -383,10 +387,12 @@ class FigureFinalizer(ub.NiceRepr):
             fig.set_size_inches(config['size_inches'])
         if config['tight_layout'] is not None:
             fig.tight_layout()
+
         # TODO: could save to memory and then write as an image
-        fig.savefig(final_fpath, **savekw)
-        if self.cropwhite:
-            cropwhite_ondisk(final_fpath)
+        if final_fpath is not None:
+            fig.savefig(final_fpath, **savekw)
+            if self.cropwhite:
+                cropwhite_ondisk(final_fpath)
         return final_fpath
 
     def __call__(self, fig, fpath, **kwargs):
