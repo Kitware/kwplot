@@ -1,5 +1,10 @@
 """
 Manager classes to help construct concise matplotlib figures.
+
+Largely tools ported from geowatch.utils.util_kwplot
+
+SeeAlso:
+    ~/code/geowatch/geowatch/utils/util_kwplot.py
 """
 import ubelt as ub
 import matplotlib as mpl
