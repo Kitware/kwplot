@@ -23,7 +23,8 @@ class Gifify(scfg.DataConfig):
 
     image_list = scfg.Value(None, required=True, help=ub.paragraph(
             '''
-            list of images (or a text file containing a list of images)
+            a list of images, a text file containing a list of images, or a
+            directory containing a list of images.
             '''), position=1, nargs='*', alias=['input'])
     delay = scfg.Value(10, type=float, short_alias=['d'], help='delay between frames', nargs=1)
     output = scfg.Value('auto', short_alias=['o'], help=ub.paragraph(
