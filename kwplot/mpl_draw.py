@@ -178,12 +178,61 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     Helper for plotting confusion matrices
 
     Args:
-        matrix (ndarray | pd.DataFrame) : if a data frame then index, columns,
-            xlabel, and ylabel will be defaulted to sensible values.
+        matrix (ndarray | pd.DataFrame): The 2D matrix to plot. If a pandas DataFrame,
+            the `index`, `columns`, `xlabel`, and `ylabel` will be inferred from the
+            DataFrame's index and column names.
+
+        index (list | None): Labels for the rows of the matrix. If None and `matrix` is
+            a DataFrame, the DataFrame's index will be used. Defaults to None.
+
+        columns (list | None): Labels for the columns of the matrix. If None and `matrix`
+            is a DataFrame, the DataFrame's columns will be used. Defaults to None.
+
+        rot (int): Rotation angle for the x-axis labels. Defaults to 90 degrees.
+
+        ax (matplotlib.axes.Axes | None): The matplotlib axes to plot on. If None, a new
+            figure and axes will be created. Defaults to None.
+
+        grid (bool): If True, grid lines will be drawn around the matrix cells.
+            Defaults to True.
+
+        label (str | None): Label for the colorbar. If None, no label will be added.
+            Defaults to None.
+
+        zerodiag (bool): If True, the diagonal of the matrix will be set to zero.
+            Useful for visualizing confusion matrices where the diagonal represents
+            correct predictions. Defaults to False.
+
+        cmap (str): Colormap to use for the matrix plot. Defaults to 'viridis'.
+
+        showvals (bool): If True, the values of the matrix will be displayed on the plot.
+            Defaults to False.
+
+        showzero (bool): If True, zero values will be displayed when `showvals` is True.
+            If False, zero values will be hidden. Defaults to True.
+
+        logscale (bool): If True, the matrix values will be plotted on a logarithmic scale.
+            Defaults to False.
+
+        xlabel (str | None): Label for the x-axis. If None and `matrix` is a DataFrame,
+            the DataFrame's column name will be used. Defaults to None.
+
+        ylabel (str | None): Label for the y-axis. If None and `matrix` is a DataFrame,
+            the DataFrame's index name will be used. Defaults to None.
+
+        fnum (int | None): Figure number to use for creating a new figure. If None,
+            a new figure will be created with the next available number. Defaults to None.
+
+        pnum (tuple | None): Subplot number to use for creating a new subplot. If None,
+            the entire figure will be used. Defaults to None.
+
 
     TODO:
         - [ ] Finish args docs
-        - [ ] Replace internals with seaborn
+        - [ ] Replace internals with seaborn and use sns.clustermap?
+
+    Returns:
+        Axes: matplotlib axes drawn on
 
     Example:
         >>> # xdoctest: +REQUIRES(module:pandas)
