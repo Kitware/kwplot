@@ -18,12 +18,23 @@ class FigureManager:
     SeeAlso:
         :class:`LabelManager`.
         :class:`FigureFinalizer`.
+
+    Example:
+        dpath = ub.Path.appdir('kwplot/tests/test_figman')
+        figman = FigureManager(dpath)
+
+
     """
 
     def __init__(figman, **kwargs):
         """
         Args:
             **kwargs: See :class:`FigureFinalizer`.
+                dpath='.',
+                size_inches=None,
+                cropwhite=True,
+                tight_layout=True,
+                verbose=0,
                 dpi : float
                 format : str
                 metadata : dict
