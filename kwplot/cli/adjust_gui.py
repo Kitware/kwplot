@@ -37,7 +37,7 @@ class AdjustGuiConfig(scfg.DataConfig):
     low = 0.1
     mid = 0.5
     high =  0.9
-    crop = scfg.Value("null", type=str)
+    crop = scfg.Value("null", type=str, help='A crop string e.g. y1:y2, x1:x2')
     expr = scfg.Value("null", type=str)
     cmap = scfg.Value('None', type=str)
 

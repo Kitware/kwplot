@@ -54,18 +54,38 @@ def ensure_fnum(fnum):
 def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
            docla=False, projection=None, **kwargs):
     """
-    http://matplotlib.org/users/gridspec.html
+    Creates or activates a matplotlib figure and subplot.
+
+    This function wraps around matplotlib's figure and subplot logic to
+    streamline subplot creation using a tuple-based or integer-based `pnum`
+    specification.  It supports clearing figures (`doclf`) or clearing specific
+    axes (`docla`), and can assign titles to either the current subplot or the
+    entire figure.
 
     Args:
-        fnum (int): fignum = figure number
-        pnum (int, str, or tuple(int, int, int)): plotnum = plot tuple
-        title (str):  (default = None)
-        figtitle (None): (default = None)
-        docla (bool): (default = False)
-        doclf (bool): (default = False)
+        fnum (int | None): Figure number to create or activate. If None, uses the current figure.
+
+        pnum (int | str | tuple): Subplot specifier, interpreted as (nRows, nCols, index),
+            e.g., (2, 2, 1) or 221. Can also be a string like '221'.
+            Supports advanced formats like slices or lists for multi-cell spanning.
+
+        title (str | None): Title for the active subplot axis. Defaults to None.
+
+        figtitle (str | None): Title for the entire figure (`suptitle`). Defaults to None.
+
+        doclf (bool): If True, clears the figure contents using `fig.clf()`. Defaults to False.
+
+        docla (bool): If True, clears the subplot axis using `ax.cla()` before plotting. Defaults to False.
+
+        projection (str or None): Optional matplotlib projection (e.g., '3d'). Defaults to None.
+
+        **kwargs: Currently unused, reserved for future extension.
 
     Returns:
         mpl.figure.Figure: fig
+
+    References:
+        http://matplotlib.org/users/gridspec.html
 
     Example:
         >>> import kwplot
