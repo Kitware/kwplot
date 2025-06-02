@@ -35,6 +35,7 @@ class FigureManager:
             format (str): File format
             metadata (dict): Metadata for saving
             bbox_inches, pad_inches, facecolor, edgecolor, backend, orientation, etc.
+            verbose (int): verbosity level
 
     SeeAlso:
         :class:`LabelManager`.

@@ -202,7 +202,7 @@ def histplot_splity(data, x, split_y='auto', **snskw):
 
 
 def simple_plot_histogram(data, x='intensity_bin', weights='value',
-                          hue=None, ax=None):
+                          hue=None, ax=None, palette=None):
     """
     This is just histplot, but with a fixed auto-weights binner and some custom
     palette stuff.
@@ -228,7 +228,27 @@ def simple_plot_histogram(data, x='intensity_bin', weights='value',
         >>> weights = 'count'
         >>> ax = None
         >>> kwplot.autompl()
-        >>> ax = simple_plot_histogram(data, x, weights, hue, ax)
+        >>> ax = simple_plot_histogram(data, x, weights, hue=hue, ax=ax)
+        >>> kwplot.show_if_requested()
+
+    Example:
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> from kwplot.util_seaborn import *  # NOQA
+        >>> import pandas as pd
+        >>> n = 256
+        >>> data = pd.DataFrame({
+        >>>     'bin': np.hstack([np.arange(0, n), np.arange(0, n)]),
+        >>>     'count': np.random.randint(0, 256, n * 2),
+        >>>     'channel': (['red'] * n) + (['green'] * n),
+        >>> })
+        >>> hue = 'channel'
+        >>> x = 'bin'
+        >>> weights = 'count'
+        >>> ax = None
+        >>> kwplot.autompl()
+        >>> palette = {'red': 'red', 'green': 'green'}
+        >>> ax = simple_plot_histogram(data, x, weights, palette=palette, hue=hue, ax=ax)
+        >>> kwplot.show_if_requested()
     """
     import kwplot
     sns = kwplot.autosns()
@@ -244,16 +264,22 @@ def simple_plot_histogram(data, x='intensity_bin', weights='value',
     }
 
     config = default_config.copy()
-    palette = None
-
     if palette is not None:
-        palette = palette.copy()
+        if not isinstance(palette, Palette):
+            palette = Palette(palette)
+
         if hue is not None:
             unique_hue_values = data[hue].unique()
-            for value in unique_hue_values:
-                if value not in palette:
-                    palette[value] = None
-            palette = _fill_missing_colors(palette)
+            palette.fill_missing_colors(unique_hue_values)
+
+    # if palette is not None:
+    #     palette = palette.copy()
+    #     if hue is not None:
+    #         unique_hue_values = data[hue].unique()
+    #         for value in unique_hue_values:
+    #             if value not in palette:
+    #                 palette[value] = None
+    #         palette = _fill_missing_colors(palette)
 
     hist_data_kw = dict(
         x=x,
@@ -446,33 +472,205 @@ def _unsigned_subtract(a, b):
                            casting='unsafe', dtype=unsigned_dt)
 
 
-def _fill_missing_colors(label_to_color):
+# def _fill_missing_colors(label_to_color):
+#     """
+#     label_to_color = {'foo': kwimage.Color('red').as01(), 'bar': None}
+#     """
+#     from distinctipy import distinctipy
+#     import kwarray
+#     import numpy as np
+#     import kwimage
+#     given = {k: kwimage.Color(v).as01() for k, v in label_to_color.items() if v is not None}
+#     needs_color = sorted(set(label_to_color) - set(given))
+
+#     seed = 6777939437
+#     # hack in our code
+
+#     def _patched_get_random_color(pastel_factor=0, rng=None):
+#         rng = kwarray.ensure_rng(seed, api='python')
+#         color = [(rng.random() + pastel_factor) / (1.0 + pastel_factor) for _ in range(3)]
+#         return tuple(color)
+#     distinctipy.get_random_color = _patched_get_random_color
+
+#     exclude_colors = [
+#         tuple(map(float, (d, d, d)))
+#         for d in np.linspace(0, 1, 5)
+#     ] + list(given.values())
+
+#     final = given.copy()
+#     new_colors = distinctipy.get_colors(len(needs_color), exclude_colors=exclude_colors)
+#     for key, new_color in zip(needs_color, new_colors):
+#         final[key] = tuple(map(float, new_color))
+#     return final
+
+
+class Palette(dict):
     """
-    label_to_color = {'foo': kwimage.Color('red').as01(), 'bar': None}
+    A dictionary-like palette for seaborn that allows forcing specific color mappings
+    and automatically fills missing colors.
+
+    References:
+        https://chat.deepseek.com/a/chat/s/840b3833-3bec-493b-860c-632c3b38d19f
+
+    Example:
+        >>> # Force 'dog' to be orange and let others be auto-assigned
+        >>> from kwplot.util_seaborn import *  # NOQA
+        >>> palette = Palette({'dog': 'orange'})
+        >>> palette.fill_missing_colors(['cat', 'dog', 'bird'])
+        >>> palette.normalize()
+        >>> # Use directly with seaborn
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> # xdoctest: +REQUIRES(module:seaborn)
+        >>> import kwplot
+        >>> sns = kwplot.autosns()
+        >>> sns.barplot(x=['cat', 'dog', 'bird'], y=[1, 2, 3], palette=palette)
+        >>> kwplot.show_if_requested()
     """
-    from distinctipy import distinctipy
-    import kwarray
-    import numpy as np
-    import kwimage
-    given = {k: kwimage.Color(v).as01() for k, v in label_to_color.items() if v is not None}
-    needs_color = sorted(set(label_to_color) - set(given))
 
-    seed = 6777939437
-    # hack in our code
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Do we need to store fixed?
+        self._fixed = set()
+        if args and isinstance(args[0], dict):
+            self._fixed = set(args[0].keys())
 
-    def _patched_get_random_color(pastel_factor=0, rng=None):
-        rng = kwarray.ensure_rng(seed, api='python')
-        color = [(rng.random() + pastel_factor) / (1.0 + pastel_factor) for _ in range(3)]
-        return tuple(color)
-    distinctipy.get_random_color = _patched_get_random_color
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self._fixed.add(key)
 
-    exclude_colors = [
-        tuple(map(float, (d, d, d)))
-        for d in np.linspace(0, 1, 5)
-    ] + list(given.values())
+    def normalize(self):
+        """
+        Normalize color values to RGB float tuples.
+        """
+        import kwimage
+        for k, v in self.items():
+            self[k] = kwimage.Color(v).as01()
+        return self
 
-    final = given.copy()
-    new_colors = distinctipy.get_colors(len(needs_color), exclude_colors=exclude_colors)
-    for key, new_color in zip(needs_color, new_colors):
-        final[key] = tuple(map(float, new_color))
-    return final
+    def copy(self):
+        """
+        Returns a shallow copy of the palette that maintains all fixed color tracking.
+
+        Returns:
+            Palette: A new Palette instance with the same colors and fixed keys
+        """
+        new_palette = Palette(self.data.copy())
+        new_palette._fixed = self._fixed.copy()
+        return new_palette
+
+    def fill_missing_colors(self, labels):
+        """
+        Ensure all specified labels have colors assigned, filling in missing ones.
+
+        Args:
+            labels (Iterable): All labels that should be in the palette
+        """
+        # Convert None values to missing keys for the fill function
+        label_to_color = {
+            k: self[k] if k in self._fixed else None
+            for k in labels
+        }
+
+        # Fill missing colors
+        filled = self._fill_missing_colors(label_to_color)
+
+        # Update our palette (only for non-fixed colors)
+        for k, v in filled.items():
+            if k not in self._fixed:
+                super().__setitem__(k, v)
+
+    @staticmethod
+    def _fill_missing_colors(label_to_color):
+        """
+        Internal method to assign colors to labels that don't have them.
+
+        Args:
+            label_to_color (dict): Dictionary where None values indicate colors to be assigned
+
+        Returns:
+            dict: New dictionary with all values filled in
+        """
+        from distinctipy import distinctipy
+        import kwarray
+        import numpy as np
+        import kwimage
+        # Should we just take everything?
+        given = {
+            k: kwimage.Color(v).as01()
+            for k, v in label_to_color.items()
+            if v is not None
+        }
+        needs_color = sorted(set(label_to_color) - set(given))
+
+        seed = 6777939437
+
+        # Monkey patch distinctipy for reproducible colors
+        original_get_random_color = distinctipy.get_random_color
+        try:
+            def _patched_get_random_color(pastel_factor=0, rng=None):
+                rng = kwarray.ensure_rng(seed, api='python')
+                color = [(rng.random() + pastel_factor) / (1.0 + pastel_factor) for _ in range(3)]
+                return tuple(color)
+            distinctipy.get_random_color = _patched_get_random_color
+
+            exclude_colors = [
+                tuple(map(float, (d, d, d)))
+                for d in np.linspace(0, 1, 5)
+            ] + list(given.values())
+
+            final = given.copy()
+            new_colors = distinctipy.get_colors(len(needs_color), exclude_colors=exclude_colors)
+            for key, new_color in zip(needs_color, new_colors):
+                final[key] = tuple(map(float, new_color))
+            return final
+        finally:
+            # Restore original function
+            distinctipy.get_random_color = original_get_random_color
+
+    def draw_swatch(self, cellshape=9):
+        """
+        Example:
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> # xdoctest: +REQUIRES(module:seaborn)
+            >>> # xdoctest: +REQUIRES(module:pandas)
+            >>> import kwplot
+            >>> sns = kwplot.autosns()
+            >>> # https://seaborn.pydata.org/tutorial/color_palettes.html
+            >>> colors = kwplot.Palette(enumerate(sns.palettes.color_palette('deep', n_colors=10)))
+            >>> swatch = colors.draw_swatch()
+            >>> kwplot.imshow(swatch)
+            >>> kwplot.show_if_requested()
+        """
+        import ubelt as ub
+        import kwimage
+        import math
+        import numpy as np
+        if not ub.iterable(cellshape):
+            cellshape = [cellshape, cellshape]
+        cell_h = cellshape[0]
+        cell_w = cellshape[1]
+        cells = []
+        colors = list(self.values())
+        for color in colors:
+            cell = kwimage.Color(color).to_image(dsize=(cell_w, cell_h))
+            cells.append(cell)
+
+        num_colors = len(colors)
+        num_cells_side0 = max(1, int(np.sqrt(num_colors)))
+        num_cells_side1 = math.ceil(num_colors / num_cells_side0)
+        num_cells = num_cells_side1 * num_cells_side0
+        num_null_cells = num_cells - num_colors
+        if num_null_cells > 0:
+            null_cell = np.zeros((cell_h, cell_w, 3), dtype=np.float32)
+            pts1 = np.array([(0, 0),                   (cell_w - 1, 0)])
+            pts2 = np.array([(cell_w - 1, cell_h - 1), (0, cell_h - 1)])
+            null_cell = kwimage.draw_line_segments_on_image(
+                null_cell, pts1, pts2, color='red')
+            # null_cell = kwimage.draw_text_on_image(
+            #     {'width': cell_w, 'height': cell_h}, text='X', color='red',
+            #     halign='center', valign='center')
+            null_cell = kwimage.ensure_float01(null_cell)
+            cells.extend([null_cell] * num_null_cells)
+        swatch = kwimage.stack_images_grid(
+            cells, chunksize=num_cells_side0, axis=0)
+        return swatch
