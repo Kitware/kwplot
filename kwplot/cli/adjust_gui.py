@@ -1114,6 +1114,7 @@ def parse_cropstr(cropstr, error_policy='return-none'):
         A tuple of slice objects (row_slice, col_slice)
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:PyQt5)
         >>> parse_cropstr("null")
         None
         >>> parse_cropstr("")

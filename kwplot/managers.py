@@ -933,6 +933,7 @@ def fix_matplotlib_dates(dates, format='mdate'):
 
     Example:
         >>> # xdoctest: +REQUIRES(module:kwutil)
+        >>> # xdoctest: +REQUIRES(module:pint)
         >>> from kwplot.managers import *  # NOQA
         >>> from kwutil.util_time import coerce_datetime
         >>> from kwutil.util_time import coerce_timedelta
