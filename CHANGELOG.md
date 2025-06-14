@@ -6,11 +6,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Version 0.5.3 - Unreleased
 
 ### Fix
-
 * Fixed `ffmpeg_animate_frames` to handle paths and ndarrays
 
 ### Added
 * Add Palette class
+* Add relabel argument to FigureManager to automatically relabel on finalize
 
 
 ## Version 0.5.2 - Released 2024-09-09

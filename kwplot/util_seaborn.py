@@ -517,7 +517,7 @@ class Palette(dict):
         >>> from kwplot.util_seaborn import *  # NOQA
         >>> palette = Palette({'dog': 'orange'})
         >>> palette.fill_missing_colors(['cat', 'dog', 'bird'])
-        >>> palette.normalize()
+        >>> palette.ashex()
         >>> # Use directly with seaborn
         >>> # xdoctest: +REQUIRES(--show)
         >>> # xdoctest: +REQUIRES(module:seaborn)
@@ -537,6 +537,33 @@ class Palette(dict):
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         self._fixed.add(key)
+
+    def ashex(self):
+        """
+        Normalize color values to RGB float tuples.
+        """
+        import kwimage
+        for k, v in self.items():
+            self[k] = kwimage.Color(v).ashex()
+        return self
+
+    def as01(self):
+        """
+        Normalize color values to RGB float tuples.
+        """
+        import kwimage
+        for k, v in self.items():
+            self[k] = kwimage.Color(v).as01()
+        return self
+
+    def as255(self):
+        """
+        Normalize color values to RGB float tuples.
+        """
+        import kwimage
+        for k, v in self.items():
+            self[k] = kwimage.Color(v).as01()
+        return self
 
     def normalize(self):
         """
@@ -627,6 +654,36 @@ class Palette(dict):
             # Restore original function
             distinctipy.get_random_color = original_get_random_color
 
+    def draw_legend(self, **kwargs):
+        """
+        Draw this palette as a legend
+
+        SeeAlso:
+            :func:`kwplot.make_legend_img`
+
+        Example:
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> # xdoctest: +REQUIRES(module:seaborn)
+            >>> # xdoctest: +REQUIRES(module:pandas)
+            >>> import kwplot
+            >>> self = kwplot.Palette({
+            >>>     'True Positive': 'kitware_green',
+            >>>     'False Positive': 'kitware_red',
+            >>>     #'False Negative': 'kitware_orange',
+            >>>     #'True Negative': 'kitware_gray',
+            >>>     'False Negative': '#8B3DF9',
+            >>>     'True Negative': 'kitware_darkgreen',
+            >>> })
+            >>> sns = kwplot.autosns()
+            >>> # https://seaborn.pydata.org/tutorial/color_palettes.html
+            >>> canvas = self.draw_legend(mode='circle', dpi=300)
+            >>> kwplot.imshow(canvas, pnum=(1, 2, 2))
+            >>> kwplot.show_if_requested()
+        """
+        import kwplot
+        canvas = kwplot.make_legend_img(self, **kwargs)
+        return canvas
+
     def draw_swatch(self, cellshape=9):
         """
         Example:
@@ -674,3 +731,37 @@ class Palette(dict):
         swatch = kwimage.stack_images_grid(
             cells, chunksize=num_cells_side0, axis=0)
         return swatch
+
+    @classmethod
+    def from_colors(cls, colors):
+        """
+        Creates an from a list of colors by assigning integers as keys
+        """
+        return cls(enumerate(colors))
+
+    @classmethod
+    def from_seaborn(cls, palette_name, n_colors=None, desat=None):
+        """
+        Creates an from a list of colors by assigning integers as keys
+
+        Args:
+            palette_name (str):
+                Name of a seaborn palette (deep, muted, bright, pastel, dark,
+                colorblind or other name accepted by sns.palettes.color_palette)
+
+            n_colors (int | None): Number of colors in the palette.
+
+            desat (float | None): Proportion to desaturate each color by.
+
+        Ignore:
+            >>> import kwplot
+            >>> sns = kwplot.autosns()
+            >>> # https://seaborn.pydata.org/tutorial/color_palettes.html
+            >>> colors = kwplot.Palette.from_seaborn('deep', n_colors=4)
+            >>> swatch = colors.draw_swatch()
+            >>> kwplot.imshow(swatch)
+            >>> kwplot.show_if_requested()
+        """
+        import seaborn as sns
+        colors = sns.palettes.color_palette(palette_name, n_colors=n_colors, desat=desat)
+        return cls(enumerate(colors))

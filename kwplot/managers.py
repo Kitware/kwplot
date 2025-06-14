@@ -26,6 +26,10 @@ class FigureManager:
     3. Saving the figure to a file with standard formatting.
 
     Args:
+        relabel (bool | Dict):
+            if True or a dictionary, finalize will automatically relabel axes.
+            if a dictionary, it controls the keyword args passed to `relabel`.
+
         **kwargs: Parameters forwarded to `FigureFinalizer`. Includes:
             dpath (str | Path): Output directory
             size_inches (tuple): Figure size
@@ -54,7 +58,7 @@ class FigureManager:
         ...     'length': [60, 120, 65, 130, 170],
         ... })
         >>> dpath = ub.Path.appdir('kwplot/tests/test_figman')
-        >>> figman = kwplot.FigureManager(dpath=dpath, dpi=120)
+        >>> figman = kwplot.FigureManager(dpath=dpath, dpi=120, relabel=True)
         >>> # Map program labels to human labels
         >>> figman.labels.add_mapping({
         ...     'weight': 'Weight (kg)',
@@ -69,7 +73,6 @@ class FigureManager:
         >>> # Do your plotting stuff here.
         >>> ax = sns.scatterplot(data=data, x='length', y='weight', hue='species', ax=ax)
         >>> # Use remap the labels and save the figure out.
-        >>> figman.labels.relabel(ax=ax)
         >>> fpath = figman.finalize('my_plot.png')
         >>> # xdoctest: +REQUIRES(--show)
         >>> import kwimage
@@ -83,7 +86,7 @@ class FigureManager:
         >>> kwplot.show_if_requested()
     """
 
-    def __init__(figman, **kwargs):
+    def __init__(figman, relabel=False, **kwargs):
         """
         Args:
             **kwargs: See :class:`FigureFinalizer`.
@@ -108,6 +111,7 @@ class FigureManager:
         """
         figman.finalizer = FigureFinalizer(**kwargs)
         figman.labels = LabelManager()
+        figman.relabel = relabel
         figman.fig = None
 
     def figure(figman, *args, **kwargs):
@@ -119,6 +123,15 @@ class FigureManager:
     def finalize(self, fpath, fig=None, **kwargs):
         if fig is None:
             fig = self.fig
+
+        relabel = self.relabel
+        if not isinstance(relabel, dict):
+            if relabel:
+                relabel = {}
+        if isinstance(relabel, dict):
+            for ax in fig.get_axes():
+                self.labels.relabel(ax=ax, **relabel)
+
         final_fpath = self.finalizer.finalize(fig, fpath, **kwargs)
         return final_fpath
 
