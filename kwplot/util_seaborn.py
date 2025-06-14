@@ -345,6 +345,7 @@ def _weighted_auto_bins(data, xvar, weightvar):
         add to util_kwarray
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
         >>> import pandas as pd
         >>> import numpy as np
         >>> n = 100
