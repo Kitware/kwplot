@@ -70,6 +70,9 @@ def dataframe_table(table, fpath, title=None, fontsize=12,
 
 def humanize_dataframe(df, col_formats=None, human_labels=None, index_format=None,
                        title=None):
+    """
+    TODO: port to kwplot.humanize
+    """
     import humanize
     df2 = df.copy()
     if col_formats is not None:

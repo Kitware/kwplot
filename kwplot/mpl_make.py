@@ -108,6 +108,7 @@ def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
 
     TODO:
         does this belong in kwimage?
+        Note: this will be moved to kwimage.
     """
     import kwimage
     if fillval is None:
@@ -128,6 +129,9 @@ def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
 
 
 def _get_crop_slices(isfill):
+    """
+    Note: this will be moved to kwimage.
+    """
     import kwarray
     fill_colxs = [np.where(row)[0] for row in isfill]
     fill_rowxs = [np.where(col)[0] for col in isfill.T]
@@ -171,6 +175,8 @@ def _get_crop_slices(isfill):
 
 def get_pixel_dist(img, pixel, channel=None):
     """
+    Note: this will be moved to kwimage.
+
     Example:
         >>> img = np.random.rand(256, 256, 3)
         >>> pixel = np.random.rand(3)

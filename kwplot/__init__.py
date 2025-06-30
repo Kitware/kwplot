@@ -286,6 +286,7 @@ __getattr__ = lazy_import(
         ],
         'util_seaborn': [
             'MonkeyPatchPyPlotFigureContext',
+            'Palette',
         ],
     },
 )

@@ -32,6 +32,14 @@ class AdjustGuiConfig(scfg.DataConfig):
     Helper to find good robust normalization parameters for input images.
     """
     img_fpath = scfg.Value(None, help='input', position=1)
+    scaling = 'sigmoid'
+    extrema = 'quantile'
+    low = 0.1
+    mid = 0.5
+    high =  0.9
+    crop = scfg.Value("null", type=str, help='A crop string e.g. y1:y2, x1:x2')
+    expr = scfg.Value("null", type=str)
+    cmap = scfg.Value('None', type=str)
 
 
 def report_thread_error(fn):
@@ -179,7 +187,7 @@ class _Qt_ConfigNodeMixin:
 
     def qt_set_value(self, data):
         # TODO: casting
-        data = smartcast_mod.smartcast(data)
+        data = smartcast_mod.smartcast(data, allow_split=False)
         self.value = data
 
     def qt_delegate_style(self):
@@ -224,11 +232,18 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         >>>         'opt1': 1,
         >>>         'opt2': 2,
         >>>     },
-        >>>     'general_opt': 'abc',
+        >>>     'general_opt1': 'abc',
+        >>>     'general_opt2': 'abc,efg',
         >>> }
         >>> self = QConfigNode.from_indexable(config)
         >>> print('self = {}'.format(ub.urepr(self, nl=1)))
-        >>> print(self.to_indexable())
+        >>> config = self.to_indexable()
+        >>> print(f'config = {ub.urepr(config, nl=1)}')
+        >>> self.children['general_opt2'].qt_set_value('fds,fds')
+        >>> assert self.children['general_opt2'].value == 'fds,fds'
+        >>> config = self.to_indexable()
+        >>> print(f'config = {ub.urepr(config, nl=1)}')
+        >>> assert config['general_opt2'] == 'fds,fds'
     """
 
     def __init__(self, value=NoValue, type=None, parent=None, choices=None,
@@ -538,7 +553,14 @@ class QConfigModel(QtCore.QAbstractItemModel):
         >>> pindex = root_config.children['algo1'].qt_get_persistant_index(self)
         >>> index = QtCore.QModelIndex(pindex)
         >>> self.setData(index, 'foo')
-        >>> self.data(index)
+        >>> got_value = self.data(index)  # why does this not return foo?
+        >>> config = self.root_config.to_indexable()
+        >>> print(f'config = {ub.urepr(config, nl=1)}')
+        >>> assert config['algo1'] == 'foo'
+        >>> self.setData(index, 'foo,bar')
+        >>> config = self.root_config.to_indexable()
+        >>> print(f'config = {ub.urepr(config, nl=1)}')
+        >>> assert config['algo1'] == 'foo,bar'
     """
     @report_thread_error
     def __init__(self, root_config, parent=None):
@@ -911,6 +933,7 @@ class AdjustWidget(QtWidgets.QWidget):
     def __init__(self, config=None, raw_img=None):
         super().__init__()
         self.raw_img = raw_img
+        self.processed_img = raw_img
         self.config = QConfigNode.coerce(config)
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -941,10 +964,38 @@ class AdjustWidget(QtWidgets.QWidget):
         from geowatch.cli.coco_spectra import _weighted_auto_bins
         import pandas as pd
 
-        params = self.config.to_indexable()
         print('Update Norm')
+        params = self.config.to_indexable()
         print('params = {}'.format(ub.urepr(params, nl=1)))
-        norm_img, norm_info = kwarray.robust_normalize(self.raw_img, params=params, return_info=True)
+
+        norm_param_names = {
+            'scaling', 'extrema', 'low', 'mid', 'high'
+        }
+
+        cropstr = params.get('crop', 'null')
+        sl = parse_cropstr(cropstr)
+        if sl is not None:
+            self.processed_img = self.raw_img[sl]
+        else:
+            self.processed_img = self.raw_img
+
+        expr = params.get('expr', 'img')
+        if expr == 'null' or not expr:
+            expr = None
+        if expr is not None:
+            # Hack: not safe
+            img = self.processed_img
+            ns = globals() | locals()
+            self.processed_img = eval(expr, ns)
+            # self.processed_img = ns['img']
+
+        normalizer_params = ub.udict(params) & norm_param_names
+        norm_img, norm_info = kwarray.robust_normalize(self.processed_img, params=normalizer_params, return_info=True)
+
+        processed_stats = kwarray.stats_dict(self.processed_img)
+        norm_stats = kwarray.stats_dict(norm_img)
+        print(f'processed_stats = {ub.urepr(processed_stats, nl=1)}')
+        print(f'norm_stats = {ub.urepr(norm_stats, nl=1)}')
 
         self.norm_img = norm_img
         self.norm_info = norm_info
@@ -954,13 +1005,23 @@ class AdjustWidget(QtWidgets.QWidget):
         fig = self.mpl_widget.fig
 
         fig.clf()
-        ax1 = fig.add_subplot(1, 2, 1)
-        ax2 = fig.add_subplot(1, 2, 2)
+        nSubplots = 2
+        SHOW_NORM_HIST = True
+        if SHOW_NORM_HIST:
+            nSubplots += 1
+        ax1 = fig.add_subplot(1, nSubplots, 1)
+        ax2 = fig.add_subplot(1, nSubplots, 2)
+        if SHOW_NORM_HIST:
+            ax3 = fig.add_subplot(1, nSubplots, 3)
 
-        ax1.imshow(self.norm_img)
+        imshow_params = {}
+        cmap = params.get('cmap', None)
+        if cmap is not None and cmap.lower() not in {'null', 'none'}:
+            imshow_params['cmap'] = cmap
+        ax1.imshow(self.norm_img, **imshow_params)
         ax1.grid(False)
 
-        counts, bins = np.histogram(self.raw_img, bins=256)
+        counts, bins = np.histogram(self.processed_img, bins=256)
         centers = (bins[1:] + bins[0:-1]) / 2
         data = pd.DataFrame({'value': centers, 'weight': counts})
         n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
@@ -994,6 +1055,21 @@ class AdjustWidget(QtWidgets.QWidget):
         ax2.plot([mid_val, mid_val], [ymin, ymax], '-', color='blue')
         ax2.plot([max_val, max_val], [ymin, ymax], '-', color='blue')
 
+        if SHOW_NORM_HIST:
+            counts, bins = np.histogram(self.norm_img, bins=256)
+            centers = (bins[1:] + bins[0:-1]) / 2
+            data = pd.DataFrame({'value': centers, 'weight': counts})
+            n_equal_bins = _weighted_auto_bins(data, 'value', 'weight')
+            hist_data_kw = dict(
+                x='value',
+                weights='weight',
+                bins=n_equal_bins,
+            )
+            hist_style_kw = dict(
+            )
+            hist_data_kw_ = hist_data_kw.copy()
+            sns.histplot(ax=ax3, data=data, **hist_data_kw_, **hist_style_kw)
+
         fig.canvas.draw()
 
     def on_mpl_widget_click(self, event):
@@ -1007,7 +1083,7 @@ class AdjustWidget(QtWidgets.QWidget):
         keys = ['low', 'mid', 'high']
         qarr = [config.children[k].value for k in keys]
 
-        raw_data = self.raw_img.ravel().copy()
+        raw_data = self.processed_img.ravel().copy()
         raw_data.sort()
 
         clicked_percentile = stats.percentileofscore(raw_data, event.xdata)
@@ -1023,6 +1099,56 @@ class AdjustWidget(QtWidgets.QWidget):
             index = QtCore.QModelIndex(pindex)
             model = index.model()
             model.setData(index, clicked_quantile)
+
+
+def parse_cropstr(cropstr, error_policy='return-none'):
+    """
+    Parse a string of the form R1:R2,C1:C2 into a tuple of slices using regex.
+
+    Args:
+        cropstr: A string specifying row and column ranges in format "R1:R2,C1:C2"
+                (empty values mean unbounded, e.g. "10:, :20" means from 10 to end,
+                and from beginning to 20)
+
+    Returns:
+        A tuple of slice objects (row_slice, col_slice)
+
+    Example:
+        >>> # xdoctest: +REQUIRES(module:PyQt5)
+        >>> parse_cropstr("null")
+        None
+        >>> parse_cropstr("")
+        (slice(None, None, None), slice(None, None, None))
+        >>> parse_cropstr("10:20,30:40")
+        (slice(10, 20), slice(30, 40))
+        >>> parse_cropstr(":20,30:")
+        (slice(None, 20), slice(30, None))
+    """
+    import re
+    if not cropstr.strip():
+        return (slice(None), slice(None))
+
+    # Regex pattern to match either:
+    # 1. empty string (treated as full slice)
+    # 2. a single number (e.g. "5" becomes 5:6)
+    # 3. a range with start:end (either can be empty)
+    pattern = r'^\s*((?P<r1>\d*):(?P<r2>\d*))\s*,\s*((?P<c1>\d*):(?P<c2>\d*))\s*$'
+
+    match = re.fullmatch(pattern, cropstr)
+    if not match:
+        if error_policy == 'return-none':
+            return None
+        raise ValueError(f"Invalid crop string format: '{cropstr}'. Expected 'R1:R2,C1:C2'")
+
+    def to_int_or_none(s):
+        return int(s) if s else None
+
+    r1 = to_int_or_none(match.group('r1'))
+    r2 = to_int_or_none(match.group('r2'))
+    c1 = to_int_or_none(match.group('c1'))
+    c2 = to_int_or_none(match.group('c2'))
+
+    return (slice(r1, r2), slice(c1, c2))
 
 
 def main(cmdline=1, **kwargs):
@@ -1046,11 +1172,14 @@ def main(cmdline=1, **kwargs):
         raw_img = kwimage.grab_test_image()
 
     config = {
-        'scaling': QConfigNode('sigmoid', choices=['sigmoid', 'linear']),
-        'extrema': QConfigNode('quantile', choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
-        'low': QConfigNode(0.1, min_value=0.0, max_value=1.0, step_value=0.01),
-        'mid': QConfigNode(0.5, min_value=0.0, max_value=1.0, step_value=0.01),
-        'high': QConfigNode(0.9, min_value=0.0, max_value=1.0, step_value=0.01),
+        'scaling': QConfigNode(config.scaling, choices=['sigmoid', 'linear']),
+        'extrema': QConfigNode(config.extrema, choices=['quantile', 'adaptive-quantile', 'iqr', 'iqr-clip']),
+        'low': QConfigNode(config.low, min_value=0.0, max_value=1.0, step_value=0.01),
+        'mid': QConfigNode(config.mid, min_value=0.0, max_value=1.0, step_value=0.01),
+        'high': QConfigNode(config.high, min_value=0.0, max_value=1.0, step_value=0.01),
+        'crop': QConfigNode(config.crop),
+        'expr': QConfigNode(config.expr),
+        'cmap': QConfigNode(config.cmap),
     }
 
     widget = AdjustWidget(config, raw_img)

@@ -88,11 +88,13 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1,
         >>> # Test output to video
         >>> output_fpath = test_dpath / 'test.mp4'
     """
-    inputs = VideoFrameInputs(frame_fpaths)
+    inputs = VideoInputs.coerce(frame_fpaths)
     writer = FFMPEG_FrameWriter(inputs, output_fpath)
     writer.verbose = verbose
     writer.config['in_framerate'] = in_framerate
     writer.config['max_width'] = max_width
+    output_fpath = writer.write()
+    return output_fpath
 
 
 class VideoInputs:
@@ -100,8 +102,39 @@ class VideoInputs:
     Abstract class for frame-path or in-memory-array video inputs
     """
 
+    def __init__(self):
+        self.temp_dpath = None
+        self.input_dsize = None
 
-class VideoFrameInputs(VideoInputs):
+    @classmethod
+    def coerce(cls, inputs):
+        """
+        Choose an appropriate subclass
+        """
+        import numpy as np
+        subcls = NotImplemented
+        if isinstance(inputs, cls):
+            return inputs
+        elif isinstance(inputs, np.ndarray):
+            subcls = VideoArrayInputs
+        elif ub.iterable(inputs) and len(inputs):
+            if isinstance(inputs[0], np.ndarray):
+                subcls = VideoArrayInputs
+            else:
+                subcls = VideoFramePathInputs
+        self = subcls(inputs)
+        return self
+
+    def _ensure_temp_dpath(self):
+        """
+        Infer input width / height if not given
+        """
+        import uuid
+        if self.temp_dpath is None:
+            self.temp_dpath = ub.Path.appdir('kwplot', 'gifify', 'temp', str(uuid.uuid4())).ensuredir()
+
+
+class VideoFramePathInputs(VideoInputs):
     """
     Represents a list of video frames as inputs.
     Metadata about inputs can be passed or introspected.
@@ -109,10 +142,9 @@ class VideoFrameInputs(VideoInputs):
 
     def __init__(self, frame_fpaths=None, input_dsize=None, temp_dpath=None,
                  verbose=0):
+        super().__init__()
         self.frame_fpaths = frame_fpaths
-        self.input_dsize = None
         self.verbose = verbose
-        self.temp_dpath = None
 
     def __len__(self):
         return len(self.frame_fpaths)
@@ -136,13 +168,6 @@ class VideoFrameInputs(VideoInputs):
                 max_w = max(max_w, w)
             self.input_dsize = (max_w, max_h)
 
-    def _ensure_temp_dpath(self):
-        """
-        Infer input width / height if not given
-        """
-        if self.temp_dpath is None:
-            self.temp_dpath = ub.Path.appdir('kwplot', 'gifify', 'temp').ensuredir()
-
     def as_file_list_manifest(self):
         """
         Convert to a file list input (for ffmpeg)
@@ -164,7 +189,55 @@ class VideoArrayInputs(VideoInputs):
     """
 
     def __init__(self, frame_arrays):
+        super().__init__()
         self.frame_arrays = frame_arrays
+
+    def __len__(self):
+        return len(self.frame_arrays)
+
+    def _ensure_input_dsize(self):
+        """
+        Infer input width / height if not given
+        """
+        # Determine the maximum size of the image
+        if self.input_dsize is None:
+            try:
+                _, max_w, max_h, c = self.frame_arrays.shape
+            except Exception:
+                max_w = 0
+                max_h = 0
+                for frame in self.frame_arrays:
+                    h, w, *_ = frame.shape
+                    max_h = max(max_h, h)
+                    max_w = max(max_w, w)
+                self.input_dsize = (max_w, max_h)
+            else:
+                self.input_dsize = (w, h)
+
+    def _write_frames_to_disk(self):
+        import kwimage
+        self._ensure_temp_dpath()
+        frame_dpath = (ub.Path(self.temp_dpath) / 'frames').ensuredir()
+        self.frame_fpaths = []
+        for idx, frame in enumerate(self.frame_arrays):
+            fname = f'frame_{idx:03d}.jpg'
+            fpath = frame_dpath / fname
+            kwimage.imwrite(fpath, frame)
+            self.frame_fpaths.append(fpath)
+
+    def as_file_list_manifest(self):
+        """
+        Convert to a file list input (for ffmpeg)
+        """
+        import uuid
+        self._write_frames_to_disk()
+        temp_fpath = self.temp_dpath / f'temp_list_{uuid.uuid4()}.txt'
+        lines = ["file '{}'".format(ub.Path(fpath).absolute())
+                 for fpath in self.frame_fpaths]
+        text = '\n'.join(lines)
+        with open(temp_fpath, 'w') as file:
+            file.write(text + '\n')
+        return temp_fpath
 
 
 class CV2_FrameWriter:
@@ -432,7 +505,7 @@ class VideoWriter:
         Create a video from a list of paths to frame iamges
         """
         self = cls()
-        self.inputs = VideoFrameInputs(frame_fpaths)
+        self.inputs = VideoFramePathInputs(frame_fpaths)
         return self
 
     def write(self):
@@ -489,3 +562,4 @@ def pil_write_animated_gif(fpath, image_list):
     first_pil_img = pil_images[0]
     rest_pil_imgs = pil_images[1:]
     first_pil_img.save(fpath, save_all=True, append_images=rest_pil_imgs, optimize=False, duration=40, loop=0)
+

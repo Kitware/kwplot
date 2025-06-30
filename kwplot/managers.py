@@ -1,5 +1,10 @@
 """
 Manager classes to help construct concise matplotlib figures.
+
+Largely tools ported from geowatch.utils.util_kwplot
+
+SeeAlso:
+    ~/code/geowatch/geowatch/utils/util_kwplot.py
 """
 import ubelt as ub
 import matplotlib as mpl
@@ -8,17 +13,88 @@ import matplotlib.text  # NOQA
 
 class FigureManager:
     """
-    Combines a figure finalizer, and label manager.
+    Manages matplotlib figures by combining figure creation, labeling, and
+    saving into a single interface.
+
+    This class wraps together:
+    - `FigureFinalizer` for output formatting and saving.
+    - `LabelManager` for dynamically relabeling figure elements (titles, axis labels, legends, etc.).
+
+    It simplifies the common workflow of:
+    1. Creating a figure.
+    2. Customizing labels and titles.
+    3. Saving the figure to a file with standard formatting.
+
+    Args:
+        relabel (bool | Dict):
+            if True or a dictionary, finalize will automatically relabel axes.
+            if a dictionary, it controls the keyword args passed to `relabel`.
+
+        **kwargs: Parameters forwarded to `FigureFinalizer`. Includes:
+            dpath (str | Path): Output directory
+            size_inches (tuple): Figure size
+            cropwhite (bool): Whether to crop whitespace
+            tight_layout (bool): Whether to call `tight_layout()`
+            dpi (int): Dots per inch for output
+            format (str): File format
+            metadata (dict): Metadata for saving
+            bbox_inches, pad_inches, facecolor, edgecolor, backend, orientation, etc.
+            verbose (int): verbosity level
 
     SeeAlso:
         :class:`LabelManager`.
         :class:`FigureFinalizer`.
+
+    Example:
+        >>> # xdoctest: +REQUIRES(module:pandas)
+        >>> # xdoctest: +REQUIRES(module:seaborn)
+        >>> import kwplot
+        >>> import ubelt as ub
+        >>> import pandas as pd
+        >>> sns = kwplot.autosns()
+        >>> data = pd.DataFrame({
+        ...     'species': ['red_fox', 'gray_wolf', 'red_fox', 'gray_wolf', 'black_bear'],
+        ...     'weight': [6, 35, 7, 40, 90],
+        ...     'length': [60, 120, 65, 130, 170],
+        ... })
+        >>> dpath = ub.Path.appdir('kwplot/tests/test_figman')
+        >>> figman = kwplot.FigureManager(dpath=dpath, dpi=120, relabel=True)
+        >>> # Map program labels to human labels
+        >>> figman.labels.add_mapping({
+        ...     'weight': 'Weight (kg)',
+        ...     'length': 'Length (cm)',
+        ...     'red_fox': 'Red Fox',
+        ...     'gray_wolf': 'Gray Wolf',
+        ...     'black_bear': 'Black Bear',
+        ...     'species': 'Species',
+        ... })
+        >>> fig = figman.figure()
+        >>> ax = fig.gca()
+        >>> # Do your plotting stuff here.
+        >>> ax = sns.scatterplot(data=data, x='length', y='weight', hue='species', ax=ax)
+        >>> # Use remap the labels and save the figure out.
+        >>> fpath = figman.finalize('my_plot.png')
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> import kwimage
+        >>> kwplot.close_figures()
+        >>> canvas = kwimage.imread(fpath)[..., 0:3]
+        >>> border_thickness = 10
+        >>> canvas = np.pad(canvas, ((border_thickness, border_thickness),
+        >>>                          (border_thickness, border_thickness),
+        >>>                          (0, 0)), mode='constant', constant_values=0)
+        >>> kwplot.imshow(canvas)
+        >>> kwplot.show_if_requested()
     """
 
-    def __init__(figman, **kwargs):
+    def __init__(figman, relabel=False, **kwargs):
         """
         Args:
             **kwargs: See :class:`FigureFinalizer`.
+                dpath='.',
+                size_inches=None,
+                cropwhite=True,
+                tight_layout=True,
+                verbose=0,
                 dpi : float
                 format : str
                 metadata : dict
@@ -35,6 +111,7 @@ class FigureManager:
         """
         figman.finalizer = FigureFinalizer(**kwargs)
         figman.labels = LabelManager()
+        figman.relabel = relabel
         figman.fig = None
 
     def figure(figman, *args, **kwargs):
@@ -46,6 +123,15 @@ class FigureManager:
     def finalize(self, fpath, fig=None, **kwargs):
         if fig is None:
             fig = self.fig
+
+        relabel = self.relabel
+        if not isinstance(relabel, dict):
+            if relabel:
+                relabel = {}
+        if isinstance(relabel, dict):
+            for ax in fig.get_axes():
+                self.labels.relabel(ax=ax, **relabel)
+
         final_fpath = self.finalizer.finalize(fig, fpath, **kwargs)
         return final_fpath
 
@@ -156,6 +242,9 @@ class LabelManager:
             self._modify_labels(label)
 
     def relabel_yticks(self, ax=None):
+        """
+        FIXME: This seems to remove exponent scales.
+        """
         old_ytick_labels = ax.get_yticklabels()
         new_yticklabels = [self._modify_labels(label) for label in old_ytick_labels]
         ax.set_yticks(ax.get_yticks())
@@ -263,6 +352,7 @@ class LabelManager:
             >>> self.force_integer_ticks('x')
             >>> xticks = ax.get_xticks()
             >>> assert np.all(xticks.round() == xticks), 'ticks should be integers now'
+            >>> # xdoctest +REQUIRES(--show)
         """
         axis = self._coerce_axis(axis)
         if method == 'maxn':
@@ -843,6 +933,7 @@ def fix_matplotlib_dates(dates, format='mdate'):
 
     Example:
         >>> # xdoctest: +REQUIRES(module:kwutil)
+        >>> # xdoctest: +REQUIRES(module:pint)
         >>> from kwplot.managers import *  # NOQA
         >>> from kwutil.util_time import coerce_datetime
         >>> from kwutil.util_time import coerce_timedelta
