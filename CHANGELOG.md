@@ -3,7 +3,7 @@
 This changelog follows the specifications detailed in: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), although we have not yet reached a `1.0.0` release.
 
-## Version 0.5.3 - Unreleased
+## Version 0.5.4 - Released 2025-06-30
 
 ### Fix
 * Fixed `ffmpeg_animate_frames` to handle paths and ndarrays
@@ -11,6 +11,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 * Add Palette class
 * Add relabel argument to FigureManager to automatically relabel on finalize
+* Add `draw_polyline`
+
+
+### Changed
+* Improved adjust gui
 
 
 ## Version 0.5.2 - Released 2024-09-09

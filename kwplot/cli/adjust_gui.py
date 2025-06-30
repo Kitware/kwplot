@@ -30,16 +30,79 @@ from ubelt.util_const import NoParamType
 class AdjustGuiConfig(scfg.DataConfig):
     """
     Helper to find good robust normalization parameters for input images.
+
+    This tool allows cropping and normalization of input images using robust
+    statistics. It is useful for tuning contrast and visualization parameters
+    interactively or programmatically.
     """
-    img_fpath = scfg.Value(None, help='input', position=1)
-    scaling = 'sigmoid'
-    extrema = 'quantile'
-    low = 0.1
-    mid = 0.5
-    high =  0.9
-    crop = scfg.Value("null", type=str, help='A crop string e.g. y1:y2, x1:x2')
-    expr = scfg.Value("null", type=str)
-    cmap = scfg.Value('None', type=str)
+
+    img_fpath = scfg.Value(None, help='Path to the input image file.', position=1)
+
+    scaling = scfg.Value(
+        'sigmoid', choices=['sigmoid', 'linear'],
+        help=ub.codeblock(
+            '''
+            Scaling function used for normalization:
+            - 'sigmoid': nonlinear sigmoid mapping centered at `mid`
+            - 'linear' : linear rescaling between `low` and `high`
+            '''
+        ))
+
+    extrema = scfg.Value(
+        'quantile', choices=['quantile', 'adaptive-quantile', 'iqr',
+                             'iqr-clip'],
+        help=ub.codeblock(
+            '''
+            Method used to estimate low/mid/high intensity thresholds:
+            - 'quantile'         : empirical percentiles
+            - 'adaptive-quantile': quantile with local adaptation
+            - 'iqr'              : interquartile range
+            - 'iqr-clip'         : IQR with clipping of outliers
+            '''
+        ))
+
+    low = scfg.Value(0.1, help='Lower bound percentile or IQR quantile (range: 0.0–1.0).')
+
+    mid = scfg.Value(0.5, help='Midpoint intensity (used in sigmoid scaling, range: 0.0–1.0).')
+
+    high = scfg.Value(0.9, help='Upper bound percentile or IQR quantile (range: 0.0–1.0).')
+
+    crop = scfg.Value("null", type=str, help=ub.codeblock(
+        '''
+        Optional crop string in the form "y1:y2,x1:x2".
+
+        Use empty values for open-ended slices, e.g.:
+        "10:, :100" → rows from 10 to end, columns from start to 100
+
+        Set to "null" to disable cropping.
+        '''))
+
+    expr = scfg.Value("null", type=str, help=ub.codeblock(
+        '''
+        Optional Python expression to transform the image after cropping.
+
+        This is evaluated as `eval(expr)` with `img` bound to the cropped
+        image (i.e., `img = self.processed_img`).
+
+        Example:
+        "np.log1p(img)"
+        "img[::2, ::2]"
+
+        Set to "null" to disable expression evaluation.
+        '''
+    ))
+
+    cmap = scfg.Value(
+        'None', type=str, help=ub.codeblock(
+            '''
+            Optional matplotlib colormap to apply when displaying the image.
+
+            Examples:
+            "gray", "viridis", "magma"
+
+            Set to "None" or "null" to use default colormap behavior.
+            '''
+        ))
 
 
 def report_thread_error(fn):
@@ -968,9 +1031,6 @@ class AdjustWidget(QtWidgets.QWidget):
         params = self.config.to_indexable()
         print('params = {}'.format(ub.urepr(params, nl=1)))
 
-        norm_param_names = {
-            'scaling', 'extrema', 'low', 'mid', 'high'
-        }
 
         cropstr = params.get('crop', 'null')
         sl = parse_cropstr(cropstr)
@@ -989,6 +1049,9 @@ class AdjustWidget(QtWidgets.QWidget):
             self.processed_img = eval(expr, ns)
             # self.processed_img = ns['img']
 
+        norm_param_names = {
+            'scaling', 'extrema', 'low', 'mid', 'high'
+        }
         normalizer_params = ub.udict(params) & norm_param_names
         norm_img, norm_info = kwarray.robust_normalize(self.processed_img, params=normalizer_params, return_info=True)
 
