@@ -505,6 +505,7 @@ def _unsigned_subtract(a, b):
 #     return final
 
 
+# FIXME: we have another pallete object in manager.py we need to rectify with
 class Palette(dict):
     """
     A dictionary-like palette for seaborn that allows forcing specific color mappings

@@ -295,7 +295,7 @@ def imshow(img,
     defaults.
 
     Args:
-        img (ndarray): image data. Height, Width, and Channel dimensions
+        img (ndarray | PIL.Image): image data. Height, Width, and Channel dimensions
             can either be in standard (H, W, C) format or in (C, H, W) format.
             If C in [3, 4], we assume data is in the rgb / rgba colorspace by
             default.
@@ -382,6 +382,18 @@ def imshow(img,
         >>> ax2.plot([0, 1], [0, 1], '-o')
         >>> # xdoctest: +REQUIRES(--show)
         >>> kwplot.show_if_requested()
+
+    Example:
+        >>> # Test case to show pil image
+        >>> import kwplot
+        >>> import kwimage
+        >>> kwplot.autompl()   # xdoctest: +REQUIRES(--show)
+        >>> img = kwimage.grab_test_image('carl')
+        >>> from PIL import Image
+        >>> pil_img = Image.fromarray(img)
+        >>> kwplot.imshow(pil_img)
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> kwplot.show_if_requested()
     """
     #import matplotlib as mpl
     import matplotlib.pyplot as plt
@@ -399,6 +411,10 @@ def imshow(img,
         img_fpath = img
         import kwimage
         img = kwimage.imread(img_fpath)
+
+    if not hasattr(img, '__len__') and hasattr(img, 'convert'):
+        # could be a PIL image
+        img = np.asarray(img)
 
     valid_interpolation_choices = ['nearest', 'bicubic', 'bilinear']
 
