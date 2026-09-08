@@ -19,19 +19,15 @@ __all__ = [
 _qtensured = False
 
 
-def _current_ipython_session():
+def _current_ipython_session() -> Any:
     """
-    Returns a reference to the current IPython session, if one is running
+    Returns a reference to the current IPython session, if one is running.
     """
     try:
-        __IPYTHON__
-    except NameError:
+        import IPython  # ty: ignore[unresolved-import]
+    except ImportError:
         return None
-    else:
-        # if ipython is None we must have exited ipython at some point
-        import IPython
-        ipython = IPython.get_ipython()
-        return ipython
+    return IPython.get_ipython()
 
 
 def _qtensure():
@@ -282,8 +278,8 @@ def _determine_best_backend(verbose):
 
         if backend_infos['pyqt6']['modpath']:
             try:
-                import PyQt6  # NOQA
-                from PyQt6 import QtCore  # NOQA
+                import PyQt6  # ty: ignore[unresolved-import]  # noqa: F401
+                from PyQt6 import QtCore  # ty: ignore[unresolved-import]
             except ImportError as ex:
                 if verbose:
                     print('[kwplot.autompl] No PyQt6, agg is probably best')
@@ -320,8 +316,8 @@ def _determine_best_backend(verbose):
                         backend_infos['pyqt5']['usable'] = False
         elif backend_infos['pyqt4']['modpath']:
             try:
-                import Qt4Agg  # NOQA
-                from PyQt4 import QtCore  # NOQA
+                import Qt4Agg  # ty: ignore[unresolved-import]  # noqa: F401
+                from PyQt4 import QtCore  # ty: ignore[unresolved-import]
             except ImportError as ex:
                 backend_infos['pyqt4']['usable'] = False
                 backend_infos['pyqt4']['importable'] = False
@@ -352,12 +348,16 @@ def _check_for_linux_opencv_qt_conflicts(QtCore):
     """
     if 'cv2' in sys.modules:
         cv2 = sys.modules['cv2']
-        cv2_mod_fpath = ub.Path(cv2.__file__)
+        cv2_mod_file = getattr(cv2, '__file__', None)
+        qt_mod_file = getattr(QtCore, '__file__', None)
+        if cv2_mod_file is None or qt_mod_file is None:
+            return False
+        cv2_mod_fpath = ub.Path(cv2_mod_file)
         cv2_mod_dpath = cv2_mod_fpath.parent
         cv2_lib_dpath = cv2_mod_dpath / 'qt/plugins/platforms'
         cv2_qxcb_fpath = cv2_lib_dpath / 'libqxcb.so'
 
-        qt_mod_fpath = ub.Path(QtCore.__file__)
+        qt_mod_fpath = ub.Path(qt_mod_file)
         qt_mod_dpath = qt_mod_fpath.parent
         qt_lib_dpath = qt_mod_dpath / 'Qt/plugins/platforms'
         qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
@@ -387,11 +387,15 @@ def _check_for_cv2_qt_incompat():
     import ubelt as ub
     from PyQt5 import QtCore  # NOQA
 
-    cv2_mod_dpath = ub.Path(cv2.__file__).parent
+    cv2_mod_file = getattr(cv2, '__file__', None)
+    qt_mod_file = getattr(QtCore, '__file__', None)
+    if cv2_mod_file is None or qt_mod_file is None:
+        raise OSError('cannot determine cv2 / Qt module paths')
+    cv2_mod_dpath = ub.Path(cv2_mod_file).parent
     cv2_lib_dpath = ub.Path(cv2_mod_dpath) / 'qt/plugins/platforms'
     cv2_qxcb_fpath = ub.Path(cv2_lib_dpath) / 'libqxcb.so'
 
-    qt_mod_dpath = ub.Path(QtCore.__file__).parent
+    qt_mod_dpath = ub.Path(qt_mod_file).parent
     qt_lib_dpath1 = qt_mod_dpath / 'Qt/plugins/platforms'
     qt_lib_dpath2 = (qt_mod_dpath / 'Qt5/plugins/platforms')
     if qt_lib_dpath1.exists():

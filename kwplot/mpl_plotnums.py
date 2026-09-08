@@ -160,6 +160,8 @@ class PlotNums(object):
                 nCols = int(np.ceil(nSubplots / nRows))
             elif nCols is not None:
                 nRows = int(np.ceil(nSubplots / nCols))
+        assert nRows is not None
+        assert nCols is not None
         return nRows, nCols
 
     @staticmethod

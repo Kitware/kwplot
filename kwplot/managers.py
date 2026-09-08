@@ -6,8 +6,16 @@ Largely tools ported from geowatch.utils.util_kwplot
 SeeAlso:
     ~/code/geowatch/geowatch/utils/util_kwplot.py
 """
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+
 import ubelt as ub
 import matplotlib as mpl
+import matplotlib.axes
+import matplotlib.collections
+import matplotlib.figure
+import matplotlib.patches
 import matplotlib.text  # NOQA
 
 
@@ -86,7 +94,7 @@ class FigureManager:
         >>> kwplot.show_if_requested()
     """
 
-    def __init__(figman, relabel=False, **kwargs):
+    def __init__(figman, relabel: Any = False, **kwargs: Any) -> None:
         """
         Args:
             **kwargs: See :class:`FigureFinalizer`.
@@ -112,17 +120,19 @@ class FigureManager:
         figman.finalizer = FigureFinalizer(**kwargs)
         figman.labels = LabelManager()
         figman.relabel = relabel
-        figman.fig = None
+        figman.fig: Optional[mpl.figure.Figure] = None
 
-    def figure(figman, *args, **kwargs):
+    def figure(figman, *args: Any, **kwargs: Any) -> mpl.figure.Figure:
         import kwplot
         fig = kwplot.figure(*args, **kwargs)
         figman.fig = fig
         return fig
 
-    def finalize(self, fpath, fig=None, **kwargs):
+    def finalize(self, fpath: Any, fig: Optional[mpl.figure.Figure] = None, **kwargs: Any) -> Any:
         if fig is None:
             fig = self.fig
+        if fig is None:
+            raise ValueError('No figure has been created or supplied')
 
         relabel = self.relabel
         if not isinstance(relabel, dict):
@@ -135,7 +145,7 @@ class FigureManager:
         final_fpath = self.finalizer.finalize(fig, fpath, **kwargs)
         return final_fpath
 
-    def set_figtitle(self, *args, **kwargs):
+    def set_figtitle(self, *args: Any, **kwargs: Any) -> None:
         import kwplot
         kwplot.set_figtitle(*args, **kwargs, fig=self.fig)
 
@@ -187,19 +197,19 @@ class LabelManager:
         >>> kwplot.show_if_requested()
     """
 
-    def __init__(self, mapping=None):
-        self._dict_mapper = {}
-        self._func_mappers = []
+    def __init__(self, mapping: Any = None) -> None:
+        self._dict_mapper: Dict[Any, Any] = {}
+        self._func_mappers: list[Callable[[Any], Any]] = []
         self.add_mapping(mapping)
 
-    def copy(self):
+    def copy(self) -> LabelManager:
         new = self.__class__()
-        new.add_mapping(self._dict_mappem.copy())
+        new.add_mapping(self._dict_mapper.copy())
         for m in self._func_mappers:
             new.add_mapping(m)
         return new
 
-    def add_mapping(self, mapping):
+    def add_mapping(self, mapping: Any) -> LabelManager:
         if mapping is not None:
             if callable(mapping):
                 self._func_mappers.append(mapping)
@@ -208,12 +218,12 @@ class LabelManager:
                 self._dict_mapper.update(ub.udict(mapping).map_keys(str))
         return self
 
-    def update(self, dict_mapping):
+    def update(self, dict_mapping: Mapping[Any, Any]) -> LabelManager:
         self._dict_mapper.update(dict_mapping)
         self._dict_mapper.update(ub.udict(dict_mapping).map_keys(str))
         return self
 
-    def _modify_text(self, text: str):
+    def _modify_text(self, text: str) -> Any:
         # Handles strings, which we call text by convention, but that is
         # confusing here.
         new_text = text
@@ -241,16 +251,17 @@ class LabelManager:
         for label in legend.texts:
             self._modify_labels(label)
 
-    def relabel_yticks(self, ax=None):
+    def relabel_yticks(self, ax: Optional[mpl.axes.Axes] = None) -> None:
         """
         FIXME: This seems to remove exponent scales.
         """
+        ax = self._coerce_axes(ax)
         old_ytick_labels = ax.get_yticklabels()
         new_yticklabels = [self._modify_labels(label) for label in old_ytick_labels]
         ax.set_yticks(ax.get_yticks())
         ax.set_yticklabels(new_yticklabels)
 
-    def relabel_xticks(self, ax=None):
+    def relabel_xticks(self, ax: Optional[mpl.axes.Axes] = None) -> None:
         # Set xticks and yticks first before setting tick labels
         # https://stackoverflow.com/questions/63723514/userwarning-fixedformatter-should-only-be-used-together-with-fixedlocator
         # print(f'new_xlabel={new_xlabel}')
@@ -261,13 +272,14 @@ class LabelManager:
         # print(f'old_ytick_labels={old_ytick_labels}')
         # print(f'new_xticklabels={new_xticklabels}')
         # print(f'new_yticklabels={new_yticklabels}')
+        ax = self._coerce_axes(ax)
         old_xtick_labels = ax.get_xticklabels()
         new_xticklabels = [self._modify_labels(label) for label in old_xtick_labels]
 
         ax.set_xticks(ax.get_xticks())
         ax.set_xticklabels(new_xticklabels)
 
-    def _coerce_axes(self, ax=None):
+    def _coerce_axes(self, ax: Optional[mpl.axes.Axes] = None) -> mpl.axes.Axes:
         if ax is None:
             import kwplot
             ax = kwplot.plt.gca()
@@ -297,7 +309,8 @@ class LabelManager:
     #         func = getattr(ax, 'get_{axis}{attr}')
     #     return axis
 
-    def relabel_axes_labels(self, ax=None):
+    def relabel_axes_labels(self, ax: Optional[mpl.axes.Axes] = None) -> None:
+        ax = self._coerce_axes(ax)
         old_xlabel = ax.get_xlabel()
         old_ylabel = ax.get_ylabel()
         old_title = ax.get_title()
@@ -310,7 +323,8 @@ class LabelManager:
         ax.set_ylabel(new_ylabel)
         ax.set_title(new_title)
 
-    def relabel_legend(self, ax=None):
+    def relabel_legend(self, ax: Optional[mpl.axes.Axes] = None) -> None:
+        ax = self._coerce_axes(ax)
         if ax.legend_ is not None:
             self._modify_legend(ax.legend_)
 
@@ -424,11 +438,12 @@ class FigureFinalizer(ub.NiceRepr):
         verbose=0,
         **kwargs
     ):
-        locals_ = ub.udict(locals())
-        locals_ -= {'self', 'kwargs'}
-        locals_.update(kwargs)
+        self.dpath = dpath
+        self.size_inches = size_inches
+        self.cropwhite = cropwhite
+        self.tight_layout = tight_layout
         self.verbose = verbose
-        self.update(locals_)
+        self.update(kwargs)
 
     def __nice__(self):
         return ub.urepr(self.__dict__)
@@ -661,10 +676,10 @@ class ArtistManager:
             raise ValueError
 
         # Broadcast shapes
-        rx = [rx] if not ub.iterable(rx) else rx
-        ry = [ry] if not ub.iterable(ry) else ry
-        angle = [angle] if not ub.iterable(angle) else angle
-        nums = list(map(len, (xy, rx, ry, angle)))
+        rx = np.atleast_1d(rx)
+        ry = np.atleast_1d(ry)
+        angle = np.atleast_1d(angle)
+        nums = [len(xy), len(rx), len(ry), len(angle)]
         if not ub.allsame(nums):
             new_n = max(nums)
             for n in nums:
@@ -676,7 +691,7 @@ class ArtistManager:
             if len(ry) == 1:
                 ry = np.repeat(ry, new_n, axis=0)
             if len(angle) == 1:
-                ry = np.repeat(ry, new_n, axis=0)
+                angle = np.repeat(angle, new_n, axis=0)
 
         cols['xy'].append(xy)
         cols['rx'].append(rx)
@@ -694,8 +709,11 @@ class ArtistManager:
         """
         self.add_ellipse_marker(xy, rx=r, ry=r, angle=0, **attrs)
 
-    def build_collections(self, ax=None):
+    def build_collections(self, ax: Optional[mpl.axes.Axes] = None):
         import numpy as np
+        if ax is None:
+            import kwplot
+            ax = kwplot.autoplt().gca()
         collections = []
         for hashid, segments in self.group_to_line_segments.items():
             attrs = self.group_to_attrs[hashid]
@@ -745,15 +763,17 @@ class ArtistManager:
                 lines = np.array(lines)
                 all_lines.append(lines)
 
+        if not all_lines:
+            return (0.0, 0.0, 1.0, 1.0)
         all_coords = np.concatenate(all_lines, axis=0)
         import pandas as pd
         flags = pd.isnull(all_coords)
         all_coords[flags] = np.nan
         all_coords = all_coords.astype(float)
 
-        minx, miny = np.nanmin(all_coords, axis=0) if len(all_coords) else 0
-        maxx, maxy = np.nanmax(all_coords, axis=0) if len(all_coords) else 1
-        ltrb = minx, miny, maxx, maxy
+        minx, miny = np.nanmin(all_coords, axis=0)
+        maxx, maxy = np.nanmax(all_coords, axis=0)
+        ltrb = float(minx), float(miny), float(maxx), float(maxy)
         return ltrb
 
     def setlims(self, ax=None):
@@ -801,11 +821,14 @@ class Palette(ub.udict):
         self.update(data)
         return self
 
-    def update(self, other):
-        if isinstance(other, dict):
-            self.add_labels(label_to_color=other)
-        else:
-            self.add_labels(labels=other)
+    def update(self, other=None, **kwargs):
+        if other is not None:
+            if isinstance(other, Mapping):
+                self.add_labels(label_to_color=other)
+            else:
+                self.add_labels(labels=other)
+        if kwargs:
+            self.add_labels(label_to_color=kwargs)
 
     def add_labels(self, label_to_color=None, labels=None):
         """
@@ -826,7 +849,7 @@ class Palette(ub.udict):
         # Determine which labels in the input mapping are not explicitly given
         specified = {k: kwimage.Color.coerce(v).as01()
                      for k, v in label_to_color.items() if v is not None}
-        unspecified = ub.oset(label_to_color.keys()) - specified
+        unspecified = ub.oset(label_to_color.keys()) - set(specified)
 
         # Merge specified colors into this pallet
         super().update(specified)
@@ -847,8 +870,8 @@ class Palette(ub.udict):
         legend = kwplot.make_legend_img(self, dpi=dpi, **kwargs)
         return legend
 
-    def sorted_keys(self):
-        return self.__class__(super().sorted_keys())
+    def sorted_keys(self, key=None, reverse=False):
+        return self.__class__(super().sorted_keys(key=key, reverse=reverse))
 
     def reorder(self, head=None, tail=None):
         if head is None:
@@ -908,7 +931,7 @@ def extract_legend(ax):
     # fnum = 321
     import kwplot
     fig_onlylegend = kwplot.figure(
-        fnum=str(ax.figure.number) + '_onlylegend', doclf=1)
+        fnum=str(ax.figure.number) + '_onlylegend', doclf=True)
     new_ax = fig_onlylegend.gca()
     new_ax.axis('off')
     new_ax.legend(*legend_handles, title=orig_legend_title,

@@ -1,7 +1,7 @@
 """
 DEPRECATED: use kwimage.Color instead
 """
-from typing import Dict, Tuple
+from typing import Dict, Tuple, TYPE_CHECKING
 
 __all__ = ['Color']
 
@@ -73,8 +73,12 @@ class mcolors:
     }
 
 
-# Backwards compat
-try:
-    from kwimage import Color  # noqa
-except ImportError:
-    Color = None
+# Backwards compat.  Static checking can use the concrete kwimage type while
+# runtime still tolerates kwimage being absent.
+if TYPE_CHECKING:
+    from kwimage import Color
+else:
+    try:
+        from kwimage import Color  # noqa
+    except ImportError:
+        Color = None

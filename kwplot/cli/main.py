@@ -5,7 +5,7 @@ A simple CLI for helping with plotting and viewing tasks
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import ubelt as ub
 from scriptconfig.modal import ModalCLI
@@ -80,7 +80,8 @@ def main() -> None:
     import os
     if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
         # NON MODAL CASE RUNS IMSHOW
-        ImshowCLI.main(cmdline=0, fpath=sys.argv[1])
+        imshow_cli = cast(Any, ImshowCLI)
+        imshow_cli.main(cmdline=False, fpath=sys.argv[1])
         ...
     else:
         from kwplot.cli import gifify

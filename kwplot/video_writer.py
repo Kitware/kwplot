@@ -25,11 +25,19 @@ TODO:
 Note:
     Used by :mod:`kwcoco.cli.gifify`
 """
+from __future__ import annotations
+
+import os
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, cast
+
 import ubelt as ub
 
 
-def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1,
-                          verbose=3, max_width=None, temp_dpath=None):
+def ffmpeg_animate_frames(
+        frame_fpaths: Sequence[Any], output_fpath: Any,
+        in_framerate: float = 1, verbose: int = 3,
+        max_width: Optional[int] = None, temp_dpath: Optional[Any] = None,
+) -> Any:
     """
     Use ffmpeg to transform a series of frames into a video.
 
@@ -89,6 +97,8 @@ def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1,
         >>> output_fpath = test_dpath / 'test.mp4'
     """
     inputs = VideoInputs.coerce(frame_fpaths)
+    if temp_dpath is not None:
+        inputs.temp_dpath = ub.Path(temp_dpath)
     writer = FFMPEG_FrameWriter(inputs, output_fpath)
     writer.verbose = verbose
     writer.config['in_framerate'] = in_framerate
@@ -102,30 +112,40 @@ class VideoInputs:
     Abstract class for frame-path or in-memory-array video inputs
     """
 
-    def __init__(self):
-        self.temp_dpath = None
-        self.input_dsize = None
+    def __init__(self) -> None:
+        self.temp_dpath: Optional[ub.Path] = None
+        self.input_dsize: Optional[Tuple[int, int]] = None
+        self.frame_fpaths: List[Any] = []
 
     @classmethod
-    def coerce(cls, inputs):
+    def coerce(cls, inputs: Any) -> "VideoInputs":
         """
         Choose an appropriate subclass
         """
         import numpy as np
-        subcls = NotImplemented
         if isinstance(inputs, cls):
             return inputs
-        elif isinstance(inputs, np.ndarray):
-            subcls = VideoArrayInputs
-        elif ub.iterable(inputs) and len(inputs):
-            if isinstance(inputs[0], np.ndarray):
-                subcls = VideoArrayInputs
-            else:
-                subcls = VideoFramePathInputs
-        self = subcls(inputs)
-        return self
+        if isinstance(inputs, np.ndarray):
+            return VideoArrayInputs(inputs)
+        if ub.iterable(inputs):
+            materialized = list(inputs)
+            if not materialized:
+                raise ValueError('Video inputs cannot be empty')
+            if isinstance(materialized[0], np.ndarray):
+                return VideoArrayInputs(materialized)
+            return VideoFramePathInputs(materialized)
+        raise TypeError(f'Cannot coerce video inputs from {type(inputs)!r}')
 
-    def _ensure_temp_dpath(self):
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def _ensure_input_dsize(self) -> None:
+        raise NotImplementedError
+
+    def as_file_list_manifest(self) -> ub.Path:
+        raise NotImplementedError
+
+    def _ensure_temp_dpath(self) -> None:
         """
         Infer input width / height if not given
         """
@@ -140,16 +160,21 @@ class VideoFramePathInputs(VideoInputs):
     Metadata about inputs can be passed or introspected.
     """
 
-    def __init__(self, frame_fpaths=None, input_dsize=None, temp_dpath=None,
-                 verbose=0):
+    def __init__(
+            self, frame_fpaths: Optional[Iterable[Any]] = None,
+            input_dsize: Optional[Tuple[int, int]] = None,
+            temp_dpath: Optional[Any] = None, verbose: int = 0,
+    ) -> None:
         super().__init__()
-        self.frame_fpaths = frame_fpaths
+        self.frame_fpaths = [] if frame_fpaths is None else list(frame_fpaths)
+        self.input_dsize = input_dsize
+        self.temp_dpath = None if temp_dpath is None else ub.Path(temp_dpath)
         self.verbose = verbose
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.frame_fpaths)
 
-    def _ensure_input_dsize(self):
+    def _ensure_input_dsize(self) -> None:
         """
         Infer input width / height if not given
         """
@@ -168,12 +193,13 @@ class VideoFramePathInputs(VideoInputs):
                 max_w = max(max_w, w)
             self.input_dsize = (max_w, max_h)
 
-    def as_file_list_manifest(self):
+    def as_file_list_manifest(self) -> ub.Path:
         """
         Convert to a file list input (for ffmpeg)
         """
         import uuid
         self._ensure_temp_dpath()
+        assert self.temp_dpath is not None
         temp_fpath = self.temp_dpath / f'temp_list_{uuid.uuid4()}.txt'
         lines = ["file '{}'".format(ub.Path(fpath).absolute())
                  for fpath in self.frame_fpaths]
@@ -188,36 +214,35 @@ class VideoArrayInputs(VideoInputs):
     Represents a list of video frames as inputs
     """
 
-    def __init__(self, frame_arrays):
+    def __init__(self, frame_arrays: Any) -> None:
         super().__init__()
         self.frame_arrays = frame_arrays
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.frame_arrays)
 
-    def _ensure_input_dsize(self):
+    def _ensure_input_dsize(self) -> None:
         """
         Infer input width / height if not given
         """
         # Determine the maximum size of the image
         if self.input_dsize is None:
             try:
-                _, max_w, max_h, c = self.frame_arrays.shape
-            except Exception:
+                _, max_h, max_w, _ = self.frame_arrays.shape
+            except (AttributeError, ValueError):
                 max_w = 0
                 max_h = 0
                 for frame in self.frame_arrays:
                     h, w, *_ = frame.shape
-                    max_h = max(max_h, h)
-                    max_w = max(max_w, w)
-                self.input_dsize = (max_w, max_h)
-            else:
-                self.input_dsize = (w, h)
+                    max_h = max(max_h, int(h))
+                    max_w = max(max_w, int(w))
+            self.input_dsize = (int(max_w), int(max_h))
 
-    def _write_frames_to_disk(self):
+    def _write_frames_to_disk(self) -> None:
         import kwimage
         self._ensure_temp_dpath()
-        frame_dpath = (ub.Path(self.temp_dpath) / 'frames').ensuredir()
+        assert self.temp_dpath is not None
+        frame_dpath = (self.temp_dpath / 'frames').ensuredir()
         self.frame_fpaths = []
         for idx, frame in enumerate(self.frame_arrays):
             fname = f'frame_{idx:03d}.jpg'
@@ -225,12 +250,13 @@ class VideoArrayInputs(VideoInputs):
             kwimage.imwrite(fpath, frame)
             self.frame_fpaths.append(fpath)
 
-    def as_file_list_manifest(self):
+    def as_file_list_manifest(self) -> ub.Path:
         """
         Convert to a file list input (for ffmpeg)
         """
         import uuid
         self._write_frames_to_disk()
+        assert self.temp_dpath is not None
         temp_fpath = self.temp_dpath / f'temp_list_{uuid.uuid4()}.txt'
         lines = ["file '{}'".format(ub.Path(fpath).absolute())
                  for fpath in self.frame_fpaths]
@@ -241,30 +267,36 @@ class VideoArrayInputs(VideoInputs):
 
 
 class CV2_FrameWriter:
-    def __init__(self, inputs=None, output_fpath=None):
+    def __init__(self, inputs: Optional[VideoInputs] = None, output_fpath: Any = None) -> None:
         self.inputs = inputs
         self.output_fpath = output_fpath
         self.verbose = 0
-        self.config = {
+        self.config: Dict[str, Any] = {
             'max_width': None,
             'in_framerate': 1,
         }
 
-    def find_convert(self):
+    def find_convert(self) -> str:
         exe = ub.find_exe('convert') or ub.find_exe('convert.exe')
         if exe is None:
             raise FileNotFoundError('Cannot find convert, cannot use ImageMagik_FrameWriter')
         return exe
 
-    def write(self):
+    def write(self) -> Any:
         import cv2
-        import os
         import kwimage
+        if self.inputs is None:
+            raise ValueError('Video inputs are required')
         self.inputs._ensure_input_dsize()
+        if self.inputs.input_dsize is None:
+            raise RuntimeError('Unable to determine input frame size')
         max_w, max_h = self.inputs.input_dsize
         in_framerate = float(self.config['in_framerate'])
         dsize = (max_w, max_h)
-        fourcc = cv2.VideoWriter_fourcc(*'MPEG')
+        cv2_dynamic = cast(Any, cv2)
+        fourcc = cv2_dynamic.VideoWriter_fourcc(*'MPEG')
+        if self.output_fpath is None:
+            raise ValueError('An output path is required')
         output_fpath = os.fspath(self.output_fpath)
         output = cv2.VideoWriter(
             output_fpath, fourcc, in_framerate, dsize)
@@ -274,35 +306,40 @@ class CV2_FrameWriter:
                 output.write(frame)
         finally:
             output.release()
+        return self.output_fpath
 
 
 class ImageMagik_FrameWriter:
-    def __init__(self, inputs=None, output_fpath=None):
+    def __init__(self, inputs: Optional[VideoInputs] = None, output_fpath: Any = None) -> None:
         self.inputs = inputs
         self.output_fpath = output_fpath
         self.verbose = 0
-        self.config = {
+        self.config: Dict[str, Any] = {
             'max_width': None,
             'in_framerate': 1,
         }
 
-    def find_convert(self):
+    def find_convert(self) -> str:
         exe = ub.find_exe('convert') or ub.find_exe('convert.exe')
         if exe is None:
             raise FileNotFoundError('Cannot find convert, cannot use ImageMagik_FrameWriter')
         return exe
 
-    def write(self):
-        import os
+    def write(self) -> Any:
         convert_exe = self.find_convert()
+        if self.inputs is None:
+            raise ValueError('Video inputs are required')
+        if self.output_fpath is None:
+            raise ValueError('An output path is required')
         escaped_gif_fpath = os.fspath(self.output_fpath).replace('%', '%%')
 
-        delay = (1 / self.config['in_framerate']) * 100
+        in_framerate = float(self.config['in_framerate'])
+        delay = (1 / in_framerate) * 100
         # Note: delay might not work unless writing to a gif
         # https://superuser.com/questions/1416395/imagemagick-convert-is-not-adjusting-mp4-framerate-as-expected
         # https://imagemagick.org/script/command-line-options.php?#delay
         command = [convert_exe, '-delay', str(delay), '-loop', '0']
-        command += self.inputs.frame_fpaths
+        command += [os.fspath(p) for p in self.inputs.frame_fpaths]
         command += [escaped_gif_fpath]
         print('Converting {} images to gif: {}'.format(len(self.inputs), escaped_gif_fpath))
         info = ub.cmd(command, verbose=3)
@@ -311,30 +348,37 @@ class ImageMagik_FrameWriter:
             print(info['out'])
             print(info['err'])
             raise RuntimeError(info['err'])
+        return self.output_fpath
 
 
 class FFMPEG_FrameWriter:
-    def __init__(self, inputs=None, output_fpath=None):
+    def __init__(self, inputs: Optional[VideoInputs] = None, output_fpath: Any = None) -> None:
         self.inputs = inputs
         self.output_fpath = output_fpath
         self.verbose = 0
-        self.config = {
+        self.config: Dict[str, Any] = {
             'max_width': None,
             'in_framerate': 1,
         }
 
-    def find_ffmpeg(self):
+    def find_ffmpeg(self) -> str:
         ffmpeg_exe = ub.find_exe('ffmpeg') or ub.find_exe('ffmpeg.exe')
         if ffmpeg_exe is None:
             raise FileNotFoundError('Cannot find ffmpeg, cannot use FFMPEG_Writer')
         return ffmpeg_exe
 
-    def write(self):
+    def write(self) -> Any:
         import sys
         import math
         ffmpeg_exe = self.find_ffmpeg()
 
+        if self.inputs is None:
+            raise ValueError('Video inputs are required')
+        if self.output_fpath is None:
+            raise ValueError('An output path is required')
         self.inputs._ensure_input_dsize()
+        if self.inputs.input_dsize is None:
+            raise RuntimeError('Unable to determine input frame size')
         max_w, max_h = self.inputs.input_dsize
         temp_fpath = self.inputs.as_file_list_manifest()
 
@@ -477,20 +521,20 @@ class VideoWriter:
         >>> self.write()
     """
 
-    def __init__(self):
-        self.inputs = None
-        self.output_fpath = None
+    def __init__(self) -> None:
+        self.inputs: Optional[VideoInputs] = None
+        self.output_fpath: Any = None
         self.backend = 'ffmpeg'
         self.verbose = 0
         # backend = 'imagemagik'
         # backend = 'cv2'
-        self.config = ub.udict({
+        self.config: Dict[str, Any] = ub.udict({
             'in_framerate': 1,
             'max_width': None,
         })
 
     @classmethod
-    def demo(cls):
+    def demo(cls) -> "VideoWriter":
         import kwcoco
         dset = kwcoco.CocoDataset.demo(
             'vidshapes', num_videos=2, num_frames=32,
@@ -500,7 +544,7 @@ class VideoWriter:
         return self
 
     @classmethod
-    def from_frame_paths(cls, frame_fpaths):
+    def from_frame_paths(cls, frame_fpaths: Iterable[Any]) -> "VideoWriter":
         """
         Create a video from a list of paths to frame iamges
         """
@@ -508,7 +552,11 @@ class VideoWriter:
         self.inputs = VideoFramePathInputs(frame_fpaths)
         return self
 
-    def write(self):
+    def write(self) -> Any:
+        if self.inputs is None:
+            raise ValueError('Video inputs are required')
+        if self.output_fpath is None:
+            raise ValueError('An output path is required')
         if self.backend == 'ffmpeg':
             cls = FFMPEG_FrameWriter
         elif self.backend == 'imagemagik':

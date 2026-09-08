@@ -10,6 +10,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Moved package typing from sidecar ``.pyi`` stubs into inline annotations,
   preserving lazy imports and correcting stale public signatures.
 
+### Fixed
+
+* Fixed issues exposed by implementation type checking in figure helpers, Qt
+  config models, palette copying, ellipse marker broadcasting, and video input
+  dimension handling.
+
 
 ## Version 0.5.4 - Released 2025-06-30
 

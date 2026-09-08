@@ -1,6 +1,9 @@
 """
 Helpers for seaborn
 """
+from __future__ import annotations
+
+from typing import Any, Tuple, Union, cast
 
 
 class MonkeyPatchPyPlotFigureContext:
@@ -35,7 +38,7 @@ class MonkeyPatchPyPlotFigureContext:
         self.fig = fig
         self.plt = plt
         self._monkey_attrname = '__monkey_for_seaborn_issue_2830__'
-        self._orig_figure = None
+        self._orig_figure: Any = None
 
     def figure(self, *args, **kwargs):
         """
@@ -58,7 +61,8 @@ class MonkeyPatchPyPlotFigureContext:
         # TODO: make thread safe?
         setattr(self.plt, self._monkey_attrname, 'setting-monkey')
         self._orig_figure = self.plt.figure
-        self.plt.figure = self.figure
+        plt_dynamic = cast(Any, self.plt)
+        plt_dynamic.figure = self.figure
         setattr(self.plt, self._monkey_attrname, self)
 
     def _delmonkey(self):
@@ -68,7 +72,8 @@ class MonkeyPatchPyPlotFigureContext:
         assert self._getmonkey() is self
         assert self._orig_figure is not None
         setattr(self.plt, self._monkey_attrname, 'removing-monkey')
-        self.plt.figure = self._orig_figure
+        plt_dynamic = cast(Any, self.plt)
+        plt_dynamic.figure = self._orig_figure
         setattr(self.plt, self._monkey_attrname, None)
 
     def __enter__(self):
@@ -301,6 +306,8 @@ def simple_plot_histogram(data, x='intensity_bin', weights='value',
         fig = kwplot.figure(fnum=1, doclf=True)
         fig.clf()
         ax = fig.gca()
+    else:
+        fig = ax.figure
 
     hist_data_kw_ = hist_data_kw.copy()
     if hist_data_kw_['bins'] == 'auto':
@@ -583,7 +590,7 @@ class Palette(dict):
         Returns:
             Palette: A new Palette instance with the same colors and fixed keys
         """
-        new_palette = Palette(self.data.copy())
+        new_palette = Palette(dict(self))
         new_palette._fixed = self._fixed.copy()
         return new_palette
 
@@ -634,13 +641,14 @@ class Palette(dict):
         seed = 6777939437
 
         # Monkey patch distinctipy for reproducible colors
-        original_get_random_color = distinctipy.get_random_color
+        distinctipy_dynamic = cast(Any, distinctipy)
+        original_get_random_color = distinctipy_dynamic.get_random_color
         try:
             def _patched_get_random_color(pastel_factor=0, rng=None):
                 rng = kwarray.ensure_rng(seed, api='python')
                 color = [(rng.random() + pastel_factor) / (1.0 + pastel_factor) for _ in range(3)]
                 return tuple(color)
-            distinctipy.get_random_color = _patched_get_random_color
+            distinctipy_dynamic.get_random_color = _patched_get_random_color
 
             exclude_colors = [
                 tuple(map(float, (d, d, d)))
@@ -654,7 +662,7 @@ class Palette(dict):
             return final
         finally:
             # Restore original function
-            distinctipy.get_random_color = original_get_random_color
+            distinctipy_dynamic.get_random_color = original_get_random_color
 
     def draw_legend(self, **kwargs):
         """
@@ -686,7 +694,7 @@ class Palette(dict):
         canvas = kwplot.make_legend_img(self, **kwargs)
         return canvas
 
-    def draw_swatch(self, cellshape=9):
+    def draw_swatch(self, cellshape: Union[int, Tuple[int, int]] = 9):
         """
         Example:
             >>> # xdoctest: +REQUIRES(--show)
@@ -704,10 +712,10 @@ class Palette(dict):
         import kwimage
         import math
         import numpy as np
-        if not ub.iterable(cellshape):
-            cellshape = [cellshape, cellshape]
-        cell_h = cellshape[0]
-        cell_w = cellshape[1]
+        if isinstance(cellshape, int):
+            cell_h = cell_w = cellshape
+        else:
+            cell_h, cell_w = cellshape
         cells = []
         colors = list(self.values())
         for color in colors:
