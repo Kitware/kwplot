@@ -422,7 +422,7 @@ def imshow(
         >>> # Test case to show pil image
         >>> import kwplot
         >>> import kwimage
-        >>> kwplot.autompl()   # xdoctest: +REQUIRES(--show)
+        >>> kwplot.autompl()
         >>> img = kwimage.grab_test_image('carl')
         >>> from PIL import Image
         >>> pil_img = Image.fromarray(img)
