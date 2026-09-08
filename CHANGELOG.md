@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version 0.5.5 - Unreleased
 
+### Changed
+
+* Moved package typing from sidecar ``.pyi`` stubs into inline annotations,
+  preserving lazy imports and correcting stale public signatures.
+
 
 ## Version 0.5.4 - Released 2025-06-30
 

@@ -2,6 +2,11 @@
 This module handles automatically determening a "good" matplotlib backend to
 use before importing pyplot.
 """
+from __future__ import annotations
+
+from types import ModuleType
+from typing import Any, Optional
+
 import sys
 import os
 import ubelt as ub
@@ -65,7 +70,7 @@ def _aggensure():
             set_mpl_backend('agg')
 
 
-def set_mpl_backend(backend, verbose=0):
+def set_mpl_backend(backend: str, verbose: int = 0) -> None:
     """
     Args:
         backend (str): name of backend as string that :func:`matplotlib.use`
@@ -107,7 +112,8 @@ def set_mpl_backend(backend, verbose=0):
 _AUTOMPL_WAS_RUN = False
 
 
-def autompl(verbose=0, recheck=False, force=None):
+def autompl(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> None:
     """
     Uses platform heuristics to automatically set the matplotlib backend.
     If no display is available it will be set to `agg`, otherwise we will try
@@ -121,7 +127,7 @@ def autompl(verbose=0, recheck=False, force=None):
             if False, this function will not run if it has already been called
             (this can save a significant amount of time).
 
-        force (str | int | None):
+        force (str | None):
             If None or "auto", then the backend will only be set if this
             function has not been run before. Otherwise it will be set to the
             chosen backend, which is a string that :func:`matplotlib.use` would
@@ -402,7 +408,8 @@ def _check_for_cv2_qt_incompat():
     print(f'qt_qxb_exist={qt_qxb_exist}')
 
 
-def autoplt(verbose=0, recheck=False, force=None):
+def autoplt(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> ModuleType:
     """
     Like :func:`kwplot.autompl`, but also returns the
     :mod:`matplotlib.pyplot` module for convenience.
@@ -421,7 +428,8 @@ def autoplt(verbose=0, recheck=False, force=None):
     return plt
 
 
-def autosns(verbose=0, recheck=False, force=None):
+def autosns(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> ModuleType:
     """
     Like :func:`kwplot.autompl`, but also calls
     :func:`seaborn.set` and returns the :mod:`seaborn` module for convenience.
@@ -470,7 +478,7 @@ class BackendContext:
         >>> print(mpl.get_backend())
     """
 
-    def __init__(self, backend, strict=False):
+    def __init__(self, backend: str, strict: bool = False) -> None:
         """
         Args:
             backend (str):
@@ -486,7 +494,7 @@ class BackendContext:
         self._prev_backend_was_loaded = 'matplotlib.pyplot' in sys.modules
         self.strict = strict
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         import matplotlib as mpl
         self.prev = mpl.get_backend()
 
@@ -506,7 +514,7 @@ class BackendContext:
 
         set_mpl_backend(self.backend)
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         if self.prev is not None:
             """
             Note: 2021-01-07

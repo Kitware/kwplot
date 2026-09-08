@@ -3,11 +3,31 @@ Helper for drawing convolutional neural network weights.
 
 This may be removed in the future.
 """
+from __future__ import annotations
+
+from typing import Any, Optional, Protocol, Sequence, TYPE_CHECKING, Union
+
 import numpy as np
 import ubelt as ub
 
+if TYPE_CHECKING:
+    import matplotlib.figure
 
-def make_conv_images(conv, color=None, norm_per_feat=True):
+
+class _ConvLike(Protocol):
+    """Structural type for the convolution attributes used by this module."""
+
+    weight: Any
+    in_channels: int
+    out_channels: int
+    kernel_size: Sequence[int]
+
+
+def make_conv_images(
+        conv: Union[np.ndarray, _ConvLike],
+        color: Optional[bool] = None,
+        norm_per_feat: bool = True,
+) -> np.ndarray:
     """
     Convert convolutional weights to a list of visualize-able images
 
@@ -111,9 +131,18 @@ def make_conv_images(conv, color=None, norm_per_feat=True):
     return weights_flat
 
 
-def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
-                                nCols=None, voxels=False, alpha=.2,
-                                labels=False, normaxis=None, _hack_2drows=False):
+def plot_convolutional_features(
+        conv: _ConvLike,
+        limit: int = 144,
+        colorspace: Optional[str] = 'rgb',
+        fnum: Optional[Union[int, str]] = None,
+        nCols: Optional[int] = None,
+        voxels: bool = False,
+        alpha: float = .2,
+        labels: bool = False,
+        normaxis: Any = None,
+        _hack_2drows: bool = False,
+) -> matplotlib.figure.Figure:
     """Plots the convolutional layers to a matplotlib pyplot.
 
     The convolutional filters (kernels) are stored into a grid and saved to disk
@@ -330,7 +359,8 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
             # edgecolors2 = facecolors2
 
             # Shrink the gaps, which let you see occluded voxels
-            x, y, z = np.indices(np.array(filled2.shape) + 1).astype(float) // 2
+            index_shape = tuple(dim + 1 for dim in filled2.shape)
+            x, y, z = np.indices(index_shape).astype(float) // 2
             x[0::2, :, :] += 0.05
             y[:, 0::2, :] += 0.05
             z[:, :, 0::2] += 0.05
@@ -358,6 +388,7 @@ def plot_convolutional_features(conv, limit=144, colorspace='rgb', fnum=None,
             plot_kernel3d(i)
         else:
             img = weights_flat[i]
+            display_colorspace = 'rgb' if colorspace is None else colorspace
             kwplot.imshow(img, fnum=fnum, pnum=pnum_[i],
-                          interpolation='nearest', colorspace=colorspace)
+                          interpolation='nearest', colorspace=display_colorspace)
     return fig

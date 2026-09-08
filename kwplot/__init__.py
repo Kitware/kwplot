@@ -73,6 +73,34 @@ __author__ = 'Kitware Inc., Jon Crall'
 __author_email__ = 'kitware@kitware.com, jon.crall@kitware.com'
 __url__ = 'https://gitlab.kitware.com/computer-vision/kwplot'
 
+
+# Keep runtime imports lazy while exposing the public API to static type
+# checkers from the inline annotations in each implementation module.
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .auto_backends import (
+        BackendContext, autompl, autoplt, autosns, set_mpl_backend,
+    )
+    from .draw_conv import make_conv_images, plot_convolutional_features
+    from .mpl_3d import plot_points3d, plot_surface3d
+    from .mpl_color import Color
+    from .mpl_core import (
+        FigureAxes, all_figures, close_figures, distinct_colors,
+        distinct_markers, ensure_fnum, figure, imshow, legend, next_fnum,
+        phantom_legend, set_figtitle, show_if_requested,
+    )
+    from .mpl_draw import (
+        draw_boxes, draw_boxes_on_image, draw_clf_on_image,
+        draw_line_segments, draw_points, draw_text_on_image, plot_matrix,
+    )
+    from .mpl_make import (
+        make_heatmask, make_legend_img, make_orimask, make_vector_field,
+        render_figure_to_image,
+    )
+    from .mpl_multiplot import multi_plot
+    from .mpl_plotnums import PlotNums
+
 __mkinit__ = """
 mkinit kwplot -w --relative --nomods --lazy
 mkinit kwplot --diff --relative --nomods --lazy

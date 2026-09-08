@@ -2,7 +2,14 @@
 Defines the :class:`kwplot.mpl_plotnums.PlotNums` class to help manage a grid
 of subplot numbers.
 """
+from __future__ import annotations
+
+from typing import Iterator, Optional, Tuple
+
 import numpy as np
+
+
+PNum = Tuple[int, int, int]
 
 
 class PlotNums(object):
@@ -32,19 +39,22 @@ class PlotNums(object):
         (2, 2, 2)
     """
 
-    def __init__(self, nRows=None, nCols=None, nSubplots=None, start=0):
+    def __init__(
+            self, nRows: Optional[int] = None, nCols: Optional[int] = None,
+            nSubplots: Optional[int] = None, start: int = 0,
+    ) -> None:
         nRows, nCols = self._get_num_rc(nSubplots, nRows, nCols)
         self.nRows = nRows
         self.nCols = nCols
         base = 0
         self.offset = 0 if base == 1 else 1
         self.start = start
-        self._iter = None
+        self._iter: Optional[Iterator[PNum]] = None
 
-    def __getitem__(self, px):
+    def __getitem__(self, px: int) -> PNum:
         return (self.nRows, self.nCols, px + self.offset)
 
-    def __call__(self):
+    def __call__(self) -> PNum:
         """
         replacement for make_pnum_nextgen
 
@@ -71,7 +81,7 @@ class PlotNums(object):
             self._iter = iter(self)
         return next(self._iter)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PNum]:
         r"""
         Yields:
             tuple : pnum
@@ -102,12 +112,15 @@ class PlotNums(object):
         for px in range(self.start, len(self)):
             yield self[px]
 
-    def __len__(self):
+    def __len__(self) -> int:
         total_plots = self.nRows * self.nCols
         return total_plots
 
     @classmethod
-    def _get_num_rc(PlotNums, nSubplots=None, nRows=None, nCols=None):
+    def _get_num_rc(
+            PlotNums, nSubplots: Optional[int] = None,
+            nRows: Optional[int] = None, nCols: Optional[int] = None,
+    ) -> Tuple[int, int]:
         r"""
         Gets a constrained row column plot grid
 
@@ -150,7 +163,10 @@ class PlotNums(object):
         return nRows, nCols
 
     @staticmethod
-    def _get_square_row_cols(nSubplots, max_cols=None, fix=False, inclusive=True):
+    def _get_square_row_cols(
+            nSubplots: int, max_cols: Optional[int] = None,
+            fix: bool = False, inclusive: bool = True,
+    ) -> Tuple[int, int]:
         r"""
         Args:
             nSubplots (int):

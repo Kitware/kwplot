@@ -10,9 +10,18 @@ TODO:
         * set_y0_is_top ?
         * set_y0_is_bottom ?
 """
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Sequence, TYPE_CHECKING, Union, cast
+
 import copy
 import numpy as np
 import ubelt as ub
+
+if TYPE_CHECKING:
+    import kwimage
+    import matplotlib.axes
+    import pandas as pd
 
 __all__ = [
     'draw_boxes',
@@ -26,8 +35,16 @@ __all__ = [
 ]
 
 
-def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
-               fill=False, ax=None, lw=2):
+def draw_boxes(
+        boxes: kwimage.Boxes,
+        alpha: Optional[Union[float, Sequence[float]]] = None,
+        color: Any = 'blue',
+        labels: Optional[Sequence[str]] = None,
+        centers: Union[bool, Dict[str, Any]] = False,
+        fill: bool = False,
+        ax: Optional[matplotlib.axes.Axes] = None,
+        lw: float = 2,
+) -> None:
     """
     Draws boxes using matplotlib
 
@@ -64,6 +81,9 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
     """
     import kwplot
     import matplotlib as mpl
+    import matplotlib.collections
+    import matplotlib.font_manager
+    import matplotlib.patches
     from matplotlib import pyplot as plt
     if ax is None:
         ax = plt.gca()
@@ -74,21 +94,26 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
     # More grouped patches == more efficient runtime
     if alpha is None:
-        alpha = [1.0] * len(xywh)
-    elif not ub.iterable(alpha):
-        alpha = [alpha] * len(xywh)
+        alpha_values = [1.0] * len(xywh)
+    elif isinstance(alpha, (int, float, np.number)):
+        alpha_values = [float(alpha)] * len(xywh)
+    else:
+        alpha_values = [float(a) for a in alpha]
 
     edgecolors = [kwplot.Color(color, alpha=a).as01('rgba')
-                  for a in alpha]
+                  for a in alpha_values]
     color_groups = ub.group_items(range(len(edgecolors)), edgecolors)
     for edgecolor, idxs in color_groups.items():
         if fill:
             fc = edgecolor
         else:
             fc = transparent
-        rectkw = dict(ec=edgecolor, fc=fc, lw=lw, linestyle='solid')
-        patches = [mpl.patches.Rectangle((x, y), w, h, **rectkw)
-                   for x, y, w, h in xywh[idxs]]
+        patches = [
+            mpl.patches.Rectangle(
+                (x, y), w, h, ec=edgecolor, fc=fc, lw=lw,
+                linestyle='solid')
+            for x, y, w, h in xywh[idxs]
+        ]
         col = mpl.collections.PatchCollection(patches, match_original=True)
         ax.add_collection(col)
 
@@ -115,22 +140,25 @@ def draw_boxes(boxes, alpha=None, color='blue', labels=None, centers=False,
 
     if labels:
         texts = []
-        default_textkw = {
-            'horizontalalignment': 'left',
-            'verticalalignment': 'top',
-            'backgroundcolor': (0, 0, 0, .8),
-            'color': 'white',
-            'fontproperties': mpl.font_manager.FontProperties(
-                size=6, family='monospace'),
-        }
-        tkw = default_textkw.copy()
+        text_fontproperties = mpl.font_manager.FontProperties(
+            size=6, family='monospace')
         for (x1, y1, w, h), label in zip(xywh, labels):
-            texts.append((x1, y1, label, tkw))
-        for (x1, y1, catname, tkw) in texts:
-            ax.text(x1, y1, catname, **tkw)
+            texts.append((x1, y1, label))
+        for (x1, y1, catname) in texts:
+            ax.text(
+                float(x1), float(y1), catname,
+                horizontalalignment='left',
+                verticalalignment='top',
+                backgroundcolor=(0, 0, 0, .8),
+                color='white',
+                fontproperties=text_fontproperties,
+            )
 
 
-def draw_line_segments(pts1, pts2, ax=None, **kwargs):
+def draw_line_segments(
+        pts1: np.ndarray, pts2: np.ndarray,
+        ax: Optional[matplotlib.axes.Axes] = None, **kwargs: Any,
+) -> None:
     """
     draws `N` line segments between `N` pairs of points
 
@@ -207,10 +235,24 @@ def draw_polyline(xy_pts, ax=None, **kwargs):
     return image
 
 
-def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
-                label=None, zerodiag=False, cmap='viridis', showvals=False,
-                showzero=True, logscale=False, xlabel=None, ylabel=None,
-                fnum=None, pnum=None):
+def plot_matrix(
+        matrix: Union[np.ndarray, pd.DataFrame],
+        index: Any = None,
+        columns: Any = None,
+        rot: int = 90,
+        ax: Optional[matplotlib.axes.Axes] = None,
+        grid: bool = True,
+        label: Optional[str] = None,
+        zerodiag: bool = False,
+        cmap: Any = 'viridis',
+        showvals: bool = False,
+        showzero: bool = True,
+        logscale: bool = False,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+        fnum: Optional[int] = None,
+        pnum: Any = None,
+) -> matplotlib.axes.Axes:
     """
     Helper for plotting confusion matrices
 
@@ -308,6 +350,7 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     import pandas as pd
     import matplotlib as mpl
     import matplotlib.cm  # NOQA
+    import matplotlib.collections
 
     assert len(matrix.shape) == 2
 
@@ -317,8 +360,8 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
             index = matrix.index
             columns = matrix.columns
             if xlabel is None and ylabel is None:
-                ylabel = index.name
-                xlabel = columns.name
+                ylabel = None if index.name is None else str(index.name)
+                xlabel = None if columns.name is None else str(columns.name)
     else:
         values = matrix
 
@@ -350,14 +393,16 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
         cmap_ = mpl.colormaps[cmap]
     except Exception:
         cmap_ = mpl.cm.get_cmap(cmap)
-    cmap = copy.copy(cmap_)
-    cmap.set_bad((0, 0, 0))
+    cmap_obj = copy.copy(cmap_)
+    cmap_obj.set_bad((0, 0, 0))
 
-    if not showzero and not logscale:
-        # hack zero to be black
-        cmap.colors[0] = [0, 0, 0]
+    if not showzero and not logscale and hasattr(cmap_obj, 'colors'):
+        # Hack zero to be black for listed colormaps. ListedColormap
+        # exposes ``colors``, but the base Colormap type does not.
+        cmap_with_colors = cast(Any, cmap_obj)
+        cmap_with_colors.colors[0] = [0, 0, 0]
 
-    aximg = ax.matshow(values, interpolation='none', cmap=cmap, norm=norm)
+    aximg = ax.matshow(values, interpolation='none', cmap=cmap_obj, norm=norm)
 
     ax.grid(False)
     cax = ax.figure.colorbar(aximg, ax=ax)
@@ -381,15 +426,17 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     # Grid lines around the pixels
     if grid:
         offset = -.5
-        xlim = [-.5, len(columns)]
-        ylim = [-.5, len(index)]
+        num_cols = len(columns)
+        num_rows = len(index)
+        xlim = [-.5, float(num_cols)]
+        ylim = [-.5, float(num_rows)]
         segments = []
-        for x in range(ylim[1]):
+        for x in range(num_rows):
             xdata = [x + offset, x + offset]
             ydata = ylim
             segment = list(zip(xdata, ydata))
             segments.append(segment)
-        for y in range(xlim[1]):
+        for y in range(num_cols):
             xdata = xlim
             ydata = [y + offset, y + offset]
             segment = list(zip(xdata, ydata))
@@ -406,9 +453,9 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
             val = values[r, c]
             if val == 0:
                 if showzero:
-                    ax.text(c, r, val, va='center', ha='center', color='white')
+                    ax.text(float(c), float(r), str(val), va='center', ha='center', color='white')
             else:
-                ax.text(c, r, val, va='center', ha='center', color='white')
+                ax.text(float(c), float(r), str(val), va='center', ha='center', color='white')
 
     if xlabel is not None:
         ax.set_xlabel(xlabel)
@@ -418,8 +465,16 @@ def plot_matrix(matrix, index=None, columns=None, rot=90, ax=None, grid=True,
     return ax
 
 
-def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
-                alpha=None, radius=1, **kwargs):
+def draw_points(
+        xy: np.ndarray,
+        color: Any = 'blue',
+        class_idxs: Optional[np.ndarray] = None,
+        classes: Optional[Sequence[Any]] = None,
+        ax: Optional[matplotlib.axes.Axes] = None,
+        alpha: Optional[Union[float, Sequence[float]]] = None,
+        radius: float = 1,
+        **kwargs: Any,
+) -> List[Any]:
     """
 
     Args:
@@ -439,6 +494,8 @@ def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
     """
     import kwimage
     import matplotlib as mpl
+    import matplotlib.collections
+    import matplotlib.patches
     from matplotlib import pyplot as plt
     if ax is None:
         ax = plt.gca()
@@ -447,12 +504,14 @@ def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
 
     # More grouped patches == more efficient runtime
     if alpha is None:
-        alpha = [1.0] * len(xy)
-    elif not ub.iterable(alpha):
-        alpha = [alpha] * len(xy)
+        alpha_values = [1.0] * len(xy)
+    elif isinstance(alpha, (int, float, np.number)):
+        alpha_values = [float(alpha)] * len(xy)
+    else:
+        alpha_values = [float(a) for a in alpha]
 
     if color == 'distinct':
-        colors = kwimage.Color.distinct(len(alpha))
+        colors = kwimage.Color.distinct(len(alpha_values))
     elif color == 'classes':
         # TODO: read colors from categories if they exist
         if class_idxs is None or classes is None:
@@ -465,20 +524,20 @@ def draw_points(xy, color='blue', class_idxs=None, classes=None, ax=None,
         _keys, _vals = kwarray.group_indices(class_idxs)
         colors = list(ub.take(cls_colors, class_idxs))
     else:
-        colors = [color] * len(alpha)
+        colors = [color] * len(alpha_values)
 
     ptcolors = [kwimage.Color(c, alpha=a).as01('rgba')
-                for c, a in zip(colors, alpha)]
+                for c, a in zip(colors, alpha_values)]
     color_groups = ub.group_items(range(len(ptcolors)), ptcolors)
 
-    circlekw = {
+    circlekw: Dict[str, Any] = {
         'radius': radius,
         'fill': True,
         'ec': None,
     }
     if 'fc' in kwargs:
         import warnings
-        warnings.warning(
+        warnings.warn(
             'Warning: specifying fc to Points.draw overrides '
             'the color argument. Use color instead')
     circlekw.update(kwargs)

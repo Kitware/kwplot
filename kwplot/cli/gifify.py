@@ -9,6 +9,11 @@ TODO:
     - [ ] Use kwplot.video_writer
 """
 
+from __future__ import annotations
+
+import os
+from typing import Any, Optional, Sequence, Union
+
 import ubelt as ub
 from os.path import isdir, join
 import scriptconfig as scfg
@@ -40,7 +45,7 @@ class Gifify(scfg.DataConfig):
         '''))
 
     @classmethod
-    def main(cls, cmdline=True, **kwargs):
+    def main(cls, cmdline: bool = True, **kwargs: Any) -> None:
         import glob
         config = cls.cli(cmdline=cmdline, data=kwargs)
         print('config = {}'.format(ub.urepr(dict(config), nl=1)))
@@ -106,7 +111,13 @@ class Gifify(scfg.DataConfig):
                                   max_width=config['max_width'])
 
 
-def ffmpeg_animate_frames(frame_fpaths, output_fpath, in_framerate=1, verbose=3, max_width=None):
+def ffmpeg_animate_frames(
+        frame_fpaths: Sequence[Union[str, os.PathLike]],
+        output_fpath: Union[str, os.PathLike],
+        in_framerate: float = 1,
+        verbose: int = 3,
+        max_width: Optional[int] = None,
+) -> None:
     """
     Use ffmpeg to transform a series of frames into a video.
 

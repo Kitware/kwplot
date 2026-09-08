@@ -3,8 +3,15 @@ DEPRECATED: use kwimage versions instead
 
 Functions used to explicitly make images as ndarrays using mpl/cv2 utilities
 """
+from __future__ import annotations
+
+from typing import Any, Dict, List, Mapping, Optional, TYPE_CHECKING, Tuple, Union
+
 import numpy as np
 from kwimage import make_heatmask, make_vector_field, make_orimask  # NOQA
+
+if TYPE_CHECKING:
+    import matplotlib.figure
 
 __all__ = [
     'make_heatmask', 'make_vector_field', 'make_orimask', 'make_legend_img',
@@ -12,8 +19,13 @@ __all__ = [
 ]
 
 
-def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
-                    transparent=False):
+def make_legend_img(
+        label_to_color: Union[Mapping[str, Any], List[Dict[str, Any]]],
+        dpi: int = 96,
+        shape: Tuple[int, int] = (200, 200),
+        mode: str = 'line',
+        transparent: bool = False,
+) -> np.ndarray:
     """
     Makes an image of a categorical legend
 
@@ -88,7 +100,10 @@ def make_legend_img(label_to_color, dpi=96, shape=(200, 200), mode='line',
     return legend_img
 
 
-def crop_border_by_color(img, fillval=None, thresh=0, channel=None):
+def crop_border_by_color(
+        img: np.ndarray, fillval: Any = None, thresh: float = 0,
+        channel: Optional[int] = None,
+) -> np.ndarray:
     r"""
     Crops image to remove any constant color padding.
 
@@ -173,7 +188,9 @@ def _get_crop_slices(isfill):
     return rowslice, colslice
 
 
-def get_pixel_dist(img, pixel, channel=None):
+def get_pixel_dist(
+        img: np.ndarray, pixel: Any, channel: Optional[int] = None,
+) -> np.ndarray:
     """
     Note: this will be moved to kwimage.
 
@@ -197,7 +214,12 @@ def get_pixel_dist(img, pixel, channel=None):
     return dist
 
 
-def render_figure_to_image(fig, dpi=None, transparent=None, **savekw):
+def render_figure_to_image(
+        fig: matplotlib.figure.Figure,
+        dpi: Optional[Union[int, str]] = None,
+        transparent: Optional[bool] = None,
+        **savekw: Any,
+) -> np.ndarray:
     """
     Saves a figure as an image in memory.
 

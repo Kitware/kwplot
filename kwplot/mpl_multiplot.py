@@ -1,16 +1,28 @@
 """
 DEPRECATED: Use seaborn instead
 """
+from __future__ import annotations
+
+from typing import Any, Mapping, Optional, TYPE_CHECKING, Tuple
+
 import numpy as np
 import ubelt as ub
 import warnings
 from itertools import zip_longest
 from . import mpl_core
 
+if TYPE_CHECKING:
+    import matplotlib.axes
+
 __all__ = ['multi_plot']
 
 
-def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
+def multi_plot(
+        xdata: Any = None,
+        ydata: Any = None,
+        xydata: Optional[Mapping[str, Tuple[Any, Any]]] = None,
+        **kwargs: Any,
+) -> matplotlib.axes.Axes:
     r"""
     plots multiple lines, bars, etc...
 
@@ -192,6 +204,8 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         >>> kwplot.show_if_requested()
     """
     import matplotlib as mpl
+    import matplotlib.font_manager
+    import matplotlib.ticker
     from matplotlib import pyplot as plt
 
     # Initial integration with mpl rcParams standards
@@ -213,7 +227,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     if xydata is not None:
         if xdata is not None or ydata is not None:
             raise ValueError('Cannot specify xydata with xdata or ydata')
-        if isinstance(xydata, dict):
+        if isinstance(xydata, Mapping):
             xdata = ub.odict((k, np.array(xy[0])) for k, xy in xydata.items())
             ydata = ub.odict((k, np.array(xy[1])) for k, xy in xydata.items())
         else:
@@ -237,13 +251,21 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
         default_label_list = kwargs.pop('label', ykeys)
         kwargs['label_list'] = kwargs.get('label_list', default_label_list)
     else:
-        # ydata should be a List[ndarray] or an ndarray
+        # ydata should be a list of arrays or a single array/list.  Keep the
+        # public input permissive, then normalize to a concrete list here.
         ydata_list = ydata
         ykeys = None
 
     # allow ydata_list to be passed without a container
     if is_list_of_scalars(ydata_list):
         ydata_list = [np.array(ydata_list)]
+    elif ydata_list is None:
+        ydata_list = []
+    else:
+        ydata_list = list(ydata_list)
+
+    if not ydata_list:
+        raise ValueError('ydata must contain at least one series')
 
     if xdata is None:
         xdata = list(range(max(map(len, ydata_list))))
@@ -252,6 +274,8 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     # Transform xdata into xdata_list
     if isinstance(xdata, dict):
+        if ykeys is None:
+            raise ValueError('dict xdata requires dict ydata')
         xdata_list = [np.array(xdata[k], copy=True) for k in ykeys]
     elif is_list_of_lists(xdata):
         xdata_list = [np.array(xd, copy=True) for xd in xdata]
@@ -337,7 +361,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     if isinstance(kwargs['color'], str):
         if kwargs['color'] == 'distinct':
-            kwargs['color'] = mpl_core.distinct_colors(num_lines, randomize=0)
+            kwargs['color'] = mpl_core.distinct_colors(num_lines, randomize=False)
         else:
             cm = plt.get_cmap(kwargs['color'])
             kwargs['color'] = [cm(i / num_lines) for i in range(num_lines)]
@@ -531,13 +555,10 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     if weight is None:
         weight = 'normal'
 
-    labelkw = {
-        'fontproperties': mpl.font_manager.FontProperties(
-            weight=weight,
-            family=family, size=labelsize)
-    }
-    ax.set_xlabel(xlabel, **labelkw)
-    ax.set_ylabel(ylabel, **labelkw)
+    label_fontproperties = mpl.font_manager.FontProperties(
+        weight=weight, family=family, size=labelsize)
+    ax.set_xlabel(xlabel, fontproperties=label_fontproperties)
+    ax.set_ylabel(ylabel, fontproperties=label_fontproperties)
 
     tick_fontprop = mpl.font_manager.FontProperties(family=family,
                                                     weight=weight)
@@ -606,14 +627,16 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     num_yticks = kwargs.get('num_yticks', None)
 
     if num_xticks is not None:
-        if xdata.dtype.kind == 'i':
+        xdata_for_ticks = np.asarray(xdata_list[0]) if xdata_list else np.array([])
+        if xdata_for_ticks.dtype.kind == 'i':
             xticks = np.linspace(np.ceil(xmin), np.floor(xmax),
                                  num_xticks).astype(np.int32)
         else:
             xticks = np.linspace((xmin), (xmax), num_xticks)
         ax.set_xticks(xticks)
     if num_yticks is not None:
-        if ydata.dtype.kind == 'i':
+        ydata_for_ticks = np.asarray(ydata_list[0]) if ydata_list else np.array([])
+        if ydata_for_ticks.dtype.kind == 'i':
             yticks = np.linspace(np.ceil(ymin), np.floor(ymax),
                                  num_yticks).astype(np.int32)
         else:
@@ -629,17 +652,19 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     if yticklabels is not None:
         # Hack ONLY WORKS WHEN TRANSPOSE = True
         # Overrides num_yticks
-        missing_labels = max(len(ydata) - len(yticklabels), 0)
-        yticklabels_ = yticklabels + [''] * missing_labels
-        ax.set_yticks(ydata)
+        ytick_data = np.asarray(ydata_list[0]) if ydata_list else np.array([])
+        missing_labels = max(len(ytick_data) - len(yticklabels), 0)
+        yticklabels_ = list(yticklabels) + [''] * missing_labels
+        ax.set_yticks(ytick_data)
         ax.set_yticklabels(yticklabels_)
 
     xticklabels = kwargs.get('xticklabels', None)
     if xticklabels is not None:
         # Overrides num_xticks
-        missing_labels = max(len(xdata) - len(xticklabels), 0)
-        xticklabels_ = xticklabels + [''] * missing_labels
-        ax.set_xticks(xdata)
+        xtick_data = np.asarray(xdata_list[0]) if xdata_list else np.array([])
+        missing_labels = max(len(xtick_data) - len(xticklabels), 0)
+        xticklabels_ = list(xticklabels) + [''] * missing_labels
+        ax.set_xticks(xtick_data)
         ax.set_xticklabels(xticklabels_)
 
     xticks = kwargs.get('xticks', None)
@@ -698,26 +723,22 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
 
     # Setup title
     if title is not None:
-        titlekw = {
-            'fontproperties': mpl.font_manager.FontProperties(
-                family=family,
-                weight=weight,
-                size=titlesize)
-        }
-        ax.set_title(title, **titlekw)
+        title_fontproperties = mpl.font_manager.FontProperties(
+            family=family, weight=weight, size=titlesize)
+        ax.set_title(title, fontproperties=title_fontproperties)
 
     use_legend   = kwargs.get('use_legend', 'label' in valid_keys)
     legend_loc   = kwargs.get('legend_loc', mplrc['legend.loc'])
     legend_alpha = kwargs.get('legend_alpha', mplrc['legend.framealpha'])
     if use_legend:
-        legendkw = {
-            'alpha': legend_alpha,
-            'fontproperties': mpl.font_manager.FontProperties(
-                family=family,
-                weight=weight,
-                size=legendsize)
-        }
-        mpl_core.legend(loc=legend_loc, ax=ax, **legendkw)
+        legend_fontproperties = mpl.font_manager.FontProperties(
+            family=family, weight=weight, size=legendsize)
+        mpl_core.legend(
+            loc=legend_loc,
+            ax=ax,
+            alpha=legend_alpha,
+            fontproperties=legend_fontproperties,
+        )
 
     figtitle = kwargs.get('figtitle', None)
 
@@ -730,7 +751,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     return ax
 
 
-def is_listlike(data):
+def is_listlike(data: Any) -> bool:
     try:
         import pandas as pd
         flag = isinstance(data, (list, np.ndarray, tuple, pd.Series))
@@ -740,14 +761,14 @@ def is_listlike(data):
     return flag
 
 
-def is_list_of_scalars(data):
+def is_list_of_scalars(data: Any) -> bool:
     if is_listlike(data):
         if len(data) > 0 and not is_listlike(data[0]):
             return True
     return False
 
 
-def is_list_of_lists(data):
+def is_list_of_lists(data: Any) -> bool:
     if is_listlike(data):
         if len(data) > 0 and is_listlike(data[0]):
             return True
