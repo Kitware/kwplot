@@ -389,10 +389,7 @@ def plot_matrix(
     else:
         norm = None
 
-    try:
-        cmap_ = mpl.colormaps[cmap]
-    except Exception:
-        cmap_ = mpl.cm.get_cmap(cmap)
+    cmap_ = mpl.colormaps.get_cmap(cmap)
     cmap_obj = copy.copy(cmap_)
     cmap_obj.set_bad((0, 0, 0))
 

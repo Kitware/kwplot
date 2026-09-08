@@ -569,7 +569,7 @@ lint:
   - python -m uv pip install -r requirements/linting.txt
   - ./run_linter.sh
   - python -m pip install ty
-  - pip install -r requirements/runtime.txt
+  - pip install -r requirements/runtime.txt -r requirements/types.txt -r requirements/optional.txt -r requirements/headless.txt
   - ty check ./kwplot
   allow_failure: true
 gpgsign/wheels:

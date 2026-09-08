@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+* Fixed type-check CI dependency installation for optional imports.
 * Fixed issues exposed by implementation type checking in figure helpers, Qt
   config models, palette copying, ellipse marker broadcasting, and video input
   dimension handling.

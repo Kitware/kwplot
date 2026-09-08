@@ -155,6 +155,11 @@ dev_status = "planning"
 remote_host = "gitlab.kitware.com"
 remote_group = "computer-vision"
 typed = true
+typecheck_install_extras = [
+  "types",
+  "optional",
+  "headless",
+]
 render_doc_images = 1
 use_setup_py = false
 use_pyproject_requirements = false
