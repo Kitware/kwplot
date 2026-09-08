@@ -49,7 +49,7 @@ class ImshowCLI(DataConfig):
 
         if config.stats:
             stats = kwarray.stats_dict(imdata, nan=True)
-            print('stats = {}'.format(ub.repr2(stats, nl=1)))
+            print('stats = {}'.format(ub.urepr(stats, nl=1)))
 
         if kwimage.num_channels(imdata) == 2:
             import numpy as np

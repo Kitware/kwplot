@@ -640,7 +640,7 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
         >>> plt = kwplot.autoplt()
         >>> style = 'astrisk'
         >>> marker_list = kwplot.distinct_markers(10, style)
-        >>> print('marker_list = {}'.format(ub.repr2(marker_list, nl=1)))
+        >>> print('marker_list = {}'.format(ub.urepr(marker_list, nl=1)))
         >>> x_data = np.arange(0, 3)
         >>> for count, (marker) in enumerate(marker_list):
         >>>     plt.plot(x_data, [count] * len(x_data), marker=marker, markersize=10, linestyle='', label=str(marker))

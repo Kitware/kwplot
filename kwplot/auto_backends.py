@@ -204,7 +204,7 @@ def _determine_best_backend(verbose):
             # NOTE: this call takes a significant amount of time
             info = ub.cmd('xdpyinfo', shell=True)
             if verbose > 3:
-                print('xdpyinfo-info = {}'.format(ub.repr2(info)))
+                print('xdpyinfo-info = {}'.format(ub.urepr(info)))
             if info['ret'] != 0:
                 DISPLAY = None
 

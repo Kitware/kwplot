@@ -339,9 +339,9 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
     def __nice__(self):
         if self.children:
             if self.value is None:
-                return f'{ub.repr2(self.children, nl=1)}'
+                return f'{ub.urepr(self.children, nl=1)}'
             else:
-                return f'{self.value}, {ub.repr2(self.children, nl=1)}'
+                return f'{self.value}, {ub.urepr(self.children, nl=1)}'
         else:
             return f'{self.value}'
 
