@@ -800,7 +800,9 @@ def distinct_colors(
         #.hashstr27(cmap_seed)
         #cmap_seed = 0
         #pass
-        jitter = (rng.randn(N) / (rng.randn(100).max() / 2)).clip(-1, 1) * ((1 / (N ** 2)))
+        jitter_values = rng.randn(N)
+        jitter_normalizer = float(max(rng.randn(100))) / 2
+        jitter = (jitter_values / jitter_normalizer).clip(-1, 1) * ((1 / (N ** 2)))
         range_ = np.linspace(0, 1, N, endpoint=False)
         #print('range_ = %r' % (range_,))
         range_ = range_ + jitter
