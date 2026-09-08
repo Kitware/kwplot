@@ -19,10 +19,10 @@ from typing import (
 )
 
 import ubelt as ub
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5 import QtWidgets  # type: ignore
+from PyQt5 import QtCore  # type: ignore
+from PyQt5 import QtGui  # type: ignore
+from PyQt5.QtCore import Qt  # type: ignore
 from matplotlib.backend_bases import MouseEvent, KeyEvent, PickEvent
 import matplotlib.backends.backend_qt5agg as backend_qt
 from scriptconfig import smartcast as smartcast_mod
