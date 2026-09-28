@@ -509,7 +509,7 @@ def multi_plot(xdata=None, ydata=None, xydata=None, **kwargs):
     xlabel     = kwargs.get('xlabel', '')
     ylabel     = kwargs.get('ylabel', '')
     def none_or_unicode(text):
-        return None if text is None else ub.ensure_unicode(text)
+        return text.decode('utf8') if isinstance(text, bytes) else text
 
     xlabel = none_or_unicode(xlabel)
     ylabel = none_or_unicode(ylabel)
