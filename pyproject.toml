@@ -167,3 +167,4 @@ use_pyproject_requirements = false
 enable_gpg = true
 workspace_members = []
 workspace_sync_versions = false
+ci_pypi_trusted_publishing = ["gitlab"]
