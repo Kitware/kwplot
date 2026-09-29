@@ -159,6 +159,7 @@ typecheck_install_extras = [
   "types",
   "optional",
   "headless",
+  "qt",
 ]
 render_doc_images = 1
 use_setup_py = false
