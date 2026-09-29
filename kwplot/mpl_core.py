@@ -636,8 +636,10 @@ def set_figtitle(
         figtitle = ''
     if fig is None:
         fig = plt.gcf()
-    figtitle = ub.ensure_unicode(figtitle)
-    subtitle = ub.ensure_unicode(subtitle)
+    if isinstance(figtitle, bytes):
+        figtitle = figtitle.decode('utf8')
+    if isinstance(subtitle, bytes):
+        subtitle = subtitle.decode('utf8')
     if incanvas:
         if subtitle != '':
             subtitle = '\n' + subtitle
