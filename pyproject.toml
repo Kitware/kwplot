@@ -167,4 +167,6 @@ use_pyproject_requirements = false
 enable_gpg = true
 workspace_members = []
 workspace_sync_versions = false
-ci_pypi_trusted_publishing = ["gitlab"]
+# Can enable this if gitlab.kitware.com becomes a trusted instance
+ci_pypi_trusted_publishing = false # ["gitlab"]
+ci_gpg_secret_transport = "direct_ci"
