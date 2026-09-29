@@ -798,7 +798,7 @@ def distinct_colors(
         choice_idx = int(rng.randint(0, len(choices)))
         cmap_str = str(choices[choice_idx])
         #print('cmap_str = %r' % (cmap_str,))
-        cmap = plt.cm.get_cmap(cmap_str)
+        cmap = mpl.colormaps.get_cmap(cmap_str)
         #.hashstr27(cmap_seed)
         #cmap_seed = 0
         #pass
@@ -941,7 +941,7 @@ def phantom_legend(
             raise KeyError
         handles.append(phantom_actor)
 
-    legend_artist = ax.legend(handles=handles, loc=loc)
+    legend_artist = ax.legend(handles=handles, loc=cast(Any, loc))
     phantom['artist'] = legend_artist
 
     # Re-add other legends

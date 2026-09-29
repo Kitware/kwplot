@@ -559,7 +559,7 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
                         state = (_QValidator.Intermediate, text, pos)
         return state
 
-    def value(self) -> Optional[float]:  # type: ignore
+    def value(self) -> Optional[float]:
         internal_value = super().value()
         if self.nullable and internal_value == self.NONE_VALUE:
             return None
