@@ -297,8 +297,8 @@ def _determine_best_backend(verbose):
                         backend_infos['pyqt6']['usable'] = False
         elif backend_infos['pyqt5']['modpath']:
             try:
-                import PyQt5  # NOQA  # type: ignore
-                from PyQt5 import QtCore  # NOQA  # type: ignore
+                import PyQt5  # NOQA
+                from PyQt5 import QtCore  # NOQA
             except ImportError as ex:
                 if verbose:
                     print('[kwplot.autompl] No PyQt5, agg is probably best')
@@ -385,7 +385,7 @@ def _check_for_linux_opencv_qt_conflicts(QtCore):
 def _check_for_cv2_qt_incompat():
     import cv2
     import ubelt as ub
-    from PyQt5 import QtCore  # NOQA  # type: ignore
+    from PyQt5 import QtCore  # NOQA
 
     cv2_mod_file = getattr(cv2, '__file__', None)
     qt_mod_file = getattr(QtCore, '__file__', None)

@@ -19,10 +19,10 @@ from typing import (
 )
 
 import ubelt as ub
-from PyQt5 import QtWidgets  # type: ignore
-from PyQt5 import QtCore  # type: ignore
-from PyQt5 import QtGui  # type: ignore
-from PyQt5.QtCore import Qt  # type: ignore
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 from matplotlib.backend_bases import MouseEvent, KeyEvent, PickEvent
 import matplotlib.backends.backend_qt5agg as backend_qt
 from scriptconfig import smartcast as smartcast_mod
@@ -559,7 +559,7 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
                         state = (_QValidator.Intermediate, text, pos)
         return state
 
-    def value(self) -> Optional[float]:
+    def value(self) -> Optional[float]:  # ty: ignore[invalid-method-override]
         internal_value = super().value()
         if self.nullable and internal_value == self.NONE_VALUE:
             return None
