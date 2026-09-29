@@ -9,10 +9,17 @@ Extensions of pyplot functionality. Main differences / modifications are
 
 
 """
+from __future__ import annotations
+
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union, cast
+
 import numpy as np
 import ubelt as ub
 import matplotlib as mpl
-import matplotlib.figure  # NOQA
+import matplotlib.axes
+import matplotlib.figure
+import matplotlib.ticker
+from matplotlib import _pylab_helpers
 
 
 try:
@@ -24,7 +31,7 @@ try:
         figure and axes. This lets new code avoid magic numbers when accessing
         one or the other.
         """
-        fig : mpl.figure.Figure
+        fig : Union[mpl.figure.Figure, mpl.figure.SubFigure]
         ax : mpl.axes.Axes
 
 except ImportError:
@@ -32,10 +39,13 @@ except ImportError:
     from collections import namedtuple
     FigureAxes = namedtuple('FigureAxes', ['fig', 'ax'])
 
+_FigureNum = Union[int, str]
+_PlotNum = Union[int, str, Tuple[Any, ...]]
+
 _BASE_FNUM = 9001
 
 
-def next_fnum(new_base=None):
+def next_fnum(new_base: Optional[int] = None) -> int:
     global _BASE_FNUM
     if new_base is not None:
         _BASE_FNUM = new_base
@@ -43,7 +53,7 @@ def next_fnum(new_base=None):
     return _BASE_FNUM
 
 
-def ensure_fnum(fnum):
+def ensure_fnum(fnum: Optional[_FigureNum]) -> _FigureNum:
     if fnum is None:
         return next_fnum()
     return fnum
@@ -51,8 +61,16 @@ def ensure_fnum(fnum):
 
 # import xdev  # NOQA
 # @xdev.profile  # NOQA
-def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
-           docla=False, projection=None, **kwargs):
+def figure(
+        fnum: Optional[_FigureNum] = None,
+        pnum: Optional[_PlotNum] = (1, 1, 1),
+        title: Optional[str] = None,
+        figtitle: Optional[str] = None,
+        doclf: bool = False,
+        docla: bool = False,
+        projection: Optional[str] = None,
+        **kwargs: Any,
+) -> mpl.figure.Figure:
     """
     Creates or activates a matplotlib figure and subplot.
 
@@ -149,18 +167,16 @@ def _convert_pnum_int_to_tup(int_pnum):
     return pnum
 
 
-def _pnum_to_subspec(pnum):
+def _pnum_to_subspec(pnum: Union[str, Tuple[Any, ...]]) -> Tuple[Any, ...]:
     import matplotlib.gridspec as gridspec
     if isinstance(pnum, str):
-        pnum = list(pnum)
+        pnum = tuple(map(int, pnum))
     nrow, ncols, plotnum = pnum
-    # if kwargs.get('use_gridspec', True):
-    # Convert old pnums to gridspec
-    gs = gridspec.GridSpec(nrow, ncols)
+    gs = gridspec.GridSpec(int(nrow), int(ncols))
     if isinstance(plotnum, (tuple, slice, list)):
         subspec = gs[plotnum]
     else:
-        subspec = gs[plotnum - 1]
+        subspec = gs[int(plotnum) - 1]
     return (subspec,)
 
 
@@ -168,6 +184,8 @@ def _setup_subfigure(fig, pnum, docla, projection):
     import matplotlib.pyplot as plt
     if isinstance(pnum, int):
         pnum = _convert_pnum_int_to_tup(pnum)
+    elif isinstance(pnum, str):
+        pnum = tuple(map(int, pnum))
     axes_list = fig.get_axes()
     if docla or len(axes_list) == 0:
         if pnum is not None:
@@ -201,8 +219,15 @@ _LEGEND_LOCATION = {
 }
 
 
-def legend(loc='best', fontproperties=None, size=None, fc='w', alpha=1,
-           ax=None, handles=None):
+def legend(
+        loc: str = 'best',
+        fontproperties: Any = None,
+        size: Any = None,
+        fc: Any = 'w',
+        alpha: float = 1,
+        ax: Optional[mpl.axes.Axes] = None,
+        handles: Optional[Sequence[Any]] = None,
+) -> None:
     r"""
     Args:
         loc (str): (default = 'best') one of 'best',
@@ -241,18 +266,18 @@ def legend(loc='best', fontproperties=None, size=None, fc='w', alpha=1,
         # prop['family'] = 'sans-serif'
     else:
         prop = fontproperties
-    legendkw = dict(loc=loc)
+    legendkw: Dict[str, Any] = dict(loc=loc)
     if prop:
         legendkw['prop'] = prop
     if handles is not None:
         legendkw['handles'] = handles
     legend = ax.legend(**legendkw)
     if legend:
-        legend.get_frame().set_fc(fc)
+        legend.get_frame().set_facecolor(fc)
         legend.get_frame().set_alpha(alpha)
 
 
-def show_if_requested(N=1):
+def show_if_requested(N: int = 1) -> None:
     """
     Used at the end of tests. Handles command line arguments for saving figures
 
@@ -282,20 +307,30 @@ def show_if_requested(N=1):
         plt.show()
 
 
-def imshow(img,
-           fnum=None, pnum=None,
-           xlabel=None, title=None, figtitle=None, ax=None,
-           norm=None, cmap=None, data_colorbar=False,
-           colorspace='rgb',
-           interpolation='nearest', alpha=None,
-           origin_convention="center",
-           show_ticks=False, **kwargs):
+def imshow(
+        img: Any,
+        fnum: Optional[_FigureNum] = None,
+        pnum: Optional[_PlotNum] = None,
+        xlabel: Optional[str] = None,
+        title: Optional[str] = None,
+        figtitle: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
+        norm: Optional[Union[bool, str, mpl.colors.Normalize]] = None,
+        cmap: Optional[Union[str, mpl.colors.Colormap]] = None,
+        data_colorbar: bool = False,
+        colorspace: str = 'rgb',
+        interpolation: str = 'nearest',
+        alpha: Optional[float] = None,
+        origin_convention: str = "center",
+        show_ticks: bool = False,
+        **kwargs: Any,
+) -> FigureAxes:
     r"""
     A wrapper around pyplot.imshow with extra options and slightly modified
     defaults.
 
     Args:
-        img (ndarray): image data. Height, Width, and Channel dimensions
+        img (ndarray | PIL.Image): image data. Height, Width, and Channel dimensions
             can either be in standard (H, W, C) format or in (C, H, W) format.
             If C in [3, 4], we assume data is in the rgb / rgba colorspace by
             default.
@@ -382,6 +417,18 @@ def imshow(img,
         >>> ax2.plot([0, 1], [0, 1], '-o')
         >>> # xdoctest: +REQUIRES(--show)
         >>> kwplot.show_if_requested()
+
+    Example:
+        >>> # Test case to show pil image
+        >>> import kwplot
+        >>> import kwimage
+        >>> kwplot.autompl()
+        >>> img = kwimage.grab_test_image('carl')
+        >>> from PIL import Image
+        >>> pil_img = Image.fromarray(img)
+        >>> kwplot.imshow(pil_img)
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> kwplot.show_if_requested()
     """
     #import matplotlib as mpl
     import matplotlib.pyplot as plt
@@ -400,6 +447,10 @@ def imshow(img,
         import kwimage
         img = kwimage.imread(img_fpath)
 
+    if not hasattr(img, '__len__') and hasattr(img, 'convert'):
+        # could be a PIL image
+        img = np.asarray(img)
+
     valid_interpolation_choices = ['nearest', 'bicubic', 'bilinear']
 
     if interpolation not in valid_interpolation_choices:
@@ -407,7 +458,7 @@ def imshow(img,
             'Invalid interpolation choice {}. Can be {}'.format(
                 interpolation, valid_interpolation_choices))
 
-    plt_imshow_kwargs = {
+    plt_imshow_kwargs: Dict[str, Any] = {
         'interpolation': interpolation,
     }
     if alpha is not None:
@@ -544,9 +595,16 @@ def imshow(img,
     return FigureAxes(fig, ax)
 
 
-def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
-                 size=None, fontfamily=None, fontweight=None,
-                 fig=None):
+def set_figtitle(
+        figtitle: Optional[str],
+        subtitle: str = '',
+        forcefignum: bool = True,
+        incanvas: bool = True,
+        size: Any = None,
+        fontfamily: Any = None,
+        fontweight: Any = None,
+        fig: Optional[mpl.figure.Figure] = None,
+) -> None:
     r"""
     A wrapper around subtitle that also sets the canvas window title if using a
     Qt backend.
@@ -578,8 +636,10 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         figtitle = ''
     if fig is None:
         fig = plt.gcf()
-    figtitle = ub.ensure_unicode(figtitle)
-    subtitle = ub.ensure_unicode(subtitle)
+    if isinstance(figtitle, bytes):
+        figtitle = figtitle.decode('utf8')
+    if isinstance(subtitle, bytes):
+        subtitle = subtitle.decode('utf8')
     if incanvas:
         if subtitle != '':
             subtitle = '\n' + subtitle
@@ -606,7 +666,10 @@ def set_figtitle(figtitle, subtitle='', forcefignum=True, incanvas=True,
         fig.canvas.manager.set_window_title(window_figtitle)
 
 
-def distinct_markers(num, style='astrisk', total=None, offset=0):
+def distinct_markers(
+        num: int, style: str = 'astrisk', total: Optional[int] = None,
+        offset: float = 0,
+) -> List[Tuple[int, int, float]]:
     """
     Creates distinct marker codes (as best as possible)
 
@@ -624,7 +687,7 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
         >>> plt = kwplot.autoplt()
         >>> style = 'astrisk'
         >>> marker_list = kwplot.distinct_markers(10, style)
-        >>> print('marker_list = {}'.format(ub.repr2(marker_list, nl=1)))
+        >>> print('marker_list = {}'.format(ub.urepr(marker_list, nl=1)))
         >>> x_data = np.arange(0, 3)
         >>> for count, (marker) in enumerate(marker_list):
         >>>     plt.plot(x_data, [count] * len(x_data), marker=marker, markersize=10, linestyle='', label=str(marker))
@@ -646,7 +709,10 @@ def distinct_markers(num, style='astrisk', total=None, offset=0):
     return marker_list
 
 
-def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cmap_seed=None):
+def distinct_colors(
+        N: int, brightness: float = .878, randomize: bool = True,
+        hue_range: Tuple[float, float] = (0.0, 1.0), cmap_seed: Any = None,
+) -> List[Tuple[float, ...]]:
     r"""
     DEPRECATED in favor of :func:`kwimage.Color.distinct`
 
@@ -722,20 +788,23 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         ]
         cmap_hack = ub.argval('--cmap-hack', default=None)
         ncolor_hack = ub.argval('--ncolor-hack', default=None)
-        if cmap_hack is not None:
+        if isinstance(cmap_hack, str):
             choices = [cmap_hack]
-        if ncolor_hack is not None:
+        if isinstance(ncolor_hack, str):
             N = int(ncolor_hack)
             N_ = N
         seed = sum(list(map(ord, ub.hash_data(cmap_seed))))
         rng = np.random.RandomState(seed + 48930)
-        cmap_str = rng.choice(choices, 1)[0]
+        choice_idx = int(rng.randint(0, len(choices)))
+        cmap_str = str(choices[choice_idx])
         #print('cmap_str = %r' % (cmap_str,))
-        cmap = plt.cm.get_cmap(cmap_str)
+        cmap = mpl.colormaps.get_cmap(cmap_str)
         #.hashstr27(cmap_seed)
         #cmap_seed = 0
         #pass
-        jitter = (rng.randn(N) / (rng.randn(100).max() / 2)).clip(-1, 1) * ((1 / (N ** 2)))
+        jitter_values = rng.randn(N)
+        jitter_normalizer = float(max(rng.randn(100))) / 2
+        jitter = (jitter_values / jitter_normalizer).clip(-1, 1) * ((1 / (N ** 2)))
         range_ = np.linspace(0, 1, N, endpoint=False)
         #print('range_ = %r' % (range_,))
         range_ = range_ + jitter
@@ -773,10 +842,18 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         import kwarray
         rng = kwarray.ensure_rng(rng=0)
         rng.shuffle(RGB_tuples)
-    return RGB_tuples
+    typed_rgb_tuples = cast(List[Tuple[float, ...]], RGB_tuples)
+    return typed_rgb_tuples
 
 
-def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=None, legend_id=None, loc=0):
+def phantom_legend(
+        label_to_color: Optional[Union[Mapping[str, Any], Sequence[Mapping[str, Any]]]] = None,
+        label_to_attrs: Optional[Mapping[str, Dict[str, Any]]] = None,
+        mode: str = 'line',
+        ax: Optional[mpl.axes.Axes] = None,
+        legend_id: Any = None,
+        loc: Union[int, str] = 0,
+) -> None:
     """
     Creates a legend on an axis based on a label-to-color map.
 
@@ -803,29 +880,35 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
 
     _phantom_legends = getattr(ax, '_phantom_legends', None)
     if _phantom_legends is None:
-        _phantom_legends = ax._phantom_legends = ub.ddict(dict)
+        _phantom_legends = ub.ddict(dict)
+        setattr(ax, '_phantom_legends', _phantom_legends)
 
     phantom = _phantom_legends[legend_id]
     handles = phantom['handles'] = []
     handles.clear()
 
     alpha = 1.0
-    legend_rows = []
-    if isinstance(label_to_color, dict):
-        legend_rows = [
-            {'label': k, 'color': c, 'type': mode, 'alpha': alpha}
-            for k, c in label_to_color.items()]
-    else:
-        legend_rows = label_to_color
+    legend_rows: List[Dict[str, Any]] = []
+    if label_to_color is not None:
+        if isinstance(label_to_color, Mapping):
+            legend_rows = [
+                {'label': k, 'color': c, 'type': mode, 'alpha': alpha}
+                for k, c in label_to_color.items()
+            ]
+        else:
+            legend_rows = [dict(row) for row in label_to_color]
 
     if label_to_attrs is not None:
         legend_rows = []
         for label, attrs in label_to_attrs.items():
-            legend_rows.append(ub.udict({
+            row = {
                 'label': label, 'type': mode, 'alpha': alpha,
-            }) | attrs)
+            }
+            row.update(attrs)
+            legend_rows.append(row)
 
     for row in legend_rows:
+        row = row.copy()
         row_type = row.pop('type')
         color = row['color']
         color = kwimage.Color(color).as01()
@@ -858,7 +941,7 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
             raise KeyError
         handles.append(phantom_actor)
 
-    legend_artist = ax.legend(handles=handles, loc=loc)
+    legend_artist = ax.legend(handles=handles, loc=cast(Any, loc))
     phantom['artist'] = legend_artist
 
     # Re-add other legends
@@ -868,7 +951,8 @@ def phantom_legend(label_to_color=None, label_to_attrs=None, mode='line', ax=Non
             ax.add_artist(artist)
 
 
-def close_figures(figures=None):
+def close_figures(
+        figures: Optional[Sequence[mpl.figure.Figure]] = None) -> None:
     """
     Close specified figures. If no figures are specified, close all figure.
 
@@ -879,21 +963,23 @@ def close_figures(figures=None):
         figures = all_figures()
     for fig in figures:
         # TODO: make work for more than QT
-        if hasattr(fig.canvas.manager, 'window'):
-            try:
-                qwin = fig.canvas.manager.window
-            except AttributeError:
-                qwin = fig.canvas.window()
-            qwin.close()
-        elif hasattr(fig.canvas, 'window'):
-            qwin = fig.canvas.window()
+        canvas = fig.canvas
+        manager = canvas.manager
+        window = getattr(manager, 'window', None)
+        if window is not None:
+            qwin = window() if callable(window) else window
             qwin.close()
         else:
-            from matplotlib import pyplot as plt
-            plt.close(fig)
+            canvas_window = getattr(canvas, 'window', None)
+            if canvas_window is not None:
+                qwin = canvas_window() if callable(canvas_window) else canvas_window
+                qwin.close()
+            else:
+                from matplotlib import pyplot as plt
+                plt.close(fig)
 
 
-def all_figures():
+def all_figures() -> List[mpl.figure.Figure]:
     """
     Return a list of all open figures
 
@@ -901,7 +987,7 @@ def all_figures():
         List[mpl.figure.Figure]: list of all figures
     """
     #import matplotlib as mpl
-    manager_list = mpl._pylab_helpers.Gcf.get_all_fig_managers()
+    manager_list = _pylab_helpers.Gcf.get_all_fig_managers()
     all_figures = []
     # Make sure you dont show figures that this module closed
     for manager in manager_list:

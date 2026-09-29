@@ -2,6 +2,11 @@
 This module handles automatically determening a "good" matplotlib backend to
 use before importing pyplot.
 """
+from __future__ import annotations
+
+from types import ModuleType
+from typing import Any, Optional
+
 import sys
 import os
 import ubelt as ub
@@ -14,19 +19,15 @@ __all__ = [
 _qtensured = False
 
 
-def _current_ipython_session():
+def _current_ipython_session() -> Any:
     """
-    Returns a reference to the current IPython session, if one is running
+    Returns a reference to the current IPython session, if one is running.
     """
     try:
-        __IPYTHON__
-    except NameError:
+        import IPython  # ty: ignore[unresolved-import]
+    except ImportError:
         return None
-    else:
-        # if ipython is None we must have exited ipython at some point
-        import IPython
-        ipython = IPython.get_ipython()
-        return ipython
+    return IPython.get_ipython()
 
 
 def _qtensure():
@@ -65,7 +66,7 @@ def _aggensure():
             set_mpl_backend('agg')
 
 
-def set_mpl_backend(backend, verbose=0):
+def set_mpl_backend(backend: str, verbose: int = 0) -> None:
     """
     Args:
         backend (str): name of backend as string that :func:`matplotlib.use`
@@ -107,7 +108,8 @@ def set_mpl_backend(backend, verbose=0):
 _AUTOMPL_WAS_RUN = False
 
 
-def autompl(verbose=0, recheck=False, force=None):
+def autompl(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> None:
     """
     Uses platform heuristics to automatically set the matplotlib backend.
     If no display is available it will be set to `agg`, otherwise we will try
@@ -121,7 +123,7 @@ def autompl(verbose=0, recheck=False, force=None):
             if False, this function will not run if it has already been called
             (this can save a significant amount of time).
 
-        force (str | int | None):
+        force (str | None):
             If None or "auto", then the backend will only be set if this
             function has not been run before. Otherwise it will be set to the
             chosen backend, which is a string that :func:`matplotlib.use` would
@@ -204,7 +206,7 @@ def _determine_best_backend(verbose):
             # NOTE: this call takes a significant amount of time
             info = ub.cmd('xdpyinfo', shell=True)
             if verbose > 3:
-                print('xdpyinfo-info = {}'.format(ub.repr2(info)))
+                print('xdpyinfo-info = {}'.format(ub.urepr(info)))
             if info['ret'] != 0:
                 DISPLAY = None
 
@@ -276,8 +278,8 @@ def _determine_best_backend(verbose):
 
         if backend_infos['pyqt6']['modpath']:
             try:
-                import PyQt6  # NOQA
-                from PyQt6 import QtCore  # NOQA
+                import PyQt6  # ty: ignore[unresolved-import]  # noqa: F401
+                from PyQt6 import QtCore  # ty: ignore[unresolved-import]
             except ImportError as ex:
                 if verbose:
                     print('[kwplot.autompl] No PyQt6, agg is probably best')
@@ -314,8 +316,8 @@ def _determine_best_backend(verbose):
                         backend_infos['pyqt5']['usable'] = False
         elif backend_infos['pyqt4']['modpath']:
             try:
-                import Qt4Agg  # NOQA
-                from PyQt4 import QtCore  # NOQA
+                import Qt4Agg  # ty: ignore[unresolved-import]  # noqa: F401
+                from PyQt4 import QtCore  # ty: ignore[unresolved-import]
             except ImportError as ex:
                 backend_infos['pyqt4']['usable'] = False
                 backend_infos['pyqt4']['importable'] = False
@@ -346,12 +348,16 @@ def _check_for_linux_opencv_qt_conflicts(QtCore):
     """
     if 'cv2' in sys.modules:
         cv2 = sys.modules['cv2']
-        cv2_mod_fpath = ub.Path(cv2.__file__)
+        cv2_mod_file = getattr(cv2, '__file__', None)
+        qt_mod_file = getattr(QtCore, '__file__', None)
+        if cv2_mod_file is None or qt_mod_file is None:
+            return False
+        cv2_mod_fpath = ub.Path(cv2_mod_file)
         cv2_mod_dpath = cv2_mod_fpath.parent
         cv2_lib_dpath = cv2_mod_dpath / 'qt/plugins/platforms'
         cv2_qxcb_fpath = cv2_lib_dpath / 'libqxcb.so'
 
-        qt_mod_fpath = ub.Path(QtCore.__file__)
+        qt_mod_fpath = ub.Path(qt_mod_file)
         qt_mod_dpath = qt_mod_fpath.parent
         qt_lib_dpath = qt_mod_dpath / 'Qt/plugins/platforms'
         qt_qxcb_fpath = qt_lib_dpath / 'libqxcb.so'
@@ -381,11 +387,15 @@ def _check_for_cv2_qt_incompat():
     import ubelt as ub
     from PyQt5 import QtCore  # NOQA
 
-    cv2_mod_dpath = ub.Path(cv2.__file__).parent
+    cv2_mod_file = getattr(cv2, '__file__', None)
+    qt_mod_file = getattr(QtCore, '__file__', None)
+    if cv2_mod_file is None or qt_mod_file is None:
+        raise OSError('cannot determine cv2 / Qt module paths')
+    cv2_mod_dpath = ub.Path(cv2_mod_file).parent
     cv2_lib_dpath = ub.Path(cv2_mod_dpath) / 'qt/plugins/platforms'
     cv2_qxcb_fpath = ub.Path(cv2_lib_dpath) / 'libqxcb.so'
 
-    qt_mod_dpath = ub.Path(QtCore.__file__).parent
+    qt_mod_dpath = ub.Path(qt_mod_file).parent
     qt_lib_dpath1 = qt_mod_dpath / 'Qt/plugins/platforms'
     qt_lib_dpath2 = (qt_mod_dpath / 'Qt5/plugins/platforms')
     if qt_lib_dpath1.exists():
@@ -402,7 +412,8 @@ def _check_for_cv2_qt_incompat():
     print(f'qt_qxb_exist={qt_qxb_exist}')
 
 
-def autoplt(verbose=0, recheck=False, force=None):
+def autoplt(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> ModuleType:
     """
     Like :func:`kwplot.autompl`, but also returns the
     :mod:`matplotlib.pyplot` module for convenience.
@@ -421,7 +432,8 @@ def autoplt(verbose=0, recheck=False, force=None):
     return plt
 
 
-def autosns(verbose=0, recheck=False, force=None):
+def autosns(verbose: int = 0, recheck: bool = False,
+            force: Optional[str] = None) -> ModuleType:
     """
     Like :func:`kwplot.autompl`, but also calls
     :func:`seaborn.set` and returns the :mod:`seaborn` module for convenience.
@@ -470,7 +482,7 @@ class BackendContext:
         >>> print(mpl.get_backend())
     """
 
-    def __init__(self, backend, strict=False):
+    def __init__(self, backend: str, strict: bool = False) -> None:
         """
         Args:
             backend (str):
@@ -486,7 +498,7 @@ class BackendContext:
         self._prev_backend_was_loaded = 'matplotlib.pyplot' in sys.modules
         self.strict = strict
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         import matplotlib as mpl
         self.prev = mpl.get_backend()
 
@@ -506,7 +518,7 @@ class BackendContext:
 
         set_mpl_backend(self.backend)
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         if self.prev is not None:
             """
             Note: 2021-01-07

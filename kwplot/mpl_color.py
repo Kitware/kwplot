@@ -1,12 +1,14 @@
 """
 DEPRECATED: use kwimage.Color instead
 """
+from typing import Dict, Tuple, TYPE_CHECKING
+
 __all__ = ['Color']
 
 
 class mcolors:
     # Duplicates data in matplotlib
-    BASE_COLORS = {
+    BASE_COLORS: Dict[str, Tuple[float, float, float]] = {
         'b': (0, 0, 1),
         'g': (0, 0.5, 0),
         'r': (1, 0, 0),
@@ -17,7 +19,7 @@ class mcolors:
         'w': (1, 1, 1)
     }
 
-    CSS4_COLORS = {
+    CSS4_COLORS: Dict[str, str] = {
         'aliceblue': '#F0F8FF', 'antiquewhite': '#FAEBD7', 'aqua': '#00FFFF',
         'aquamarine': '#7FFFD4', 'azure': '#F0FFFF', 'beige': '#F5F5DC',
         'bisque': '#FFE4C4', 'black': '#000000', 'blanchedalmond': '#FFEBCD',
@@ -71,8 +73,12 @@ class mcolors:
     }
 
 
-# Backwards compat
-try:
-    from kwimage import Color  # noqa
-except ImportError:
-    Color = None
+# Backwards compat.  Static checking can use the concrete kwimage type while
+# runtime still tolerates kwimage being absent.
+if TYPE_CHECKING:
+    from kwimage import Color
+else:
+    try:
+        from kwimage import Color  # noqa
+    except ImportError:
+        Color = None

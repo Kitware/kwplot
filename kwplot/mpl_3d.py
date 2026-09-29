@@ -1,12 +1,27 @@
 """
 Helper for making 3D plots
 """
+from __future__ import annotations
+
+from typing import Any, Dict, Optional, Tuple
+
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 
-def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
-                   wire=False, mode=None, contour=False, rstride=1, cstride=1,
-                   pnum=None, labelkw=None, xlabelkw=None, ylabelkw=None,
-                   zlabelkw=None, titlekw=None, *args, **kwargs):
+def plot_surface3d(
+        xgrid: Any, ygrid: Any, zdata: Any,
+        xlabel: Optional[str] = None, ylabel: Optional[str] = None,
+        zlabel: Optional[str] = None, wire: bool = False,
+        mode: Optional[str] = None, contour: bool = False,
+        rstride: int = 1, cstride: int = 1,
+        pnum: Optional[Tuple[int, int, int]] = None,
+        labelkw: Optional[Dict[str, Any]] = None,
+        xlabelkw: Optional[Dict[str, Any]] = None,
+        ylabelkw: Optional[Dict[str, Any]] = None,
+        zlabelkw: Optional[Dict[str, Any]] = None,
+        titlekw: Optional[Dict[str, Any]] = None,
+        *args: Any, **kwargs: Any,
+) -> Axes3D:
     r"""
     References:
         https://matplotlib.org/2.0.2/mpl_toolkits/mplot3d/tutorial.html
@@ -38,25 +53,22 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
         ylabelkw = labelkw.copy()
     if zlabelkw is None:
         zlabelkw = labelkw.copy()
-    from mpl_toolkits.mplot3d import Axes3D  # NOQA
     import matplotlib.pyplot as plt
     import matplotlib as mpl
 
-    cmap = kwargs.get('cmap', 'magma')  # cm.coolwarm)
+    cmap = kwargs.get('cmap', 'magma')
     if isinstance(cmap, str):
-        if cmap == 'magma':
-            kwargs['cmap'] = cmap = mpl.cm.magma
+        kwargs['cmap'] = cmap = plt.get_cmap(cmap)
+    fig = plt.gcf()
     if pnum is None:
-        try:
-            ax = plt.gca(projection='3d')
-        except Exception:
-            fig = plt.gcf()
-            ax = fig.add_subplot(projection='3d')
-            # ax = Axes3D(fig)
+        current_ax = plt.gca()
+        if isinstance(current_ax, Axes3D):
+            raw_ax = current_ax
+        else:
+            raw_ax = fig.add_subplot(1, 1, 1, projection='3d')
     else:
-        fig = plt.gcf()
-        #print('pnum = %r' % (pnum,))
-        ax = fig.add_subplot(*pnum, projection='3d')
+        raw_ax = fig.add_subplot(*pnum, projection='3d')
+    ax = raw_ax
     title = kwargs.pop('title', None)
     if mode is None:
         mode = 'wire' if wire else 'surface'
@@ -78,11 +90,10 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     else:
         raise NotImplementedError('mode=%r' % (mode,))
     if contour:
-        import matplotlib.cm as cm
         xoffset = xgrid.min() - ((xgrid.max() - xgrid.min()) * .1)
         yoffset = ygrid.max() + ((ygrid.max() - ygrid.min()) * .1)
         zoffset = zdata.min() - ((zdata.max() - zdata.min()) * .1)
-        cmap = kwargs.get('cmap', cm.coolwarm)
+        cmap = kwargs.get('cmap', plt.get_cmap('coolwarm'))
         ax.contour(xgrid, ygrid, zdata, zdir='x', offset=xoffset, cmap=cmap)
         ax.contour(xgrid, ygrid, zdata, zdir='y', offset=yoffset, cmap=cmap)
         ax.contour(xgrid, ygrid, zdata, zdir='z', offset=zoffset, cmap=cmap)
@@ -98,9 +109,18 @@ def plot_surface3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
     return ax
 
 
-def plot_points3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
-                  mode=None, pnum=None, labelkw=None, xlabelkw=None,
-                  ylabelkw=None, zlabelkw=None, titlekw=None, *args, **kwargs):
+def plot_points3d(
+        xgrid: Any, ygrid: Any, zdata: Any,
+        xlabel: Optional[str] = None, ylabel: Optional[str] = None,
+        zlabel: Optional[str] = None, mode: Optional[str] = None,
+        pnum: Optional[Tuple[int, int, int]] = None,
+        labelkw: Optional[Dict[str, Any]] = None,
+        xlabelkw: Optional[Dict[str, Any]] = None,
+        ylabelkw: Optional[Dict[str, Any]] = None,
+        zlabelkw: Optional[Dict[str, Any]] = None,
+        titlekw: Optional[Dict[str, Any]] = None,
+        *args: Any, **kwargs: Any,
+) -> Axes3D:
     r"""
     References:
         http://matplotlib.org/mpl_toolkits/mplot3d/tutorial.html
@@ -132,25 +152,22 @@ def plot_points3d(xgrid, ygrid, zdata, xlabel=None, ylabel=None, zlabel=None,
         ylabelkw = labelkw.copy()
     if zlabelkw is None:
         zlabelkw = labelkw.copy()
-    from mpl_toolkits.mplot3d import Axes3D  # NOQA
     import matplotlib.pyplot as plt
     import matplotlib as mpl
 
-    cmap = kwargs.get('cmap', 'magma')  # cm.coolwarm)
+    cmap = kwargs.get('cmap', 'magma')
     if isinstance(cmap, str):
-        if cmap == 'magma':
-            kwargs['cmap'] = cmap = mpl.cm.magma
+        kwargs['cmap'] = cmap = plt.get_cmap(cmap)
+    fig = plt.gcf()
     if pnum is None:
-        try:
-            ax = plt.gca(projection='3d')
-        except Exception:
-            fig = plt.gcf()
-            ax = fig.add_subplot(projection='3d')
-            # ax = Axes3D(fig)
+        current_ax = plt.gca()
+        if isinstance(current_ax, Axes3D):
+            raw_ax = current_ax
+        else:
+            raw_ax = fig.add_subplot(1, 1, 1, projection='3d')
     else:
-        fig = plt.gcf()
-        #print('pnum = %r' % (pnum,))
-        ax = fig.add_subplot(*pnum, projection='3d')
+        raw_ax = fig.add_subplot(*pnum, projection='3d')
+    ax = raw_ax
     title = kwargs.pop('title', None)
     if mode is None:
         mode = 'points'

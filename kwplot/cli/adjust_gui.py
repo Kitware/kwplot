@@ -11,6 +11,13 @@ References:
     ~/code/guitool_ibeis/guitool_ibeis/PreferenceWidget.py
     ~/code/utool/utool/Preferences.py
 """
+from __future__ import annotations
+
+from typing import (
+    Any, Callable, Dict, Generator, Optional, Sequence, Tuple, Type,
+    TypeVar, Union, cast,
+)
+
 import ubelt as ub
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
@@ -22,9 +29,10 @@ from scriptconfig import smartcast as smartcast_mod
 from enum import Enum
 import scriptconfig as scfg
 
-__docstubs__ = """
-from ubelt.util_const import NoParamType
-"""
+
+_Qt = cast(Any, Qt)
+_QValidator = cast(Any, QtGui.QValidator)
+_QStyle = cast(Any, QtWidgets.QStyle)
 
 
 class AdjustGuiConfig(scfg.DataConfig):
@@ -105,9 +113,12 @@ class AdjustGuiConfig(scfg.DataConfig):
         ))
 
 
-def report_thread_error(fn):
+_F = TypeVar('_F', bound=Callable[..., Any])
+
+
+def report_thread_error(fn: _F) -> _F:
     """ Decorator to help catch errors that QT wont report """
-    def report_thread_error_wrapper(*args, **kwargs):
+    def report_thread_error_wrapper(*args: Any, **kwargs: Any) -> Any:
         import traceback
         import sys
         try:
@@ -119,14 +130,15 @@ def report_thread_error(fn):
             sys.stdout.flush()
             et, ei, tb = sys.exc_info()
             raise
-    return report_thread_error_wrapper
+    typed_wrapper = cast(_F, report_thread_error_wrapper)
+    return typed_wrapper
 
 
 class _Indexer:
-    def __init__(self, func):
+    def __init__(self, func: Callable[[Any], Any]) -> None:
         self.func = func
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         return self.func(key)
 
 
@@ -148,7 +160,7 @@ class IndexedDict(dict):
     """
 
     # def __init__(self, data=None, /, **kwargs):  # python 3.8+
-    def __init__(self, data=None, **kwargs):
+    def __init__(self, data: Any = None, **kwargs: Any) -> None:
         super().__init__()
         self._index_to_key = []
         self._key_to_index = {}
@@ -158,10 +170,10 @@ class IndexedDict(dict):
         else:
             self.update(kwargs)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: Any) -> None:
         raise NotImplementedError
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         if key not in self._key_to_index:
             index = len(self)
             super().__setitem__(key, value)
@@ -170,7 +182,7 @@ class IndexedDict(dict):
         else:
             super().__setitem__(key, value)
 
-    def update(self, *args, **kwargs):
+    def update(self, *args: Any, **kwargs: Any) -> None:
         if len(args) == 1:
             data = args[0]
         else:
@@ -183,29 +195,26 @@ class IndexedDict(dict):
             self[key] = value
 
     @property
-    def iloc(self):
+    def iloc(self) -> _Indexer:
         return _Indexer(self.value_atindex)
 
-    def indexof(self, key):
+    def indexof(self, key: Any) -> int:
         return self._key_to_index[key]
 
     @property
-    def index(self):
+    def index(self) -> list:
         return self._index_to_key
 
-    def key_atindex(self, index):
+    def key_atindex(self, index: int) -> Any:
         key = self._index_to_key[index]
         return key
 
-    def value_atindex(self, index):
+    def value_atindex(self, index: int) -> Any:
         key = self._index_to_key[index]
         value = self[key]
         return value
 
-try:
-    NoValue  # pragma: no cover
-except NameError:  # pragma: no cover
-    NoValue = object.__new__(ub.util_const.NoParamType)  # type: NoParamType
+NoValue: Any = object.__new__(ub.util_const.NoParamType)
 
 
 class _Qt_ConfigNodeMixin:
@@ -213,25 +222,33 @@ class _Qt_ConfigNodeMixin:
     Extension of the config node with method specifically for Qt data models
     """
 
-    def qt_get_parent(self):
+    parent: Optional[Any]
+    key: Any
+    value: Any
+    children: IndexedDict
+    delegate_style: Optional[Any]
+    _qt_observer_id_to_persistent_index: Dict[int, Any]
+    _qt_observer_id_to_observers: Dict[int, Any]
+
+    def qt_get_parent(self) -> Optional[QConfigNode]:
         return self.parent
 
-    def qt_parents_index_of_me(self):
+    def qt_parents_index_of_me(self) -> Optional[int]:
         if self.parent is None:
             return None
         else:
             return self.parent.children.indexof(self.key)
 
-    def qt_get_child(self, row):
+    def qt_get_child(self, row: int) -> QConfigNode:
         return self.children.iloc[row]
 
-    def qt_row_count(self):
+    def qt_row_count(self) -> int:
         return len(self.children)
 
-    def qt_col_count(self):
+    def qt_col_count(self) -> int:
         return 2
 
-    def qt_get_data(self, column):
+    def qt_get_data(self, column: int) -> Any:
         if column == 0:
             return self.key
         data = self.value
@@ -242,37 +259,33 @@ class _Qt_ConfigNodeMixin:
             data = 'None'
         return data
 
-    def qt_type(self):
+    def qt_type(self) -> Type[Any]:
         return type(self.value)
 
-    def qt_is_editable(self):
+    def qt_is_editable(self) -> bool:
         return self.value is not NoValue
 
-    def qt_set_value(self, data):
+    def qt_set_value(self, data: Any) -> None:
         # TODO: casting
         data = smartcast_mod.smartcast(data, allow_split=False)
         self.value = data
 
-    def qt_delegate_style(self):
+    def qt_delegate_style(self) -> Optional[DelegateStyle]:
         return self.delegate_style
 
-    def qt_set_persistant_index(self, index, observer):
-        """
-        """
-        observer = None
+    def qt_set_persistant_index(self, index: Any, observer: Any) -> None:
+        """Remember a persistent model index for a particular observer."""
         observer_id = id(observer)
         self._qt_observer_id_to_observers[observer_id] = observer
         self._qt_observer_id_to_persistent_index[observer_id] = index
 
-    def qt_get_persistant_index(self, observer):
-        """
-        """
-        observer = None
+    def qt_get_persistant_index(self, observer: Any) -> Any:
+        """Look up the persistent model index for an observer."""
         observer_id = id(observer)
         return self._qt_observer_id_to_persistent_index[observer_id]
 
-    def qt_observers(self):
-        yield self._qt_observer_id_to_observers.values()
+    def qt_observers(self) -> Generator[Any, None, None]:
+        yield from self._qt_observer_id_to_observers.values()
 
 
 class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
@@ -309,9 +322,13 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         >>> assert config['general_opt2'] == 'fds,fds'
     """
 
-    def __init__(self, value=NoValue, type=None, parent=None, choices=None,
-                 min_value=None, max_value=None, step_value=None,
-                 nullable=True, help=None):
+    def __init__(
+            self, value: Any = NoValue, type: Optional[Type[Any]] = None,
+            parent: Optional[QConfigNode] = None, choices: Any = None,
+            min_value: Optional[float] = None, max_value: Optional[float] = None,
+            step_value: Optional[float] = None, nullable: bool = True,
+            help: Optional[str] = None,
+    ) -> None:
         self.parent = parent
         self.key = None
         self.type = type
@@ -336,16 +353,16 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         self._qt_observer_id_to_persistent_index = {}
         self._qt_observer_id_to_observers = {}
 
-    def __nice__(self):
+    def __nice__(self) -> str:
         if self.children:
             if self.value is None:
-                return f'{ub.repr2(self.children, nl=1)}'
+                return f'{ub.urepr(self.children, nl=1)}'
             else:
-                return f'{self.value}, {ub.repr2(self.children, nl=1)}'
+                return f'{self.value}, {ub.urepr(self.children, nl=1)}'
         else:
             return f'{self.value}'
 
-    def add_child(self, key, child=None):
+    def add_child(self, key: Any, child: Optional[QConfigNode] = None) -> QConfigNode:
         if child is None:
             child = QConfigNode()
         child.parent = self
@@ -353,7 +370,7 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
         self.children[key] = child
         return child
 
-    def items(self):
+    def items(self) -> Generator[Tuple[Any, Any], None, None]:
         if self.value is not NoValue:
             raise Exception('this is a leaf node')
 
@@ -366,17 +383,17 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
             else:
                 raise TypeError
 
-    def to_indexable(self):
+    def to_indexable(self) -> Dict[Any, Any]:
         return dict(self.items())
 
-    def _pathget(self, path):
+    def _pathget(self, path: Sequence[Any]) -> QConfigNode:
         curr_ = self
         for p in path:
             curr_ = curr_.children[p]
         return curr_
 
     @classmethod
-    def coerce(cls, data):
+    def coerce(cls, data: Any) -> QConfigNode:
         if data is None:
             return cls()
         elif isinstance(data, cls):
@@ -387,13 +404,14 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
             raise TypeError
 
     @classmethod
-    def from_indexable(cls, config):
+    def from_indexable(cls, config: Dict[Any, Any]) -> QConfigNode:
         """
         Create a tree from a nested dict
         """
         self = cls()
         walker = ub.IndexableWalker(config)
-        for path, value in walker:
+        walker_iter = cast(Any, walker)
+        for path, value in walker_iter:
             if isinstance(value, dict):
                 *prefix, key = path
                 parent = self._pathget(prefix)
@@ -412,7 +430,10 @@ class QConfigNode(ub.NiceRepr, _Qt_ConfigNodeMixin):
 
 
 class CustomComboBox(QtWidgets.QComboBox):
-    def __init__(combo, parent=None, default=None, options=None, changed=None):
+    def __init__(
+            combo, parent: Any = None, default: Any = None,
+            options: Any = None, changed: Any = None,
+    ) -> None:
         super().__init__(parent=parent)
         options = [opt if isinstance(opt, tuple) and len(opt) == 2 else
                    (str(opt), opt) for opt in options]
@@ -422,19 +443,19 @@ class CustomComboBox(QtWidgets.QComboBox):
         combo.setDefault(default)
         combo.currentIndexChanged['int'].connect(combo.currentIndexChangedCustom)
 
-    def currentValue(combo):
+    def currentValue(combo) -> Any:
         index = combo.currentIndex()
         opt = combo.options[index]
         value = opt[1]
         return value
 
-    def setOptions(combo, options):
+    def setOptions(combo, options: Sequence[Any]) -> None:
         flags = [isinstance(opt, tuple) and len(opt) == 2 for opt in options]
         options = [opt if flag else (str(opt), opt)
                     for flag, opt in zip(flags, options)]
         combo.options = options
 
-    def updateOptions(combo, reselect=False, reselect_index=None):
+    def updateOptions(combo, reselect: bool = False, reselect_index: Optional[int] = None) -> None:
         if reselect_index is None:
             reselect_index = combo.currentIndex()
         combo.clear()
@@ -442,25 +463,25 @@ class CustomComboBox(QtWidgets.QComboBox):
         if reselect and reselect_index < len(combo.options):
             combo.setCurrentIndex(reselect_index)
 
-    def setOptionText(combo, option_text_list):
+    def setOptionText(combo, option_text_list: Sequence[str]) -> None:
         for index, text in enumerate(option_text_list):
             combo.setItemText(index, text)
 
-    def currentIndexChangedCustom(combo, index):
+    def currentIndexChangedCustom(combo, index: int) -> None:
         if combo.changed is not None:
             combo.changed(index, combo.options[index][1])
 
-    def setDefault(combo, default=None):
+    def setDefault(combo, default: Any = None) -> None:
         if default is not None:
             combo.setCurrentValue(default)
         else:
             combo.setCurrentIndex(0)
 
-    def setCurrentValue(combo, value):
+    def setCurrentValue(combo, value: Any) -> None:
         index = combo.findValueIndex(value)
         combo.setCurrentIndex(index)
 
-    def findValueIndex(combo, value):
+    def findValueIndex(combo, value: Any) -> int:
         """ finds index of backend value and sets the current index """
         for index, (text, val) in enumerate(combo.options):
             if value == val:
@@ -483,7 +504,7 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
     HARD_MAX = float(2 ** _EXP) + 1.0
     NONE_VALUE = HARD_MIN + 1.0
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.type = kwargs.pop('type', float)
         self.nullable = kwargs.pop('nullable', True)
         self.post_nan_value = 0
@@ -492,69 +513,70 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
         super().__init__(*args, **kwargs)
         super().setRange(self.HARD_MIN, self.HARD_MAX)
 
-    def keyPressEvent(self, event):
-        if self.nullable and event.matches(QtGui.QKeySequence.Delete):
+    def keyPressEvent(self, e: Optional[QtGui.QKeyEvent]) -> None:
+        if self.nullable and e is not None and e.matches(QtGui.QKeySequence.Delete):
             self.setValue(self.NONE_VALUE)
         else:
-            return super().keyPressEvent(event)
+            super().keyPressEvent(e)
 
-    def setMinimum(self, min_value):
-        """ hack to get around None being invalid """
-        self._hack_min = min_value
+    def setMinimum(self, min: float) -> None:
+        """Hack to get around None being invalid."""
+        self._hack_min = min
 
-    def setMaximum(self, max_value):
-        self._hack_max = max_value
+    def setMaximum(self, max: float) -> None:
+        self._hack_max = max
 
-    def setRange(self, min_value, max_value):
-        self._hack_min = min_value
-        self._hack_max = max_value
+    def setRange(self, min: float, max: float) -> None:
+        self._hack_min = min
+        self._hack_max = max
 
-    def stepBy(self, steps):
+    def stepBy(self, steps: int) -> None:
         current_value = self.value()
         if current_value is None:
             self.setValue(self.post_nan_value)
         else:
             self.setValue(current_value + steps * self.singleStep())
 
-    def validate(self, text, pos):
+    def validate(self, input: Optional[str], pos: int) -> Tuple[Any, str, int]:
         import re
+        text = '' if input is None else input
         if self.nullable and (len(text) == 0 or text.lower().startswith('n')):
-            state = (QtGui.QValidator.Acceptable, text, pos)
+            state = (_QValidator.Acceptable, text, pos)
         else:
             if self._hack_min >= 0 and text.startswith('-'):
-                state = (QtGui.QValidator.Invalid, text, pos)
+                state = (_QValidator.Invalid, text, pos)
             else:
                 if not re.match(r'^[+-]?[0-9]*[.,]?[0-9]*[Ee]?[+-]?[0-9]*$', text, flags=re.MULTILINE):
-                    state = (QtGui.QValidator.Invalid, text, pos)
+                    state = (_QValidator.Invalid, text, pos)
                 else:
                     try:
                         val = float(text)
                         if val >= self._hack_min and val <= self._hack_max:
-                            state = (QtGui.QValidator.Acceptable, text, pos)
+                            state = (_QValidator.Acceptable, text, pos)
                         else:
-                            state = (QtGui.QValidator.Invalid, text, pos)
+                            state = (_QValidator.Invalid, text, pos)
                     except Exception:
-                        state = (QtGui.QValidator.Intermediate, text, pos)
+                        state = (_QValidator.Intermediate, text, pos)
         return state
 
-    def value(self):
+    def value(self) -> Optional[float]:  # ty: ignore[invalid-method-override]
         internal_value = super().value()
         if self.nullable and internal_value == self.NONE_VALUE:
             return None
         else:
             return internal_value
 
-    def setValue(self, value):
-        if value is None:
-            value = self.NONE_VALUE
+    def setValue(self, val: Optional[Union[float, str]]) -> None:
+        value: Union[float, str] = self.NONE_VALUE if val is None else val
         if isinstance(value, str):
             value = self.valueFromText(value)
         if value != self.NONE_VALUE:
             value = max(value, self._hack_min)
             value = min(value, self._hack_max)
-        return super().setValue(value)
+        super().setValue(float(value))
 
-    def valueFromText(self, text):
+    def valueFromText(self, text: Optional[str]) -> float:
+        text = '' if text is None else text
         if self.nullable and (len(text) == 0 or text[0:1].lower().startswith('n')):
             value = self.NONE_VALUE
         else:
@@ -563,12 +585,12 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
             elif self.type is float:
                 value = self.type(text)
             else:
-                # raise ValueError('unknown self.type=%r' % (self.type,))
                 value = float(text)
-        return value
+        return float(value)
 
-    def textFromValue(self, value):
-        if self.nullable and value is None or value == self.NONE_VALUE:
+    def textFromValue(self, v: float) -> str:
+        value = v
+        if self.nullable and value == self.NONE_VALUE:
             text = 'None'
         else:
             if self.type is int:
@@ -577,7 +599,6 @@ class NullableSpinBox(QtWidgets.QDoubleSpinBox):
                 text = str(float(value))
             else:
                 text = str(value)
-                # raise ValueError('unknown self.type=%r' % (self.type,))
         return text
 
 
@@ -626,12 +647,12 @@ class QConfigModel(QtCore.QAbstractItemModel):
         >>> assert config['algo1'] == 'foo,bar'
     """
     @report_thread_error
-    def __init__(self, root_config, parent=None):
+    def __init__(self, root_config: Any, parent: Any = None) -> None:
         super(QConfigModel, self).__init__(parent)
-        self.root_config = root_config
+        self.root_config = QConfigNode.coerce(root_config)
 
     @report_thread_error
-    def index_to_node(self, index=QtCore.QModelIndex()):
+    def index_to_node(self, index: QtCore.QModelIndex = QtCore.QModelIndex()) -> QConfigNode:
         """ Internal helper method """
         if index.isValid():
             item = index.internalPointer()
@@ -642,34 +663,34 @@ class QConfigModel(QtCore.QAbstractItemModel):
     #-----------
     # Overloaded ItemModel Read Functions
     @report_thread_error
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         parent_node = self.index_to_node(parent)
         return parent_node.qt_row_count()
 
     @report_thread_error
-    def columnCount(self, parent=QtCore.QModelIndex()):
+    def columnCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         parent_node = self.index_to_node(parent)
         return parent_node.qt_col_count()
 
     @report_thread_error
-    def data(self, qtindex, role=Qt.DisplayRole):
+    def data(self, index: QtCore.QModelIndex, role: int = _Qt.DisplayRole) -> Any:
         """
         Returns the data stored under the given role
-        for the item referred to by the qtindex.
+        for the item referred to by the index.
         """
-        if not qtindex.isValid():
+        if not index.isValid():
             return None
         # Specify CheckState Role:
-        flags = self.flags(qtindex)
-        if role == Qt.CheckStateRole:
-            if flags & Qt.ItemIsUserCheckable:
-                node = self.index_to_node(qtindex)
-                data = node.qt_get_data(qtindex.column())
-                return Qt.Checked if data else Qt.Unchecked
-        if role != Qt.DisplayRole and role != Qt.EditRole:
+        flags = self.flags(index)
+        if role == _Qt.CheckStateRole:
+            if flags & _Qt.ItemIsUserCheckable:
+                node = self.index_to_node(index)
+                data = node.qt_get_data(index.column())
+                return _Qt.Checked if data else _Qt.Unchecked
+        if role != _Qt.DisplayRole and role != _Qt.EditRole:
             return None
-        node = self.index_to_node(qtindex)
-        data = node.qt_get_data(qtindex.column())
+        node = self.index_to_node(index)
+        data = node.qt_get_data(index.column())
         if isinstance(data, float):
             LOCALE = QtCore.QLocale()
             var = LOCALE.toString(float(data), format='g', precision=6)
@@ -678,23 +699,23 @@ class QConfigModel(QtCore.QAbstractItemModel):
         return str(var)
 
     @report_thread_error
-    def setData(self, qtindex, value, role=Qt.EditRole):
-        """Sets the role data for the item at qtindex to value."""
-        if role == Qt.EditRole:
+    def setData(self, index: QtCore.QModelIndex, value: Any, role: int = _Qt.EditRole) -> bool:
+        """Sets the role data for the item at index to value."""
+        if role == _Qt.EditRole:
             data = value
-        elif role == Qt.CheckStateRole:
-            data = (value == Qt.Checked)
+        elif role == _Qt.CheckStateRole:
+            data = (value == _Qt.Checked)
         else:
             return False
-        node = self.index_to_node(qtindex)
-        old_data = node.qt_get_data(qtindex.column())
+        node = self.index_to_node(index)
+        old_data = node.qt_get_data(index.column())
         if old_data != data:
             node.qt_set_value(data)
-        self.dataChanged.emit(qtindex, qtindex)
+        self.dataChanged.emit(index, index)
         return True
 
     @report_thread_error
-    def index(self, row, col, parent=QtCore.QModelIndex()):
+    def index(self, row: int, column: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> QtCore.QModelIndex:
         """Returns the index of the item in the model specified
         by the given row, column and parent index."""
         if parent.isValid() and parent.column() != 0:
@@ -702,12 +723,12 @@ class QConfigModel(QtCore.QAbstractItemModel):
         parent_node = self.index_to_node(parent)
         child_node = parent_node.children.iloc[row]
         if child_node:
-            new_index = self._new_index(row, col, child_node)
+            new_index = self._new_index(row, column, child_node)
             return new_index
         else:
             return QtCore.QModelIndex()
 
-    def _new_index(self, row, col, node):
+    def _new_index(self, row: int, col: int, node: QConfigNode) -> QtCore.QModelIndex:
         # Not sure if this is the correct way to register persistent
         # indexes of the model into the backend data structure.
         new_index = self.createIndex(row, col, node)
@@ -716,40 +737,42 @@ class QConfigModel(QtCore.QAbstractItemModel):
         return new_index
 
     @report_thread_error
-    def parent(self, index=None):
+    def parent(self, child: Optional[QtCore.QModelIndex] = None) -> Any:
         """Returns the parent of the model item with the given index.
         If the item has no parent, an invalid QModelIndex is returned."""
-        if index is None:  # Overload with QtCore.QObject.parent()
+        if child is None:  # Overload with QtCore.QObject.parent()
             return QtCore.QObject.parent(self)
-        if not index.isValid():
+        if not child.isValid():
             return QtCore.QModelIndex()
-        node = self.index_to_node(index)
+        node = self.index_to_node(child)
         parent_node = node.qt_get_parent()
-        if parent_node == self.root_config:
+        if parent_node is None or parent_node == self.root_config:
             return QtCore.QModelIndex()
-        new_index = self._new_index(parent_node.qt_parents_index_of_me(), 0, parent_node)
-        return new_index
+        row = parent_node.qt_parents_index_of_me()
+        if row is None:
+            return QtCore.QModelIndex()
+        return self._new_index(row, 0, parent_node)
 
     @report_thread_error
-    def flags(self, index):
+    def flags(self, index: QtCore.QModelIndex) -> Any:
         """Returns the item flags for the given index."""
         if index.column() == 0:
             # The First Column is just a label and unchangable
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            return _Qt.ItemIsEnabled | _Qt.ItemIsSelectable
         if not index.isValid():
-            return Qt.ItemFlag(0)
+            return _Qt.ItemFlag(0)
         child_node = self.index_to_node(index)
         if child_node:
             if child_node.qt_is_editable():
                 if child_node.qt_type() is bool:
-                    return Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
+                    return _Qt.ItemIsEnabled | _Qt.ItemIsUserCheckable
                 else:
-                    return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        return Qt.ItemFlag(0)
+                    return _Qt.ItemIsEditable | _Qt.ItemIsEnabled | _Qt.ItemIsSelectable
+        return _Qt.ItemFlag(0)
 
     @report_thread_error
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+    def headerData(self, section: int, orientation: Any, role: int = _Qt.DisplayRole) -> Any:
+        if orientation == _Qt.Horizontal and role == _Qt.DisplayRole:
             if section == 0:
                 return 'Key'
             if section == 1:
@@ -778,12 +801,13 @@ class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
         http://doc.qt.io/qt-4.8/style-reference.html
 
     """
-    def paint(self, painter, option, index):
+    def paint(self, painter: Any, option: Any, index: QtCore.QModelIndex) -> Any:
         leaf_node = index.internalPointer()
         delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
         if delegate_style == DelegateStyle.COMBO_BOX:
-            curent_value = str(index.model().data(index))
-            style = QtWidgets.QApplication.style()
+            model = cast(Any, index.model())
+            curent_value = str(model.data(index))
+            style = cast(Any, QtWidgets.QApplication.style())
             opt = QtWidgets.QStyleOptionComboBox()
 
             opt.currentText = curent_value
@@ -796,15 +820,15 @@ class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
                 opt.state |= style.State_Enabled
                 opt.state = style.State_Enabled | style.State_Active
 
-            element = QtWidgets.QStyle.CE_ComboBoxLabel
-            control = QtWidgets.QStyle.CC_ComboBox
+            element = _QStyle.CE_ComboBoxLabel
+            control = _QStyle.CC_ComboBox
 
             style.drawComplexControl(control, opt, painter)
             style.drawControl(element, opt, painter)
         else:
             return super().paint(painter, option, index)
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent: Any, option: Any, index: QtCore.QModelIndex) -> Any:
         """
         Creates different editors for different types of data
         """
@@ -812,7 +836,8 @@ class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
         delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
         if delegate_style == DelegateStyle.COMBO_BOX:
             options = leaf_node.choices
-            curent_value = index.model().data(index)
+            model = cast(Any, index.model())
+            curent_value = model.data(index)
             editor = CustomComboBox(parent=parent, options=options,
                                     default=curent_value)
             editor.currentIndexChanged['int'].connect(self.currentIndexChanged)
@@ -836,26 +861,29 @@ class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
 
             editor.setAutoFillBackground(True)
             editor.setHidden(False)
-            curent_value = index.model().data(index)
+            model = cast(Any, index.model())
+            curent_value = model.data(index)
             editor.setValue(curent_value)
         else:
-            editor = super().createEditor(parent, option, index)
+            raw_editor = super().createEditor(parent, option, index)
+            editor = cast(Any, raw_editor)
             editor.setAutoFillBackground(True)
             # editor.keyPressEvent
         return editor
 
-    def setEditorData(self, editor, index):
+    def setEditorData(self, editor: Any, index: QtCore.QModelIndex) -> None:
         leaf_node = index.internalPointer()
         delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
         if delegate_style == DelegateStyle.COMBO_BOX:
             editor.blockSignals(True)
-            current_data = index.model().data(index)
+            model = cast(Any, index.model())
+            current_data = model.data(index)
             editor.setCurrentValue(current_data)
             editor.blockSignals(False)
         else:
             return super().setEditorData(editor, index)
 
-    def setModelData(self, editor, model, index):
+    def setModelData(self, editor: Any, model: Any, index: QtCore.QModelIndex) -> None:
         leaf_node = index.internalPointer()
         delegate_style = None if leaf_node is None else leaf_node.qt_delegate_style()
         if delegate_style == DelegateStyle.COMBO_BOX:
@@ -867,19 +895,21 @@ class QConfigValueDelegate(QtWidgets.QStyledItemDelegate):
         else:
             return super().setModelData(editor, model, index)
 
-    def currentIndexChanged(self, combo_idx):
+    def currentIndexChanged(self, combo_idx: int) -> None:
         sender = self.sender()
         self.commitData.emit(sender)
 
-    def updateEditorGeometry(self, editor, option, index):
+    def updateEditorGeometry(self, editor: Any, option: Any, index: QtCore.QModelIndex) -> None:
         editor.setGeometry(option.rect)
 
-    def editorEvent(self, event, model, option, index):
+    def editorEvent(self, event: Any, model: Any, option: Any, index: QtCore.QModelIndex) -> Any:
         return super().editorEvent(event, model, option, index)
 
-    def eventFilter(self, editor, event):
-        handled =  super().eventFilter(editor, event)
-        return handled
+    def eventFilter(
+            self, object: Optional[QtCore.QObject],
+            event: Optional[QtCore.QEvent],
+    ) -> bool:
+        return super().eventFilter(object, event)
 
 
 class QConfigWidget(QtWidgets.QWidget):
@@ -891,7 +921,7 @@ class QConfigWidget(QtWidgets.QWidget):
 
     data_changed = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent, config=None):
+    def __init__(self, parent: Any, config: Optional[QConfigNode] = None) -> None:
         import operator
         from functools import reduce
         super().__init__(parent=parent)
@@ -905,7 +935,8 @@ class QConfigWidget(QtWidgets.QWidget):
         self.tree_view.setItemDelegateForColumn(1, self.delegate)
 
         self.tree_view.setModel(self.config_model)
-        self.tree_view.header().resizeSection(0, 250)
+        tree_header = cast(Any, self.tree_view.header())
+        tree_header.resizeSection(0, 250)
 
         self.vert_layout.addWidget(self.tree_view)
 
@@ -922,13 +953,13 @@ class QConfigWidget(QtWidgets.QWidget):
         ])
         self.tree_view.setEditTriggers(edit_triggers)
         self.tree_view.setModel(self.config_model)
-        view_header = self.tree_view.header()
-        self.tree_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        view_header = cast(Any, self.tree_view.header())
+        self.tree_view.setHorizontalScrollBarPolicy(_Qt.ScrollBarAsNeeded)
         self.tree_view.resizeColumnToContents(0)
         self.tree_view.resizeColumnToContents(1)
         view_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
-    def _on_change(self, top_left, bottom_right):
+    def _on_change(self, top_left: Any, bottom_right: Any) -> None:
         if top_left is bottom_right:
             # we know what index changed
             qtindex = top_left
@@ -952,14 +983,15 @@ class MatplotlibWidget(QtWidgets.QWidget):
     key_pressed = QtCore.pyqtSignal(KeyEvent)
     picked = QtCore.pyqtSignal(PickEvent)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # from plottool_ibeis.interactions import zoom_factory, pan_factory
         # from plottool_ibeis import abstract_interaction
         super().__init__(*args, **kwargs)
         from matplotlib.figure import Figure
         # Create unmanaged figure and a canvas
         self.fig = Figure()
-        self.fig._no_raise_plottool_ibeis = True
+        fig_dynamic = cast(Any, self.fig)
+        fig_dynamic._no_raise_plottool_ibeis = True
         self.canvas = backend_qt.FigureCanvasQTAgg(self.fig)
         self.canvas.setParent(self)
 
@@ -969,7 +1001,7 @@ class MatplotlibWidget(QtWidgets.QWidget):
 
         # Workaround key_press bug
         # References: https://github.com/matplotlib/matplotlib/issues/707
-        self.canvas.setFocusPolicy(Qt.ClickFocus)
+        self.canvas.setFocusPolicy(_Qt.ClickFocus)
 
         # self.ax = self.fig.add_subplot(1, 1, 1)
         # pt.adjust_subplots(left=0, right=1, top=1, bottom=0, fig=self.fig)
@@ -993,7 +1025,7 @@ class AdjustWidget(QtWidgets.QWidget):
     parameters and a Matplotlib Widget to view those parameters are doing.
     """
 
-    def __init__(self, config=None, raw_img=None):
+    def __init__(self, config: Any = None, raw_img: Any = None) -> None:
         super().__init__()
         self.raw_img = raw_img
         self.processed_img = raw_img
@@ -1003,7 +1035,7 @@ class AdjustWidget(QtWidgets.QWidget):
         self.setLayout(main_layout)
 
         splitter = QtWidgets.QSplitter(parent=self)
-        splitter.setOrientation(QtCore.Qt.Vertical)
+        splitter.setOrientation(_Qt.Vertical)
         splitter.sizePolicy().setVerticalStretch(1)
         main_layout.addWidget(splitter)
 
@@ -1020,11 +1052,11 @@ class AdjustWidget(QtWidgets.QWidget):
         self.mpl_widget.button_pressed.connect(self.on_mpl_widget_click)
         self.update_normalization()
 
-    def update_normalization(self, key=None):
+    def update_normalization(self, key: Any = None) -> None:
         import seaborn as sns
         import kwarray
         import numpy as np
-        from geowatch.cli.coco_spectra import _weighted_auto_bins
+        from kwplot.util_seaborn import _weighted_auto_bins
         import pandas as pd
 
         print('Update Norm')
@@ -1045,7 +1077,8 @@ class AdjustWidget(QtWidgets.QWidget):
         if expr is not None:
             # Hack: not safe
             img = self.processed_img
-            ns = globals() | locals()
+            ns = globals().copy()
+            ns.update(locals())
             self.processed_img = eval(expr, ns)
             # self.processed_img = ns['img']
 
@@ -1135,7 +1168,7 @@ class AdjustWidget(QtWidgets.QWidget):
 
         fig.canvas.draw()
 
-    def on_mpl_widget_click(self, event):
+    def on_mpl_widget_click(self, event: Optional[MouseEvent]) -> None:
         from scipy import stats
         # Let the user click to move the config
         in_axis = event is not None and (event.inaxes is not None and event.xdata is not None)
@@ -1160,11 +1193,11 @@ class AdjustWidget(QtWidgets.QWidget):
         for observer in node.qt_observers():
             pindex = node.qt_get_persistant_index(observer)
             index = QtCore.QModelIndex(pindex)
-            model = index.model()
+            model = cast(Any, index.model())
             model.setData(index, clicked_quantile)
 
 
-def parse_cropstr(cropstr, error_policy='return-none'):
+def parse_cropstr(cropstr: str, error_policy: str = 'return-none') -> Optional[Tuple[slice, slice]]:
     """
     Parse a string of the form R1:R2,C1:C2 into a tuple of slices using regex.
 
@@ -1203,7 +1236,7 @@ def parse_cropstr(cropstr, error_policy='return-none'):
             return None
         raise ValueError(f"Invalid crop string format: '{cropstr}'. Expected 'R1:R2,C1:C2'")
 
-    def to_int_or_none(s):
+    def to_int_or_none(s: str) -> Optional[int]:
         return int(s) if s else None
 
     r1 = to_int_or_none(match.group('r1'))
@@ -1214,7 +1247,7 @@ def parse_cropstr(cropstr, error_policy='return-none'):
     return (slice(r1, r2), slice(c1, c2))
 
 
-def main(cmdline=1, **kwargs):
+def main(cmdline: bool = True, **kwargs: Any) -> None:
     config = AdjustGuiConfig.cli(cmdline=cmdline, data=kwargs, strict=True)
     print('config = ' + ub.urepr(dict(config), nl=1))
 

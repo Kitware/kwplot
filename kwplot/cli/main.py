@@ -3,12 +3,16 @@
 """
 A simple CLI for helping with plotting and viewing tasks
 """
+from __future__ import annotations
+
+from typing import Any, cast
+
 import ubelt as ub
 from scriptconfig.modal import ModalCLI
 from scriptconfig import DataConfig, Value
 
 
-modal = ModalCLI(description=ub.codeblock(
+modal: ModalCLI = ModalCLI(description=ub.codeblock(
     '''
     The Kitware Plot CLI
     '''))
@@ -33,7 +37,7 @@ class ImshowCLI(DataConfig):
     stats = Value(True, isflag=True, help='if False does not compute stats')
 
     @classmethod
-    def main(cls, cmdline=False, **kwargs):
+    def main(cls, cmdline: bool = False, **kwargs: Any) -> None:
         config = cls.cli(cmdline=cmdline, data=kwargs)
         print('config = {}'.format(ub.urepr(dict(config), nl=1)))
         import kwimage
@@ -49,7 +53,7 @@ class ImshowCLI(DataConfig):
 
         if config.stats:
             stats = kwarray.stats_dict(imdata, nan=True)
-            print('stats = {}'.format(ub.repr2(stats, nl=1)))
+            print('stats = {}'.format(ub.urepr(stats, nl=1)))
 
         if kwimage.num_channels(imdata) == 2:
             import numpy as np
@@ -71,12 +75,13 @@ class ImshowCLI(DataConfig):
         plt.show()
 
 
-def main():
+def main() -> None:
     import sys
     import os
     if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
         # NON MODAL CASE RUNS IMSHOW
-        ImshowCLI.main(cmdline=0, fpath=sys.argv[1])
+        imshow_cli = cast(Any, ImshowCLI)
+        imshow_cli.main(cmdline=False, fpath=sys.argv[1])
         ...
     else:
         from kwplot.cli import gifify

@@ -62,7 +62,7 @@ def dataframe_table(table, fpath, title=None, fontsize=12,
         imdata = kwimage.imread(fpath)
         kwplot.imshow(imdata, fnum=fnum)
     elif show == 'eog':
-        import xdev
+        import xdev  # ty: ignore[unresolved-import]
         xdev.startfile(fpath)
     elif show:
         raise KeyError(f'Show can be "imshow" or "eog", not {show!r}')
@@ -108,6 +108,7 @@ def humanize_dataframe(df, col_formats=None, human_labels=None, index_format=Non
                 index.names = [human_labels.get(n, n) for n in index.names]
 
     if index_format == 'capcase':
+        human_labels = {} if human_labels is None else human_labels
         def capcase(x):
             if '_' in x or x.islower():
                 return ' '.join([w.capitalize() for w in x.split('_')])

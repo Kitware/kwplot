@@ -2,7 +2,14 @@
 Defines the :class:`kwplot.mpl_plotnums.PlotNums` class to help manage a grid
 of subplot numbers.
 """
+from __future__ import annotations
+
+from typing import Iterator, Optional, Tuple
+
 import numpy as np
+
+
+PNum = Tuple[int, int, int]
 
 
 class PlotNums(object):
@@ -23,7 +30,7 @@ class PlotNums(object):
         >>> print(pnum_[0])
         (2, 2, 1)
         >>> # Iterable
-        >>> print(ub.repr2(list(pnum_), nl=0, nobr=1))
+        >>> print(ub.urepr(list(pnum_), nl=0, nobr=1))
         (2, 2, 1), (2, 2, 2), (2, 2, 3), (2, 2, 4)
         >>> # Callable (iterates through a default iterator)
         >>> print(pnum_())
@@ -32,19 +39,22 @@ class PlotNums(object):
         (2, 2, 2)
     """
 
-    def __init__(self, nRows=None, nCols=None, nSubplots=None, start=0):
+    def __init__(
+            self, nRows: Optional[int] = None, nCols: Optional[int] = None,
+            nSubplots: Optional[int] = None, start: int = 0,
+    ) -> None:
         nRows, nCols = self._get_num_rc(nSubplots, nRows, nCols)
         self.nRows = nRows
         self.nCols = nCols
         base = 0
         self.offset = 0 if base == 1 else 1
         self.start = start
-        self._iter = None
+        self._iter: Optional[Iterator[PNum]] = None
 
-    def __getitem__(self, px):
+    def __getitem__(self, px: int) -> PNum:
         return (self.nRows, self.nCols, px + self.offset)
 
-    def __call__(self):
+    def __call__(self) -> PNum:
         """
         replacement for make_pnum_nextgen
 
@@ -53,7 +63,7 @@ class PlotNums(object):
             >>> import itertools as it
             >>> pnum_ = PlotNums(nSubplots=9)
             >>> pnum_list = [pnum_() for _ in range(len(pnum_))]
-            >>> result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
+            >>> result = ('pnum_list = %s' % (ub.urepr(pnum_list),))
             >>> print(result)
 
         Example:
@@ -64,14 +74,14 @@ class PlotNums(object):
             >>>     pnum_ = PlotNums(nRows, nCols, nSubplots, start)
             >>>     pnum_list = [pnum_() for _ in range(len(pnum_))]
             >>>     print((nRows, nCols, nSubplots))
-            >>>     result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
+            >>>     result = ('pnum_list = %s' % (ub.urepr(pnum_list),))
             >>>     print(result)
         """
         if self._iter is None:
             self._iter = iter(self)
         return next(self._iter)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PNum]:
         r"""
         Yields:
             tuple : pnum
@@ -79,7 +89,7 @@ class PlotNums(object):
         Example:
             >>> import ubelt as ub
             >>> pnum_ = iter(PlotNums(nRows=3, nCols=2))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
+            >>> result = ub.urepr(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 1),
             (3, 2, 2),
@@ -93,7 +103,7 @@ class PlotNums(object):
             >>> nRows = 3
             >>> nCols = 2
             >>> pnum_ = iter(PlotNums(nRows, nCols, start=3))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
+            >>> result = ub.urepr(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 4),
             (3, 2, 5),
@@ -102,12 +112,15 @@ class PlotNums(object):
         for px in range(self.start, len(self)):
             yield self[px]
 
-    def __len__(self):
+    def __len__(self) -> int:
         total_plots = self.nRows * self.nCols
         return total_plots
 
     @classmethod
-    def _get_num_rc(PlotNums, nSubplots=None, nRows=None, nCols=None):
+    def _get_num_rc(
+            PlotNums, nSubplots: Optional[int] = None,
+            nRows: Optional[int] = None, nCols: Optional[int] = None,
+    ) -> Tuple[int, int]:
         r"""
         Gets a constrained row column plot grid
 
@@ -132,7 +145,7 @@ class PlotNums(object):
             >>>     size = PlotNums._get_num_rc(**kw)
             >>>     if kw['nSubplots'] is not None:
             >>>         assert size[0] * size[1] >= kw['nSubplots']
-            >>>     print('**kw = %s' % (ub.repr2(kw),))
+            >>>     print('**kw = %s' % (ub.urepr(kw),))
             >>>     print('size = %r' % (size,))
         """
         if nSubplots is None:
@@ -147,10 +160,15 @@ class PlotNums(object):
                 nCols = int(np.ceil(nSubplots / nRows))
             elif nCols is not None:
                 nRows = int(np.ceil(nSubplots / nCols))
+        assert nRows is not None
+        assert nCols is not None
         return nRows, nCols
 
     @staticmethod
-    def _get_square_row_cols(nSubplots, max_cols=None, fix=False, inclusive=True):
+    def _get_square_row_cols(
+            nSubplots: int, max_cols: Optional[int] = None,
+            fix: bool = False, inclusive: bool = True,
+    ) -> Tuple[int, int]:
         r"""
         Args:
             nSubplots (int):
