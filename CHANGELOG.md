@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Ported CLI/config definitions from ``scriptconfig`` to ``kwconf >= 0.12.0``.
 * Moved package typing from sidecar ``.pyi`` stubs into inline annotations,
   preserving lazy imports and correcting stale public signatures.
 

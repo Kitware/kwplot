@@ -25,9 +25,9 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from matplotlib.backend_bases import MouseEvent, KeyEvent, PickEvent
 import matplotlib.backends.backend_qt5agg as backend_qt
-from scriptconfig import smartcast as smartcast_mod
+from kwconf.coerce import auto as auto_coerce
 from enum import Enum
-import scriptconfig as scfg
+import kwconf
 
 
 _Qt = cast(Any, Qt)
@@ -35,7 +35,7 @@ _QValidator = cast(Any, QtGui.QValidator)
 _QStyle = cast(Any, QtWidgets.QStyle)
 
 
-class AdjustGuiConfig(scfg.DataConfig):
+class AdjustGuiConfig(kwconf.Config):
     """
     Helper to find good robust normalization parameters for input images.
 
@@ -44,9 +44,9 @@ class AdjustGuiConfig(scfg.DataConfig):
     interactively or programmatically.
     """
 
-    img_fpath = scfg.Value(None, help='Path to the input image file.', position=1)
+    img_fpath = kwconf.Value(None, help='Path to the input image file.', position=1)
 
-    scaling = scfg.Value(
+    scaling = kwconf.Value(
         'sigmoid', choices=['sigmoid', 'linear'],
         help=ub.codeblock(
             '''
@@ -56,7 +56,7 @@ class AdjustGuiConfig(scfg.DataConfig):
             '''
         ))
 
-    extrema = scfg.Value(
+    extrema = kwconf.Value(
         'quantile', choices=['quantile', 'adaptive-quantile', 'iqr',
                              'iqr-clip'],
         help=ub.codeblock(
@@ -69,13 +69,13 @@ class AdjustGuiConfig(scfg.DataConfig):
             '''
         ))
 
-    low = scfg.Value(0.1, help='Lower bound percentile or IQR quantile (range: 0.0–1.0).')
+    low = kwconf.Value(0.1, help='Lower bound percentile or IQR quantile (range: 0.0–1.0).')
 
-    mid = scfg.Value(0.5, help='Midpoint intensity (used in sigmoid scaling, range: 0.0–1.0).')
+    mid = kwconf.Value(0.5, help='Midpoint intensity (used in sigmoid scaling, range: 0.0–1.0).')
 
-    high = scfg.Value(0.9, help='Upper bound percentile or IQR quantile (range: 0.0–1.0).')
+    high = kwconf.Value(0.9, help='Upper bound percentile or IQR quantile (range: 0.0–1.0).')
 
-    crop = scfg.Value("null", type=str, help=ub.codeblock(
+    crop = kwconf.Value("null", parser=str, help=ub.codeblock(
         '''
         Optional crop string in the form "y1:y2,x1:x2".
 
@@ -85,7 +85,7 @@ class AdjustGuiConfig(scfg.DataConfig):
         Set to "null" to disable cropping.
         '''))
 
-    expr = scfg.Value("null", type=str, help=ub.codeblock(
+    expr = kwconf.Value("null", parser=str, help=ub.codeblock(
         '''
         Optional Python expression to transform the image after cropping.
 
@@ -100,8 +100,8 @@ class AdjustGuiConfig(scfg.DataConfig):
         '''
     ))
 
-    cmap = scfg.Value(
-        'None', type=str, help=ub.codeblock(
+    cmap = kwconf.Value(
+        'None', parser=str, help=ub.codeblock(
             '''
             Optional matplotlib colormap to apply when displaying the image.
 
@@ -267,7 +267,7 @@ class _Qt_ConfigNodeMixin:
 
     def qt_set_value(self, data: Any) -> None:
         # TODO: casting
-        data = smartcast_mod.smartcast(data, allow_split=False)
+        data = auto_coerce(data)
         self.value = data
 
     def qt_delegate_style(self) -> Optional[DelegateStyle]:
@@ -1247,8 +1247,10 @@ def parse_cropstr(cropstr: str, error_policy: str = 'return-none') -> Optional[T
     return (slice(r1, r2), slice(c1, c2))
 
 
-def main(cmdline: bool = True, **kwargs: Any) -> None:
-    config = AdjustGuiConfig.cli(cmdline=cmdline, data=kwargs, strict=True)
+def main(
+    argv: bool | Sequence[str] | str | None = True, **kwargs: Any
+) -> None:
+    config = AdjustGuiConfig.cli(argv=argv, data=kwargs, strict=True)
     print('config = ' + ub.urepr(dict(config), nl=1))
 
     import sys
