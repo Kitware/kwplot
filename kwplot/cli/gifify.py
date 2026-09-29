@@ -16,38 +16,40 @@ from typing import Any, Optional, Sequence, Union
 
 import ubelt as ub
 from os.path import isdir, join
-import scriptconfig as scfg
+import kwconf
 
 
-class Gifify(scfg.DataConfig):
+class Gifify(kwconf.Config):
     """
     Convert a sequence of images into a video or gif.
     """
     __command__ = 'gifify'
     __alias__ = ['movie', 'animate']
 
-    image_list = scfg.Value(None, required=True, help=ub.paragraph(
+    image_list = kwconf.Value(None, required=True, help=ub.paragraph(
             '''
             a list of images, a text file containing a list of images, or a
             directory containing a list of images.
             '''), position=1, nargs='*', alias=['input'])
-    delay = scfg.Value(10, type=float, short_alias=['d'], help='delay between frames', nargs=1)
-    output = scfg.Value('auto', short_alias=['o'], help=ub.paragraph(
+    delay = kwconf.Value(10, parser=float, short_alias=['d'], help='delay between frames', nargs=1)
+    output = kwconf.Value('auto', short_alias=['o'], help=ub.paragraph(
         '''
         Path to the output file. If "auto", then the name will be chosen
         automatically.  If the input is a folder, it will be the folder name
         .mp4 otherwise it will be out.mp4.
         '''))
-    max_width = scfg.Value(None, type=int, help='resize to max width')
-    frames_per_second = scfg.Value(10, type=float, alias=['fps'], help=ub.paragraph(
+    max_width = kwconf.Value(None, parser=int, help='resize to max width')
+    frames_per_second = kwconf.Value(10, parser=float, alias=['fps'], help=ub.paragraph(
         '''
         number of frames per second
         '''))
 
     @classmethod
-    def main(cls, cmdline: bool = True, **kwargs: Any) -> None:
+    def main(
+        cls, argv: bool | Sequence[str] | str | None = True, **kwargs: Any
+    ) -> None:
         import glob
-        config = cls.cli(cmdline=cmdline, data=kwargs)
+        config = cls.cli(argv=argv, data=kwargs)
         print('config = {}'.format(ub.urepr(dict(config), nl=1)))
 
         image_paths = config['image_list']

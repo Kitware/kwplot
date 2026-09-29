@@ -5,21 +5,20 @@ A simple CLI for helping with plotting and viewing tasks
 """
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any, Sequence, cast
 
 import ubelt as ub
-from scriptconfig.modal import ModalCLI
-from scriptconfig import DataConfig, Value
+import kwconf
 
 
-modal: ModalCLI = ModalCLI(description=ub.codeblock(
+modal: kwconf.ModalCLI = kwconf.ModalCLI(description=ub.codeblock(
     '''
     The Kitware Plot CLI
     '''))
 
 
 @modal
-class ImshowCLI(DataConfig):
+class ImshowCLI(kwconf.Config):
     """
     Plot an image with matplotlib using robust normalization by default.
 
@@ -32,13 +31,15 @@ class ImshowCLI(DataConfig):
     """
     __command__ = 'imshow'
 
-    fpath = Value(None, position=1, help='path to the image to visualize')
-    robust = Value(True, isflag=True, help='robustly normlizes the image intensity')
-    stats = Value(True, isflag=True, help='if False does not compute stats')
+    fpath = kwconf.Value(None, position=1, help='path to the image to visualize')
+    robust = kwconf.Flag(True, help='robustly normlizes the image intensity')
+    stats = kwconf.Flag(True, help='if False does not compute stats')
 
     @classmethod
-    def main(cls, cmdline: bool = False, **kwargs: Any) -> None:
-        config = cls.cli(cmdline=cmdline, data=kwargs)
+    def main(
+        cls, argv: bool | Sequence[str] | str | None = False, **kwargs: Any
+    ) -> None:
+        config = cls.cli(argv=argv, data=kwargs)
         print('config = {}'.format(ub.urepr(dict(config), nl=1)))
         import kwimage
         import kwarray
@@ -81,7 +82,7 @@ def main() -> None:
     if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
         # NON MODAL CASE RUNS IMSHOW
         imshow_cli = cast(Any, ImshowCLI)
-        imshow_cli.main(cmdline=False, fpath=sys.argv[1])
+        imshow_cli.main(argv=False, fpath=sys.argv[1])
         ...
     else:
         from kwplot.cli import gifify
